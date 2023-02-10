@@ -1,10 +1,9 @@
 # Documentation at https://goreleaser.com
 brews:
-  - github:
+  - tap:
       owner: laurenzlong
       name: homebrew-cli
     folder: Formula
-    homepage: https://github.com/laurenzlong/cli
     description: A simple description of your application.
 before:
   hooks:
