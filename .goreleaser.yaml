@@ -1,5 +1,11 @@
-# This is an example .goreleaser.yml file with some sensible defaults.
-# Make sure to check the documentation at https://goreleaser.com
+# Documentation at https://goreleaser.com
+brews:
+  - github:
+      owner: laurenzlong
+      name: homebrew-cli
+    folder: Formula
+    homepage: https://github.com/laurenzlong/cli
+    description: A simple description of your application.
 before:
   hooks:
     # You may remove this if you don't use go modules.
