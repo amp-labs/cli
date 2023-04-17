@@ -1,0 +1,77 @@
+
+#TEST#TEST#TEST
+#specVersion: 0.1.0
+appName: MailMonkey
+
+integrations:
+
+# Integration 1
+ - name: readContactsAndLeads
+   displayName: Read Contacts and Leads
+   api: salesforce
+   actions:
+    - type: read
+      schedule: every 12 hours
+      standardObjects:              
+      - objectName: contact
+        destination: contactTable
+        # Always read these fields
+        requiredFields:
+          - fieldName: firstName
+          - fieldName: lastName
+          - fieldName: email
+        # Customer can decide during set-up if they want us to read these fields
+        optionalFields:
+          - fieldName: salutation
+      - objectName: leads
+        destination: leadsTable
+        requiredFields:
+          - fieldName: firstName
+          - fieldName: lastName
+          - fieldName: email
+          - fieldName: isConverted
+          
+# Integration 2
+ - name: createLeads
+   displayName: Create Leads
+   api: salesforce
+   actions:
+    - type: write
+      standardObjects:
+        # Create a new lead in Salesforce whenever we make an API request.
+        - objectName: lead
+          mode: insert
+          endpoint: create-account
+          
+# Integration 3
+ - name: watchLeadConversion
+   displayName: Watch Lead Conversions
+   api: salesforce
+   actions:
+    - type: subscribe
+      standardObjects:
+        - objectName: lead
+          destination: leadConvertedWebhook          
+          event: update
+          # We watch for changes on these fields
+          watchFields:
+            - fieldName: isConverted
+          # We also want the values of these fields to be sent to our webhook.
+          additionalFields:
+            - fieldName: firstName
+            - fieldName: lastName
+            - fieldName: email
+            
+destinations:
+  # Sync Contacts to a Postgres table
+  - name: contactsTable
+    type: postgres
+    tableName: SalesforceContacts
+  # Sync Leads to a Postgres table
+  - name: leadsTable
+    type: postgres
+    tableName: SalesforceLeads
+  # Webhook that Ampersand should make requests to
+  - name: leadConvertedWebhook
+    type: webhook
+    url: webhooks.mailmonkey.com/salesforce-lead-converted
