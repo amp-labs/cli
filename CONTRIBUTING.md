@@ -10,7 +10,7 @@
 task build
 ```
 
-Create a symlink in `/usr/local/bin` that points to this executable. Run this command from the root of the repo. This command names the symlinked executable `lamp`, which stands for `local amp`, in order the differentiate between the production version of the amp CLI, so that you can have both running on your computer. But you can feel free to name it anything you want.
+Create a symlink in `/usr/local/bin` that points to this executable. Run this command from the root of the repo. This command names the symlinked executable `lamp`, which stands for `local amp`, in order the differentiate between the local and production versions of the amp CLI, so that you can have both running on your computer. But you can feel free to name it anything you want.
 
 ```
 sudo ln -s $PWD/bin/amp /usr/local/bin/lamp
