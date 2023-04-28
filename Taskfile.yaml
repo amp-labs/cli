@@ -2,11 +2,6 @@ version: "3"
 
 tasks:
     build:
-        desc: Build the app
+        desc: Build the CLI
         cmds:
         - GOFLAGS=-mod=mod go build -o bin/amp main.go 
-
-    run: 
-        desc: Run the app
-        cmds:
-        - GOFLAGS=-mod=mod go run main.go
