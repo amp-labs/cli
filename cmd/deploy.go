@@ -7,16 +7,16 @@ import (
   "path/filepath"
   "time"
   
-  "github.com/amp-labs/cli/cmd/helpers/upload"
-  "github.com/amp-labs/cli/cmd/helpers/util"
-  "github.com/amp-labs/cli/cmd/helpers/zip"
+  "github.com/amp-labs/cli/helpers/upload"
+  "github.com/amp-labs/cli/helpers/util"
+  "github.com/amp-labs/cli/helpers/zip"
   "github.com/spf13/cobra"
 )
 
 var now = time.Now()
 var uploadPath string
 var uploadErrors error
-var filePath = "cmd/amp/amp.yaml"
+var filePath = "cmd /amp"
 
 // deployCmd represents the deploy command
 var deployCmd = &cobra.Command{
@@ -33,8 +33,9 @@ var deployCmd = &cobra.Command{
     
     //make a local copy of the amp.yaml by attaching a timestamp value to its name
     
-    var localVersion = fmt.Sprintf("amp_%d.yaml", now.Unix())
+    var localVersion = fmt.Sprintf("amp_%d", now.Unix())
     _copied := util.Copy(filename,localVersion)
+    fmt.Println(_copied)
     
     if _copied{
       fmt.Println("zipping file name:",localVersion)
