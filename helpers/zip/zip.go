@@ -1,64 +1,83 @@
 package zip
 
 import (
-  "archive/zip"
-  "fmt"
-  "io"
-  "log"
-  "os"
-) 
+	"archive/zip"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"time"
+)
 
 const errorkey = "ERROR:Ampersand-Cli:cli/helpers/zip: "
 
-func Zip(filename, zipPath string) bool {
-  fmt.Println("Beginning to zip amp.yaml.....")
-  
-  // Open the file to be zipped
-  file, err := os.Open(filename)
-  if err != nil {
-    log.Fatal(errorkey,err)
-    return false
-  }
-  defer file.Close()
-  
-  // Create the output zip file
-  zipFile, err := os.Create(zipPath)
-  if err != nil {
-    log.Fatal(errorkey,err)
-    return false
-  }
-  defer zipFile.Close()
-  
-  // Create a new zip archive
-  archive := zip.NewWriter(zipFile)
-  defer archive.Close()
-  
-  // Add the file to the zip archive
-  fileInfo, err := file.Stat()
-  if err != nil {
-    log.Fatal(errorkey,err)
-    return false
-  }
-  
-  header, err := zip.FileInfoHeader(fileInfo)
-  if err != nil {
-    log.Fatal(errorkey,err)
-    return false
-  }
-  
-  header.Name = file.Name()
-  
-  writer, err := archive.CreateHeader(header)
-  if err != nil {
-    log.Fatal(errorkey,err)
-    return false
-  }
-  
-  if _, err = io.Copy(writer, file); err != nil {
-    log.Fatal(errorkey,err)
-    return false
-  }
-  
-  fmt.Println("amp.yaml File zipped successfully!.....")
-  return true
+var err error
+var now = time.Now()
+
+func Zip(folderName string) (string, error) {
+
+	var workingDir, err = os.Getwd()
+	if err != nil {
+		return errorkey, err
+	}
+
+	var zippedFolder = fmt.Sprintf("amp_%d.zip", now.Unix())
+
+	var zippedDir = filepath.ToSlash(filepath.Join(workingDir, zippedFolder))
+
+	if err := zipSource(folderName, zippedDir); err != nil {
+		return errorkey, err
+	}
+	return zippedFolder, nil
+
+}
+
+func zipSource(source, target string) error {
+	file, err := os.Create(target)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	writer := zip.NewWriter(file)
+	defer writer.Close()
+
+	return filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			return err
+		}
+
+		header.Method = zip.Deflate
+
+		header.Name, err = filepath.Rel(filepath.Dir(source), path)
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			header.Name += "/"
+		}
+
+		headerWriter, err := writer.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		f, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		_, err = io.Copy(headerWriter, f)
+		return err
+	})
 }

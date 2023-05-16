@@ -5,18 +5,15 @@ import (
   "log"
   "os"
   "path/filepath"
-  "time"
   
   "github.com/amp-labs/cli/helpers/upload"
-  "github.com/amp-labs/cli/helpers/util"
+  //"github.com/amp-labs/cli/helpers/util"
   "github.com/amp-labs/cli/helpers/zip"
   "github.com/spf13/cobra"
 )
 
-var now = time.Now()
-var uploadPath string
-var uploadErrors error
-var filePath = "cmd /amp"
+var err error
+var filePath = "/amp"
 
 // deployCmd represents the deploy command
 var deployCmd = &cobra.Command{
@@ -27,35 +24,25 @@ var deployCmd = &cobra.Command{
     fmt.Println("deploy called")
     fmt.Println("Creating a local copy of the AMP file")
     
-    //Resolve amp.yaml's location using current working directory path and constant directory extension
+    //Resolve amp's location using current working directory path and folder name
     workingDir,_  := os.Getwd()
-    var filename = filepath.ToSlash(filepath.Join(workingDir,filePath))
+    var folderName = filepath.ToSlash(filepath.Join(workingDir,filePath))
     
-    //make a local copy of the amp.yaml by attaching a timestamp value to its name
-    
-    var localVersion = fmt.Sprintf("amp_%d", now.Unix())
-    _copied := util.Copy(filename,localVersion)
-    fmt.Println(_copied)
-    
-    if _copied{
-      fmt.Println("zipping file name:",localVersion)
-      var zipPath = fmt.Sprintf("amp_%d.zip", now.Unix())
-      _zipped := zip.Zip(localVersion, zipPath)
-      
-      if _zipped{
-        fmt.Println("Uploading zipped file to storage bucket")
-        uploadPath,uploadErrors = upload.Upload(zipPath)
-        }else {
-          fmt.Println("Exiting following unsuccesful zip operation")
-          return
-        }
-        fmt.Println("Deleting local amp zipped file")
-        clean_up(zipPath)
+
+    //Zips the amp folder and makes a temporary copy of zip in system temp directory
+    fmt.Println("zipping FOLDER name:",folderName)
+    zipPath,err := zip.Zip(folderName)
+    if err != nil {
+      fmt.Println("Exiting following unsuccesful zip operation")
+      return 
     }
+
+    fmt.Println("Uploading zipped file to storage bucket")
+    uploadPath,err := upload.Upload(zipPath)
     
-    clean_up(localVersion)
+    clean_up(zipPath)
     
-    if uploadErrors!=nil{
+    if err!=nil{
       fmt.Println("Exiting following unsuccesful upload operation")
       }else{
         fmt.Println("Succesfully uploaded zipped file to remote storage..",uploadPath)
