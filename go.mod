@@ -6,6 +6,9 @@ require (
 	cloud.google.com/go/storage v1.30.1
 	github.com/spf13/cobra v1.7.0
 	google.golang.org/api v0.114.0
+	github.com/adrg/xdg v0.4.0
+	github.com/imdario/mergo v0.3.15
+	github.com/spf13/cobra v1.6.1
 )
 
 require (
@@ -31,4 +34,5 @@ require (
 	google.golang.org/genproto v0.0.0-20230320184635-7606e756e683 // indirect
 	google.golang.org/grpc v1.53.0 // indirect
 	google.golang.org/protobuf v1.29.1 // indirect
+	golang.org/x/sys v0.0.0-20211025201205-69cdffdb9359 // indirect
 )
