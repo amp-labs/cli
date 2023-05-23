@@ -4,7 +4,7 @@ tasks:
     build:
         desc: Build the app
         cmds:
-        - GOFLAGS=-mod=mod go build -o bin/amp main.go 
+        - GOFLAGS=-mod=mod go build -o bin/amp{{if eq OS "windows"}}.exe{{end}} main.go 
 
     run: 
         desc: Run the app
