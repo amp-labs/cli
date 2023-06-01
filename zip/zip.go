@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const errorkey = "ERROR:Ampersand-Cli:cli/helpers/zip: "
+const errorkey = "ERROR:Ampersand-Cli:cli/zip: "
 
 var err error
 var now = time.Now()
