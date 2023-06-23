@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/adrg/xdg v0.4.0
 	github.com/imdario/mergo v0.3.15
-	github.com/spf13/cobra v1.6.1
+	github.com/spf13/cobra v1.7.0
 )
 
 require (
