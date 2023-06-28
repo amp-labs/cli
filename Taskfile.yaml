@@ -4,4 +4,5 @@ tasks:
     build:
         desc: Build the CLI
         cmds:
+        - go generate ./...
         - GOFLAGS=-mod=mod go build -o bin/amp main.go 

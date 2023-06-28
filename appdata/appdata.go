@@ -9,13 +9,13 @@ import (
 	"github.com/imdario/mergo"
 )
 
-var fileName = "Ampersand/config.json"
+const fileName = "Ampersand/config.json"
 
 // IMPORTANT:
 // Do not modify the JSON labels in this struct without ensuring backwards compatibility,
 // since those strings are written to the user's config file on their computer.
 type Config struct {
-	Token	Token `json:"token"`
+	Token Token `json:"token"`
 }
 
 // Token represents a JWT token.
@@ -23,17 +23,21 @@ type Token struct {
 	Iss string `json:"iss"`
 	Sub string `json:"sub"`
 	Aud string `json:"aud"`
-	Iat int `json:"iat"`
-	Exp int `json:"exp"`
+	Iat int    `json:"iat"`
+	Exp int    `json:"exp"`
 }
 
 // Get returns the user's existing config, or an empty config if the file doesn't exist.
 func Get() (Config, error) {
 	path, err := getExistingFilePath()
-	if err != nil { return Config{}, nil }
+	if err != nil {
+		return Config{}, nil
+	}
 
 	data, err := os.ReadFile(path)
-	if err != nil { return Config{}, fmt.Errorf("can't read config file: %v", err )}
+	if err != nil {
+		return Config{}, fmt.Errorf("can't read config file: %v", err)
+	}
 
 	var c Config
 	if err := json.Unmarshal(data, &c); err != nil {
@@ -47,7 +51,9 @@ func Get() (Config, error) {
 // The config can be a partial config, and it is merged with the existing config.
 func Set(config Config) error {
 	existing, err := Get()
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	merged := config
 	if err := mergo.Merge(&merged, existing); err != nil {
@@ -60,17 +66,20 @@ func Set(config Config) error {
 func setEntireConfig(config Config) error {
 	path, err := getExistingFilePath()
 
-	if err != nil { 
+	if err != nil {
 		path, err = getPathForNewFile()
-		if err != nil { return fmt.Errorf("can't get path for new config file: %v", err) }
+		if err != nil {
+			return fmt.Errorf("can't get path for new config file: %v", err)
+		}
 	}
 
-	json, err := json.Marshal(config)
-	if err != nil { return fmt.Errorf("can't marshal config into JSON: %v", err) }
+	s, err := json.Marshal(config)
+	if err != nil {
+		return fmt.Errorf("can't marshal config into JSON: %v", err)
+	}
 
-	return writeFile(path, json)
+	return writeFile(path, s)
 }
-
 
 func getPathForNewFile() (string, error) {
 	return xdg.ConfigFile(fileName)
