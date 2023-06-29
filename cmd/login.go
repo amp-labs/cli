@@ -102,6 +102,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// nosemgrep: go.lang.security.audit.xss.no-direct-write-to-responsewriter.no-direct-write-to-responsewriter
 		w.WriteHeader(200)
 		_, _ = w.Write([]byte(rsp))
 		go func() {
@@ -213,7 +214,7 @@ var loginCmd = &cobra.Command{
 				openBrowser("http://localhost:3535")
 			}()
 
-			//nosemgrep:go.lang.security.audit.net.use-tls.use-tls
+			// nosemgrep: go.lang.security.audit.net.use-tls.use-tls
 			log.Fatalln(http.ListenAndServe(":3535", nil))
 		} else {
 			if fi.IsDir() {
