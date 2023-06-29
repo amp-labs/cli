@@ -45,8 +45,39 @@ type token struct {
 	Jwt string `json:"jwt"`
 }
 
+type verification struct {
+	Status string `json:"status"`
+}
+
+type email struct {
+	ID           string       `json:"id"`
+	Address      string       `json:"email_address"`
+	Verification verification `json:"verification"`
+}
+
+type phone struct {
+	ID           string       `json:"id"`
+	Number       string       `json:"phone_number"`
+	Verification verification `json:"verification"`
+}
+
+type user struct {
+	ID             string  `json:"id"`
+	Username       string  `json:"username"`
+	FirstName      string  `json:"first_name"`
+	LastName       string  `json:"last_name"`
+	ImageURL       string  `json:"image_url"`
+	PrimaryEmail   string  `json:"primary_email_address_id"`
+	PrimaryPhone   string  `json:"primary_phone_number_id"`
+	EmailAddresses []email `json:"email_addresses"`
+	PhoneNumbers   []phone `json:"phone_numbers"`
+}
+
 type session struct {
 	LastActiveToken token `json:"last_active_token"`
+	CreatedAt       int64 `json:"created_at"`
+	UpdatedAt       int64 `json:"updated_at"`
+	User            user  `json:"user"`
 }
 
 type response struct {
@@ -206,6 +237,26 @@ var logoutCmd = &cobra.Command{
 			} else {
 				log.Fatalln(err)
 			}
+		}
+
+		bts, err := os.ReadFile(getJwtPath())
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		dat := &loginData{}
+		if err := json.Unmarshal(bts, dat); err != nil {
+			log.Fatalln(err)
+		}
+
+		c, err := clerk.NewClient("sk_test_RrsNOFiMbTBZXANx7hL1wj8LMQbJRVKEdrpTyQg7a6")
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		_, err = c.Sessions().Revoke(dat.SessionID)
+		if err != nil {
+			log.Fatalln(err)
 		}
 
 		if err := os.Remove(path); err != nil {
