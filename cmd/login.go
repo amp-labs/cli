@@ -102,14 +102,17 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// nosemgrep: go.lang.security.audit.xss.no-direct-write-to-responsewriter.no-direct-write-to-responsewriter
 		w.WriteHeader(200)
+
+		// nosemgrep: go.lang.security.audit.xss.no-direct-write-to-responsewriter.no-direct-write-to-responsewriter
 		_, _ = w.Write([]byte(rsp))
+
 		go func() {
 			fmt.Println("login successful")
 			time.Sleep(3 * time.Second)
 			os.Exit(0)
 		}()
+
 		return
 	}
 
