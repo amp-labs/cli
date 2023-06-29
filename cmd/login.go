@@ -212,6 +212,8 @@ var loginCmd = &cobra.Command{
 				time.Sleep(1 * time.Second)
 				openBrowser("http://localhost:3535")
 			}()
+
+			//nosemgrep:go.lang.security.audit.net.use-tls.use-tls
 			log.Fatalln(http.ListenAndServe(":3535", nil))
 		} else {
 			if fi.IsDir() {
