@@ -337,6 +337,13 @@ var loginTest = &cobra.Command{
 	},
 }
 
+var pathCommand = &cobra.Command{
+	Use: "path",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(getJwtPath())
+	},
+}
+
 func getJwtPath() string {
 	path, err := xdg.ConfigFile("amp/jwt.json")
 	if err != nil {
@@ -367,6 +374,7 @@ func init() {
 	rootCmd.AddCommand(loginCmd)
 	rootCmd.AddCommand(loginTest)
 	rootCmd.AddCommand(logoutCmd)
+	rootCmd.AddCommand(pathCommand)
 
 	// Here you will define your flags and configuration settings.
 
