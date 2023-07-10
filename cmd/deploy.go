@@ -13,8 +13,6 @@ import (
 
 var filePath = "/amp"
 
-const errorkey = "ERROR:Ampersand-Cli:cli/deploy: "
-
 // deployCmd represents the deploy command
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
@@ -30,12 +28,12 @@ var deployCmd = &cobra.Command{
 		//Zips the amp folder and makes a temporary copy of zip in system temp directory
 		zipPath, err := zip.Zip(folderName)
 		if err != nil {
-			log.Fatal(errorkey, err)
+			log.Fatal(err)
 			return
 		}
 
-		if err := upload.Upload(zipPath); err != nil {
-			log.Fatal(errorkey, err)
+		if _, err := upload.Upload(zipPath); err != nil {
+			log.Fatal(err)
 			cleanUp(zipPath)
 			return
 		}

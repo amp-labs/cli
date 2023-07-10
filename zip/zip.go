@@ -9,24 +9,21 @@ import (
 	"time"
 )
 
-const errorkey = "ERROR:Ampersand-Cli:cli/zip: "
-
-var err error
 var now = time.Now()
 
-func Zip(folderName string) (string, error) {
+func Zip(path string) (folderName string, zipError error) {
 
 	var workingDir, err = os.Getwd()
 	if err != nil {
-		return errorkey, err
+		return "", err
 	}
 
 	var zippedFolder = fmt.Sprintf("amp_%d.zip", now.Unix())
 
 	var zippedDir = filepath.ToSlash(filepath.Join(workingDir, zippedFolder))
 
-	if err := zipSource(folderName, zippedDir); err != nil {
-		return errorkey, err
+	if err := zipSource(path, zippedDir); err != nil {
+		return "", err
 	}
 	return zippedFolder, nil
 
