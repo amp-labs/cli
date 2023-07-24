@@ -1,0 +1,374 @@
+package cmd
+
+import (
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"os/exec"
+	"runtime"
+	"time"
+
+	"github.com/adrg/xdg"
+	"github.com/alexkappa/mustache"
+	"github.com/clerkinc/clerk-sdk-go/clerk"
+	"github.com/spf13/cobra"
+	"github.com/tidwall/pretty"
+)
+
+var Html = `<!doctype html>
+<html>
+        <head>
+                <meta charset="utf-8"/>
+                <title>Login</title>
+                <!--[if lt IE 9]>
+                <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+                <![endif]-->
+        </head>
+        <body>
+            <h1>Successfully logged in as {{email}}</h1>
+        <h2>Please close this tab or page and return to the CLI</h2>
+        </body>
+</html>`
+
+type loginData struct {
+	UserID    string `json:"userId"`
+	SessionID string `json:"sessionId"`
+	Token     string `json:"token"`
+}
+
+type token struct {
+	Jwt string `json:"jwt"`
+}
+
+type verification struct {
+	Status string `json:"status"`
+}
+
+type email struct {
+	ID           string       `json:"id"`
+	Address      string       `json:"email_address"`
+	Verification verification `json:"verification"`
+}
+
+type phone struct {
+	ID           string       `json:"id"`
+	Number       string       `json:"phone_number"`
+	Verification verification `json:"verification"`
+}
+
+type user struct {
+	ID             string  `json:"id"`
+	Username       string  `json:"username"`
+	FirstName      string  `json:"first_name"`
+	LastName       string  `json:"last_name"`
+	ImageURL       string  `json:"image_url"`
+	PrimaryEmail   string  `json:"primary_email_address_id"`
+	PrimaryPhone   string  `json:"primary_phone_number_id"`
+	EmailAddresses []email `json:"email_addresses"`
+	PhoneNumbers   []phone `json:"phone_numbers"`
+}
+
+type session struct {
+	LastActiveToken token `json:"last_active_token"`
+	CreatedAt       int64 `json:"created_at"`
+	UpdatedAt       int64 `json:"updated_at"`
+	User            user  `json:"user"`
+}
+
+type response struct {
+	Sessions []session `json:"sessions"`
+}
+
+type clientResponse struct {
+	Response response `json:"response"`
+}
+
+type handler struct{}
+
+func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/done" && r.Method == "GET" {
+		bts, _ := base64.StdEncoding.DecodeString(r.URL.Query().Get("p"))
+		rsp, err := processLogin(bts)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			log.Printf("error: %v", err)
+			return
+		}
+
+		w.WriteHeader(200)
+
+		// nosemgrep: go.lang.security.audit.xss.no-direct-write-to-responsewriter.no-direct-write-to-responsewriter
+		_, _ = w.Write([]byte(rsp))
+
+		go func() {
+			fmt.Println("login successful")
+			time.Sleep(3 * time.Second)
+			os.Exit(0)
+		}()
+
+		return
+	} else if r.URL.Path == "/" && r.Method == "GET" {
+		w.Header().Set("Location", "https://ampersand-cli-auth-dev.web.app")
+		w.WriteHeader(307) // redirect
+	} else {
+		w.WriteHeader(404)
+	}
+}
+
+func processLogin(payload []byte) (string, error) {
+	path := getJwtPath()
+	if err := os.WriteFile(path, pretty.Pretty(payload), 0600); err != nil {
+		return "", err
+	}
+
+	tmpl := mustache.New()
+	if err := tmpl.ParseString(Html); err != nil {
+		return "", err
+	}
+
+	dat := &loginData{}
+	if err := json.Unmarshal(payload, dat); err != nil {
+		return "", err
+	}
+
+	hc := http.DefaultClient
+
+	u := "https://welcomed-snapper-45.clerk.accounts.dev/v1/client?_clerk_js_version=4.50.1&__dev_session=" + dat.Token
+
+	req, err := http.NewRequest(http.MethodGet, u, nil)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Origin", "http://localhost:3535")
+
+	rsp, err := hc.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	bb, err := io.ReadAll(rsp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	if rsp.StatusCode != 200 {
+		return "", fmt.Errorf("http %d", rsp.StatusCode)
+	}
+
+	cr := &clientResponse{}
+	if err := json.Unmarshal(bb, cr); err != nil {
+		return "", err
+	}
+
+	jwt := cr.Response.Sessions[0].LastActiveToken.Jwt
+
+	c, err := clerk.NewClient("dummy")
+	if err != nil {
+		return "", err
+	}
+
+	claims, err := c.DecodeToken(jwt)
+	if err != nil {
+		return "", err
+	}
+
+	em := claims.Extra["email"].(string)
+	ht, err := tmpl.RenderString(map[string]string{
+		"email": em,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return ht, nil
+}
+
+// loginCmd represents the login command
+var loginCmd = &cobra.Command{
+	Use:   "login",
+	Short: "Log in to an ampersand account",
+	Long:  "Log in to an ampersand account.",
+	Run: func(cmd *cobra.Command, args []string) {
+		needLogin := false
+		path := getJwtPath()
+		fi, err := os.Stat(path)
+		if err != nil {
+			if os.IsNotExist(err) {
+				needLogin = true
+			} else {
+				log.Fatalln(err)
+			}
+		}
+
+		if needLogin {
+			http.Handle("/", &handler{})
+			fmt.Println("http://localhost:3535")
+			go func() {
+				time.Sleep(1 * time.Second)
+				openBrowser("http://localhost:3535")
+			}()
+
+			// nosemgrep: go.lang.security.audit.net.use-tls.use-tls
+			log.Fatalln(http.ListenAndServe(":3535", nil))
+		} else {
+			if fi.IsDir() {
+				log.Fatalln("jwt path isn't a regular file:", path)
+			}
+			log.Println("already logged in!")
+			os.Exit(0)
+		}
+	},
+}
+
+// logoutCmd represents the logout command
+var logoutCmd = &cobra.Command{
+	Use:   "logout",
+	Short: "Log out of an ampersand account",
+	Long:  "Log out of an ampersand account.",
+	Run: func(cmd *cobra.Command, args []string) {
+		path := getJwtPath()
+		_, err := os.Stat(path)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return
+			} else {
+				log.Fatalln(err)
+			}
+		}
+
+		bts, err := os.ReadFile(getJwtPath())
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		dat := &loginData{}
+		if err := json.Unmarshal(bts, dat); err != nil {
+			log.Fatalln(err)
+		}
+
+		if err := os.Remove(path); err != nil {
+			log.Fatalln(err)
+		}
+	},
+}
+
+var loginTest = &cobra.Command{
+	Use: "test",
+	Run: func(cmd *cobra.Command, args []string) {
+		// Never ever use this credential in production. This is here for demo purposes only.
+		c, err := clerk.NewClient("sk_test_DXSRpDpGsS5ckROTdnEcdQslGcouaRZnaxeVOuXWRO")
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		bts, err := os.ReadFile(getJwtPath())
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		dat := &loginData{}
+		if err := json.Unmarshal(bts, dat); err != nil {
+			log.Fatalln(err)
+		}
+
+		_, err = c.DecodeToken(dat.Token)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		hc := http.DefaultClient
+
+		u := "https://welcomed-snapper-45.clerk.accounts.dev/v1/client?_clerk_js_version=4.50.1&__dev_session=" + dat.Token
+
+		req, err := http.NewRequest(http.MethodGet, u, nil)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		req.Header.Set("Origin", "http://localhost:3535")
+
+		rsp, err := hc.Do(req)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		bb, err := io.ReadAll(rsp.Body)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		if rsp.StatusCode != 200 {
+			log.Fatalf("http %d", rsp.StatusCode)
+		}
+
+		cr := &clientResponse{}
+		if err := json.Unmarshal(bb, cr); err != nil {
+			log.Fatalln(err)
+		}
+
+		jwt := cr.Response.Sessions[0].LastActiveToken.Jwt
+
+		sc, err := c.VerifyToken(jwt)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		s, _ := json.MarshalIndent(sc, "", "  ")
+		fmt.Println(string(s))
+	},
+}
+
+var pathCommand = &cobra.Command{
+	Use: "path",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(getJwtPath())
+	},
+}
+
+func getJwtPath() string {
+	path, err := xdg.ConfigFile("amp/jwt.json")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return path
+}
+
+func openBrowser(url string) {
+	var err error
+
+	switch runtime.GOOS {
+	case "linux":
+		err = exec.Command("xdg-open", url).Start()
+	case "windows":
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	case "darwin":
+		err = exec.Command("open", url).Start()
+	default:
+		err = fmt.Errorf("unsupported platform")
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func init() {
+	rootCmd.AddCommand(loginCmd)
+	rootCmd.AddCommand(loginTest)
+	rootCmd.AddCommand(logoutCmd)
+	rootCmd.AddCommand(pathCommand)
+
+	// Here you will define your flags and configuration settings.
+
+	// Cobra supports Persistent Flags which will work for this command
+	// and all subcommands, e.g.:
+	// deployCmd.PersistentFlags().String("foo", "", "A help for foo")
+
+	// Cobra supports local flags which will only run when this command
+	// is called directly, e.g.:
+	// deployCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
