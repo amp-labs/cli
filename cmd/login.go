@@ -14,6 +14,7 @@ import (
 
 	"github.com/adrg/xdg"
 	"github.com/alexkappa/mustache"
+	"github.com/amp-labs/cli/vars"
 	"github.com/clerkinc/clerk-sdk-go/clerk"
 	"github.com/spf13/cobra"
 	"github.com/tidwall/pretty"
@@ -112,7 +113,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		return
 	} else if r.URL.Path == "/" && r.Method == "GET" {
-		w.Header().Set("Location", "https://ampersand-cli-auth-dev.web.app")
+		w.Header().Set("Location", vars.LoginURL)
 		w.WriteHeader(307) // redirect
 	} else {
 		w.WriteHeader(404)
@@ -137,7 +138,8 @@ func processLogin(payload []byte) (string, error) {
 
 	hc := http.DefaultClient
 
-	u := "https://welcomed-snapper-45.clerk.accounts.dev/v1/client?_clerk_js_version=4.50.1&__dev_session=" + dat.Token
+	u := fmt.Sprintf("%s/v1/client?_clerk_js_version=4.50.1&__dev_session=%s",
+		vars.ClerkRootURL, dat.Token)
 
 	req, err := http.NewRequest(http.MethodGet, u, nil)
 	if err != nil {
@@ -257,72 +259,6 @@ var logoutCmd = &cobra.Command{
 	},
 }
 
-var loginTest = &cobra.Command{
-	Use: "test",
-	Run: func(cmd *cobra.Command, args []string) {
-		// Never ever use this credential in production. This is here for demo purposes only.
-		c, err := clerk.NewClient("sk_test_DXSRpDpGsS5ckROTdnEcdQslGcouaRZnaxeVOuXWRO")
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		bts, err := os.ReadFile(getJwtPath())
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		dat := &loginData{}
-		if err := json.Unmarshal(bts, dat); err != nil {
-			log.Fatalln(err)
-		}
-
-		_, err = c.DecodeToken(dat.Token)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		hc := http.DefaultClient
-
-		u := "https://welcomed-snapper-45.clerk.accounts.dev/v1/client?_clerk_js_version=4.50.1&__dev_session=" + dat.Token
-
-		req, err := http.NewRequest(http.MethodGet, u, nil)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		req.Header.Set("Origin", "http://localhost:3535")
-
-		rsp, err := hc.Do(req)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		bb, err := io.ReadAll(rsp.Body)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		if rsp.StatusCode != 200 {
-			log.Fatalf("http %d", rsp.StatusCode)
-		}
-
-		cr := &clientResponse{}
-		if err := json.Unmarshal(bb, cr); err != nil {
-			log.Fatalln(err)
-		}
-
-		jwt := cr.Response.Sessions[0].LastActiveToken.Jwt
-
-		sc, err := c.VerifyToken(jwt)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		s, _ := json.MarshalIndent(sc, "", "  ")
-		fmt.Println(string(s))
-	},
-}
-
 var pathCommand = &cobra.Command{
 	Use: "path",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -358,7 +294,6 @@ func openBrowser(url string) {
 
 func init() {
 	rootCmd.AddCommand(loginCmd)
-	rootCmd.AddCommand(loginTest)
 	rootCmd.AddCommand(logoutCmd)
 	rootCmd.AddCommand(pathCommand)
 
