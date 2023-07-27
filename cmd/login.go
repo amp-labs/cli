@@ -207,7 +207,7 @@ func processLogin(payload []byte) (string, string, error) {
 // loginCmd represents the login command
 var loginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "Log in to an ampersand account",
+	Short: "Log in to an Ampersand account",
 	Long:  "Log in to an ampersand account.",
 	Run: func(cmd *cobra.Command, args []string) {
 		needLogin := false
