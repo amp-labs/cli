@@ -99,7 +99,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		bts, _ := base64.StdEncoding.DecodeString(r.URL.Query().Get("p"))
 
 		// Process the JWT token
-		rsp, err := processLogin(bts)
+		rsp, loginEmail, err := processLogin(bts)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			log.Printf("error: %v", err)
@@ -113,7 +113,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		go func() {
 			// Tell the user we're done and then forcefully exit the program.
-			fmt.Println("login successful")
+			fmt.Printf("Successfully logged in as %s\n", loginEmail)
 			time.Sleep(3 * time.Second)
 			os.Exit(0)
 		}()
@@ -129,15 +129,15 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // processLogin takes the JWT token, verifies it, and then stores it in the jwt.json file.
-func processLogin(payload []byte) (string, error) {
+func processLogin(payload []byte) (string, string, error) {
 	path := getJwtPath()
 	if err := os.WriteFile(path, pretty.Pretty(payload), 0600); err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	dat := &loginData{}
 	if err := json.Unmarshal(payload, dat); err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	// Call out to clerk and ask for session info using the JWT token.
@@ -147,28 +147,28 @@ func processLogin(payload []byte) (string, error) {
 
 	req, err := http.NewRequest(http.MethodGet, u, nil)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	req.Header.Set("Origin", "http://localhost:3535")
 
 	rsp, err := hc.Do(req)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	bb, err := io.ReadAll(rsp.Body)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	if rsp.StatusCode != 200 {
-		return "", fmt.Errorf("http %d", rsp.StatusCode)
+		return "", "", fmt.Errorf("http %d", rsp.StatusCode)
 	}
 
 	cr := &clientResponse{}
 	if err := json.Unmarshal(bb, cr); err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	jwt := cr.Response.Sessions[0].LastActiveToken.Jwt
@@ -176,13 +176,13 @@ func processLogin(payload []byte) (string, error) {
 	// Using a dummy value here because DecodeToken doesn't actually use the secret.
 	c, err := clerk.NewClient("dummy")
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	// Extract the claims (which includes the email address) from the JWT token.
 	claims, err := c.DecodeToken(jwt)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	// Grab the email address from the claims.
@@ -191,17 +191,17 @@ func processLogin(payload []byte) (string, error) {
 	// Render the HTML
 	tmpl := mustache.New()
 	if err := tmpl.ParseString(Html); err != nil {
-		return "", err
+		return "", "", err
 	}
 	ht, err := tmpl.RenderString(map[string]string{
 		"email": em,
 	})
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	// Return the HTML
-	return ht, nil
+	// Return the HTML and email
+	return ht, em, nil
 }
 
 // loginCmd represents the login command
@@ -238,37 +238,6 @@ var loginCmd = &cobra.Command{
 			log.Println("already logged in!")
 			os.Exit(0)
 		}
-	},
-}
-
-// logoutCmd represents the logout command
-var logoutCmd = &cobra.Command{
-	Use:   "logout",
-	Short: "Log out of an Ampersand account",
-	Long:  "Log out of an Ampersand account.",
-	Run: func(cmd *cobra.Command, args []string) {
-		path := getJwtPath()
-		_, err := os.Stat(path)
-		if err != nil {
-			if os.IsNotExist(err) {
-				return
-			} else {
-				log.Fatalln(err)
-			}
-		}
-
-		if err := os.Remove(path); err != nil {
-			log.Fatalln(err)
-		}
-
-		fmt.Println("Successfully logged out.")
-	},
-}
-
-var pathCommand = &cobra.Command{
-	Use: "path",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(getJwtPath())
 	},
 }
 
@@ -309,16 +278,4 @@ func openBrowser(url string) {
 
 func init() {
 	rootCmd.AddCommand(loginCmd)
-	rootCmd.AddCommand(logoutCmd)
-	rootCmd.AddCommand(pathCommand)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// deployCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// deployCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
