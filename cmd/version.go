@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Print out some basic info about the running binary. Useful for debugging.
 var versionCommand = &cobra.Command{
 	Use: "version",
 	Run: func(cmd *cobra.Command, args []string) {

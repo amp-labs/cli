@@ -20,6 +20,7 @@ import (
 	"github.com/tidwall/pretty"
 )
 
+// Html is shown to the user after they log in
 var Html = `<!doctype html>
 <html>
         <head>
@@ -35,6 +36,7 @@ var Html = `<!doctype html>
         </body>
 </html>`
 
+// loginData is the data that is stored in the jwt.json file
 type loginData struct {
 	UserID    string `json:"userId"`
 	SessionID string `json:"sessionId"`
@@ -91,8 +93,12 @@ type clientResponse struct {
 type handler struct{}
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// This path is followed after the user logs in. The react app redirects to here.
 	if r.URL.Path == "/done" && r.Method == "GET" {
+		// Extract the JWT token
 		bts, _ := base64.StdEncoding.DecodeString(r.URL.Query().Get("p"))
+
+		// Process the JWT token
 		rsp, err := processLogin(bts)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
@@ -106,6 +112,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(rsp))
 
 		go func() {
+			// Tell the user we're done and then forcefully exit the program.
 			fmt.Println("login successful")
 			time.Sleep(3 * time.Second)
 			os.Exit(0)
@@ -113,6 +120,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		return
 	} else if r.URL.Path == "/" && r.Method == "GET" {
+		// When the user first interacts with the login, this is what they see. (immediate redirect to the react app)
 		w.Header().Set("Location", vars.LoginURL)
 		w.WriteHeader(307) // redirect
 	} else {
@@ -120,14 +128,10 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// processLogin takes the JWT token, verifies it, and then stores it in the jwt.json file.
 func processLogin(payload []byte) (string, error) {
 	path := getJwtPath()
 	if err := os.WriteFile(path, pretty.Pretty(payload), 0600); err != nil {
-		return "", err
-	}
-
-	tmpl := mustache.New()
-	if err := tmpl.ParseString(Html); err != nil {
 		return "", err
 	}
 
@@ -136,8 +140,8 @@ func processLogin(payload []byte) (string, error) {
 		return "", err
 	}
 
+	// Call out to clerk and ask for session info using the JWT token.
 	hc := http.DefaultClient
-
 	u := fmt.Sprintf("%s/v1/client?_clerk_js_version=4.50.1&__dev_session=%s",
 		vars.ClerkRootURL, dat.Token)
 
@@ -169,17 +173,26 @@ func processLogin(payload []byte) (string, error) {
 
 	jwt := cr.Response.Sessions[0].LastActiveToken.Jwt
 
+	// Using a dummy value here because DecodeToken doesn't actually use the secret.
 	c, err := clerk.NewClient("dummy")
 	if err != nil {
 		return "", err
 	}
 
+	// Extract the claims (which includes the email address) from the JWT token.
 	claims, err := c.DecodeToken(jwt)
 	if err != nil {
 		return "", err
 	}
 
+	// Grab the email address from the claims.
 	em := claims.Extra["email"].(string)
+
+	// Render the HTML
+	tmpl := mustache.New()
+	if err := tmpl.ParseString(Html); err != nil {
+		return "", err
+	}
 	ht, err := tmpl.RenderString(map[string]string{
 		"email": em,
 	})
@@ -187,6 +200,7 @@ func processLogin(payload []byte) (string, error) {
 		return "", err
 	}
 
+	// Return the HTML
 	return ht, nil
 }
 
@@ -243,19 +257,11 @@ var logoutCmd = &cobra.Command{
 			}
 		}
 
-		bts, err := os.ReadFile(getJwtPath())
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		dat := &loginData{}
-		if err := json.Unmarshal(bts, dat); err != nil {
-			log.Fatalln(err)
-		}
-
 		if err := os.Remove(path); err != nil {
 			log.Fatalln(err)
 		}
+
+		fmt.Println("logout successful")
 	},
 }
 
@@ -266,14 +272,23 @@ var pathCommand = &cobra.Command{
 	},
 }
 
+func getJwtName() string {
+	if vars.Stage == "prod" {
+		return "amp/jwt.json"
+	}
+	return fmt.Sprintf("amp/jwt-%s.json", vars.Stage)
+}
+
+// getJwtPath returns the path to the jwt.json file where the JWT token is stored.
 func getJwtPath() string {
-	path, err := xdg.ConfigFile("amp/jwt.json")
+	path, err := xdg.ConfigFile(getJwtName())
 	if err != nil {
 		log.Fatalln(err)
 	}
 	return path
 }
 
+// openBrowser tries to open the URL in a browser. Should work on most standard platforms.
 func openBrowser(url string) {
 	var err error
 
