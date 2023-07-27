@@ -36,7 +36,10 @@ var Html = `<!doctype html>
         </body>
 </html>`
 
-const ClerkClientSessionPath = "%s/v1/client?_clerk_js_version=4.50.1&__dev_session=%s"
+const (
+	ServerPort             = 3535
+	ClerkClientSessionPath = "%s/v1/client?_clerk_js_version=4.50.1&__dev_session=%s"
+)
 
 // loginData is the data that is stored in the jwt.json file
 type loginData struct {
@@ -101,7 +104,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		bts, _ := base64.StdEncoding.DecodeString(r.URL.Query().Get("p"))
 
 		// Process the JWT token
-		rsp, loginEmail, err := processLogin(bts)
+		rsp, loginEmail, err := processLogin(bts, true)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			log.Printf("error: %v", err)
@@ -131,10 +134,12 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // processLogin takes the JWT token, verifies it, and then stores it in the jwt.json file.
-func processLogin(payload []byte) (string, string, error) {
+func processLogin(payload []byte, write bool) (string, string, error) {
 	path := getJwtPath()
-	if err := os.WriteFile(path, pretty.Pretty(payload), 0600); err != nil {
-		return "", "", err
+	if write {
+		if err := os.WriteFile(path, pretty.Pretty(payload), 0600); err != nil {
+			return "", "", err
+		}
 	}
 
 	data := &loginData{}
@@ -149,7 +154,7 @@ func processLogin(payload []byte) (string, string, error) {
 		return "", "", err
 	}
 
-	req.Header.Set("Origin", "http://localhost:3535")
+	req.Header.Set("Origin", fmt.Sprintf("http://localhost:%d", ServerPort))
 
 	rsp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -224,16 +229,27 @@ var loginCmd = &cobra.Command{
 			http.Handle("/", &handler{})
 			go func() {
 				time.Sleep(1 * time.Second)
-				openBrowser("http://localhost:3535")
+				openBrowser(fmt.Sprintf("http://localhost:%d", ServerPort))
 			}()
 
 			// nosemgrep: go.lang.security.audit.net.use-tls.use-tls
-			log.Fatalln(http.ListenAndServe(":3535", nil))
+			log.Fatalln(http.ListenAndServe(fmt.Sprintf(":%d", ServerPort), nil))
 		} else {
 			if fi.IsDir() {
 				log.Fatalln("jwt path isn't a regular file:", path)
 			}
-			log.Println("already logged in!")
+
+			contents, err := os.ReadFile(path)
+			if err != nil {
+				log.Fatalln(err)
+			}
+
+			_, loginEmail, err := processLogin(contents, false)
+			if err != nil {
+				log.Fatalln(err)
+			}
+
+			fmt.Printf("You're already logged in as %s\n", loginEmail)
 			os.Exit(0)
 		}
 	},
