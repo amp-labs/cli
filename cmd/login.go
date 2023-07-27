@@ -135,15 +135,15 @@ func processLogin(payload []byte) (string, string, error) {
 		return "", "", err
 	}
 
-	dat := &loginData{}
-	if err := json.Unmarshal(payload, dat); err != nil {
+	data := &loginData{}
+	if err := json.Unmarshal(payload, data); err != nil {
 		return "", "", err
 	}
 
 	// Call out to clerk and ask for session info using the JWT token.
 	hc := http.DefaultClient
 	u := fmt.Sprintf("%s/v1/client?_clerk_js_version=4.50.1&__dev_session=%s",
-		vars.ClerkRootURL, dat.Token)
+		vars.ClerkRootURL, data.Token)
 
 	req, err := http.NewRequest(http.MethodGet, u, nil)
 	if err != nil {
