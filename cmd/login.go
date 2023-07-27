@@ -245,7 +245,7 @@ var loginCmd = &cobra.Command{
 var logoutCmd = &cobra.Command{
 	Use:   "logout",
 	Short: "Log out of an Ampersand account",
-	Long:  "Log out of an ampersand account.",
+	Long:  "Log out of an Ampersand account.",
 	Run: func(cmd *cobra.Command, args []string) {
 		path := getJwtPath()
 		_, err := os.Stat(path)
