@@ -36,6 +36,8 @@ var Html = `<!doctype html>
         </body>
 </html>`
 
+const ClerkClientSessionPath = "%s/v1/client?_clerk_js_version=4.50.1&__dev_session=%s"
+
 // loginData is the data that is stored in the jwt.json file
 type loginData struct {
 	UserID    string `json:"userId"`
@@ -141,10 +143,7 @@ func processLogin(payload []byte) (string, string, error) {
 	}
 
 	// Call out to clerk and ask for session info using the JWT token.
-	hc := http.DefaultClient
-	u := fmt.Sprintf("%s/v1/client?_clerk_js_version=4.50.1&__dev_session=%s",
-		vars.ClerkRootURL, data.Token)
-
+	u := fmt.Sprintf(ClerkClientSessionPath, vars.ClerkRootURL, data.Token)
 	req, err := http.NewRequest(http.MethodGet, u, nil)
 	if err != nil {
 		return "", "", err
@@ -152,7 +151,7 @@ func processLogin(payload []byte) (string, string, error) {
 
 	req.Header.Set("Origin", "http://localhost:3535")
 
-	rsp, err := hc.Do(req)
+	rsp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", "", err
 	}
@@ -223,7 +222,6 @@ var loginCmd = &cobra.Command{
 
 		if needLogin {
 			http.Handle("/", &handler{})
-			fmt.Println("http://localhost:3535")
 			go func() {
 				time.Sleep(1 * time.Second)
 				openBrowser("http://localhost:3535")
