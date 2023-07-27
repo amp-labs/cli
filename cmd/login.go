@@ -208,7 +208,7 @@ func processLogin(payload []byte) (string, string, error) {
 var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Log in to an Ampersand account",
-	Long:  "Log in to an ampersand account.",
+	Long:  "Log in to an Ampersand account.",
 	Run: func(cmd *cobra.Command, args []string) {
 		needLogin := false
 		path := getJwtPath()
