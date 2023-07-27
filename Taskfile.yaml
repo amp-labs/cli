@@ -5,10 +5,12 @@ tasks:
         desc: Build the CLI (don't call directly)
         cmds:
         - go generate ./...
-        - CGO_ENABLED=0 go build -ldflags="-X {{.PKG}}.CommitID={{.GIT_COMMIT}} -X {{.PKG}}.Stage={{.STAGE}} -X '{{.PKG}}.BuildDate={{.BUILD_DATE}}' -X {{.PKG}}.Version={{.VERSION}} -X {{.PKG}}.ClerkRootURL={{.CLERK_URL}} -X {{.PKG}}.LoginURL={{.LOGIN_URL}}" -o bin/amp main.go
+        - CGO_ENABLED=0 go build -ldflags="-X {{.PKG}}.CommitID={{.GIT_COMMIT}} -X {{.PKG}}.Branch={{.GIT_BRANCH}} -X {{.PKG}}.Stage={{.STAGE}} -X '{{.PKG}}.BuildDate={{.BUILD_DATE}}' -X {{.PKG}}.Version={{.VERSION}} -X {{.PKG}}.ClerkRootURL={{.CLERK_URL}} -X {{.PKG}}.LoginURL={{.LOGIN_URL}}" -o bin/amp main.go
         vars:
             GIT_COMMIT:
                 sh: git log -n 1 --format=%H
+            GIT_BRANCH:
+                sh: git rev-parse --abbrev-ref HEAD
             BUILD_DATE:
                 sh: date -u '+%Y-%m-%d %I:%M%p'
             VERSION: 0.1

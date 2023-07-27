@@ -20,6 +20,7 @@ var versionCommand = &cobra.Command{
 
 		fmt.Println("build date: " + vars.BuildDate)
 		fmt.Println("commit: " + vars.CommitID)
+		fmt.Println("branch: " + vars.Branch)
 	},
 }
 
