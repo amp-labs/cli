@@ -93,7 +93,7 @@ type clientResponse struct {
 type handler struct{}
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// This path is followed after the user logs in. The react app redirects to here.
+	// This path is followed after the user logs in. The CLI Auth Client redirects to here.
 	if r.URL.Path == "/done" && r.Method == "GET" {
 		// Extract the JWT token
 		bts, _ := base64.StdEncoding.DecodeString(r.URL.Query().Get("p"))
