@@ -261,7 +261,7 @@ var logoutCmd = &cobra.Command{
 			log.Fatalln(err)
 		}
 
-		fmt.Println("logout successful")
+		fmt.Println("Successfully logged out.")
 	},
 }
 
