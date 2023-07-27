@@ -4,12 +4,10 @@ brews:
       owner: laurenzlong
       name: homebrew-cli
     folder: Formula
-    description: A simple description of your application.
+    description: The Ampersand CLI
 before:
   hooks:
-    # You may remove this if you don't use go modules.
     - go mod tidy
-    # you may remove this if you don't need go generate
     - go generate ./...
 builds:
   - env:
@@ -19,6 +17,14 @@ builds:
       - linux
       - windows
       - darwin
+    ldflags:
+      - -X github.com/amp-labs/cli/vars.CommitID={{.FullCommit}}
+      - -X github.com/amp-labs/cli/vars.Branch={{.Branch}}
+      - -X github.com/amp-labs/cli/vars.Stage=prod
+      - -X github.com/amp-labs/cli/vars.BuildDate={{.Now}}
+      - -X github.com/amp-labs/cli/vars.Version={{.Version}}
+      - -X github.com/amp-labs/cli/vars.ClerkRootURL=https://welcomed-snapper-45.clerk.accounts.dev/
+      - -X github.com/amp-labs/cli/vars.LoginURL=https://ampersand-cli-auth-prod.web.app
 
 archives:
   - format: tar.gz
