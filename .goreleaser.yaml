@@ -4,7 +4,7 @@ brews:
       owner: laurenzlong
       name: homebrew-cli
     folder: Formula
-    description: The ampersand cli
+    description: The Ampersand CLI
 before:
   hooks:
     - go mod tidy
