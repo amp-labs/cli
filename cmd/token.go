@@ -12,20 +12,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// logoutCmd represents the logout command
+// tokenCmd represents the generate-request-token command
 var tokenCmd = &cobra.Command{
 	Use:    "generate-request-token",
 	Short:  "Generate a request token",
 	Long:   "Generate a JWT token to be used for HTTP requests",
 	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
-		path := getJwtPath()
-		_, err := os.Stat(path)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		contents, err := os.ReadFile(path)
+		contents, err := os.ReadFile(getJwtPath())
 		if err != nil {
 			log.Fatalln(err)
 		}
