@@ -16,7 +16,7 @@ import (
 var tokenCmd = &cobra.Command{
 	Use:    "generate-request-token",
 	Short:  "Generate a request token",
-	Long:   "Generate a JWT token to be used for HTTP requests",
+	Long:   "Generate a JWT token to be used for HTTP requests, and prints it. This command is useful for testing purposes.",
 	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		contents, err := os.ReadFile(getJwtPath())
