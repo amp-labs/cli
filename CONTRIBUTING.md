@@ -34,7 +34,7 @@ If this doesn't work, then you'll need to add `/usr/local/bin` to your PATH vari
 
 ### Steps for setup on Windows Operating System.
 
-1. Install task on windows. Documentation:  https://taskfile.dev/installation/
+1. Download Taskfile by following the instructions at: https://taskfile.dev/installation/.
 
 2. Run the following command from the root of the repo to build the CLI, this will create an executable file called `amp` in the bin folder.
     `task build`
