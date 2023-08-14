@@ -1,56 +1,41 @@
 package cmd
 
 import (
-	"fmt"
-	"log"
-	"os"
 	"path/filepath"
 
-	"github.com/amp-labs/cli/upload"
-	"github.com/amp-labs/cli/zip"
+	"github.com/amp-labs/cli/files"
+	"github.com/amp-labs/cli/logger"
+	"github.com/amp-labs/cli/storage"
+	"github.com/amp-labs/cli/utils"
 	"github.com/spf13/cobra"
 )
 
-var filePath = "/amp"
-
-// deployCmd represents the deploy command
 var deployCmd = &cobra.Command{
-	Use:   "deploy",
+	Use:   "deploy <sourceFolderPath>",
 	Short: "Deploy amp.yaml file",
 	Long:  "Deploy changes to amp.yaml file.",
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("deploy called")
+		path := args[0]
+		workingDir := utils.GetWorkingDir()
+		folderName := filepath.ToSlash(filepath.Join(workingDir, path))
 
-		//Resolve amp's location using current working directory path and folder name
-		workingDir, _ := os.Getwd()
-		var folderName = filepath.ToSlash(filepath.Join(workingDir, filePath))
+		zipPath, err := files.Zip(folderName)
+		defer files.Remove(zipPath)
 
-		//Zips the amp folder and makes a temporary copy of zip in system temp directory
-		zipPath, err := zip.Zip(folderName)
 		if err != nil {
-			log.Fatal(err)
-			return
+			logger.FatalErr("Unable to zip folder", err)
 		}
 
-		if _, err := upload.Upload(zipPath); err != nil {
-			log.Fatal(err)
-			cleanUp(zipPath)
-			return
+		gcsUrl, err := storage.Upload(zipPath)
+		if err != nil {
+			logger.FatalErr("Unable to upload to Google Cloud Storage", err)
 		}
-		cleanUp(zipPath)
-
-		fmt.Println("Successfully deployed changes to amp.yaml....")
+		logger.Debugf("Uploaded to %v", gcsUrl)
+		logger.Info("Successfully deployed changes to your integrations ....")
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(deployCmd)
-}
-
-func cleanUp(filename string) {
-	err := os.Remove(filename)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
 }
