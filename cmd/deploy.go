@@ -1,31 +1,41 @@
 package cmd
 
 import (
-	"fmt"
+	"path/filepath"
 
+	"github.com/amp-labs/cli/files"
+	"github.com/amp-labs/cli/logger"
+	"github.com/amp-labs/cli/storage"
+	"github.com/amp-labs/cli/utils"
 	"github.com/spf13/cobra"
 )
 
-// deployCmd represents the deploy command
 var deployCmd = &cobra.Command{
-	Use:   "deploy",
+	Use:   "deploy <sourceFolderPath>",
 	Short: "Deploy amp.yaml file",
 	Long:  "Deploy changes to amp.yaml file.",
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("deploy called")
+		path := args[0]
+		workingDir := utils.GetWorkingDir()
+		folderName := filepath.ToSlash(filepath.Join(workingDir, path))
+
+		zipPath, err := files.Zip(folderName)
+		defer files.Remove(zipPath)
+
+		if err != nil {
+			logger.FatalErr("Unable to zip folder", err)
+		}
+
+		gcsUrl, err := storage.Upload(zipPath)
+		if err != nil {
+			logger.FatalErr("Unable to upload to Google Cloud Storage", err)
+		}
+		logger.Debugf("Uploaded to %v", gcsUrl)
+		logger.Info("Successfully deployed changes to your integrations ....")
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(deployCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// deployCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// deployCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
