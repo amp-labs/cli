@@ -1,8 +1,49 @@
 version: "3"
 
 tasks:
-    build:
-        desc: Build the CLI
+    do_build:
+        desc: Build the CLI (don't call directly)
         cmds:
-        - GOFLAGS=-mod=mod go build -o bin/amp{{if eq OS "windows"}}.exe{{end}} main.go 
+        - go generate ./...
+        - CGO_ENABLED=0 go build -ldflags="-X {{.PKG}}.CommitID={{.GIT_COMMIT}} -X {{.PKG}}.Branch={{.GIT_BRANCH}} -X {{.PKG}}.Stage={{.STAGE}} -X '{{.PKG}}.BuildDate={{.BUILD_DATE}}' -X {{.PKG}}.Version={{.VERSION}} -X {{.PKG}}.ClerkRootURL={{.CLERK_URL}} -X {{.PKG}}.LoginURL={{.LOGIN_URL}}" -o bin/amp{{if eq OS "windows"}}.exe{{end}} main.go
+        vars:
+            GIT_COMMIT:
+                sh: git log -n 1 --format=%H
+            GIT_BRANCH:
+                sh: git rev-parse --abbrev-ref HEAD
+            BUILD_DATE:
+                sh: date -u '+%Y-%m-%d %I:%M%p'
+            VERSION: 0.1
+            PKG: github.com/amp-labs/cli/vars
 
+    build-dev:
+        desc: Build a CLI configured for the dev stage
+        cmds:
+            - task: do_build
+              vars:
+                  CLERK_URL: https://welcomed-snapper-45.clerk.accounts.dev/
+                  LOGIN_URL: https://ampersand-cli-auth-dev.web.app
+                  STAGE: dev
+
+    build-staging:
+        desc: Build a CLI configured for the staging stage
+        cmds:
+            - task: do_build
+              vars:
+                  CLERK_URL: https://welcomed-snapper-45.clerk.accounts.dev/
+                  LOGIN_URL: https://ampersand-cli-auth-stag.web.app
+                  STAGE: staging
+
+    build-prod:
+        desc: Build a CLI configured for the dev stage
+        cmds:
+            - task: do_build
+              vars:
+                  CLERK_URL: https://welcomed-snapper-45.clerk.accounts.dev/
+                  LOGIN_URL: https://ampersand-cli-auth-prod.web.app
+                  STAGE: prod
+
+    build:
+        desc: An alias for build-dev
+        cmds:
+            - task: build-dev

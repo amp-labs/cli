@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"os"
+	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -10,7 +10,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "amp",
 	Short: "Ampersand CLI",
-	Long: `The Ampersand CLI allows you to deploy integration config files.`,
+	Long:  "The Ampersand CLI allows you to deploy integration config files.",
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -21,7 +21,7 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		os.Exit(1)
+		log.Fatalf("unhandled error: %v", err)
 	}
 }
 
@@ -36,5 +36,3 @@ func init() {
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
-
-

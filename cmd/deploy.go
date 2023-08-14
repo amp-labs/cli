@@ -17,7 +17,7 @@ var filePath = "/amp"
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploy amp.yaml file",
-	Long:  `Deploy changes to amp.yaml file.`,
+	Long:  "Deploy changes to amp.yaml file.",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("deploy called")
 
