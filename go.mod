@@ -9,6 +9,7 @@ require (
 	github.com/clerkinc/clerk-sdk-go v1.48.1
 	github.com/imdario/mergo v0.3.15
 	github.com/spf13/cobra v1.7.0
+	github.com/tidwall/pretty v1.2.1
 	google.golang.org/api v0.114.0
 )
 
@@ -25,7 +26,6 @@ require (
 	github.com/googleapis/gax-go/v2 v2.7.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/tidwall/pretty v1.2.1
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/oauth2 v0.6.0 // indirect
