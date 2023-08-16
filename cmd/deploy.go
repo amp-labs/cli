@@ -3,11 +3,12 @@ package cmd
 import (
 	"path/filepath"
 
+	"github.com/spf13/cobra"
+
 	"github.com/amp-labs/cli/files"
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/storage"
 	"github.com/amp-labs/cli/utils"
-	"github.com/spf13/cobra"
 )
 
 var deployCmd = &cobra.Command{
