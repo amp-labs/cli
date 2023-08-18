@@ -10,7 +10,7 @@ require (
 	github.com/imdario/mergo v0.3.15
 	github.com/spf13/cobra v1.7.0
 	github.com/tidwall/pretty v1.2.1
-	google.golang.org/api v0.137.0
+	google.golang.org/api v0.138.0
 )
 
 require (
