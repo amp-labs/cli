@@ -46,7 +46,7 @@ tasks:
                   CLERK_URL: https://welcomed-snapper-45.clerk.accounts.dev/
                   LOGIN_URL: https://ampersand-cli-auth-prod.web.app
                   GCS_BUCKET: ampersand-prod-deploy-uploads
-                  GCS_KEY: "AIzaSyBGuMBDLo7IJvXUkQ8XdZYxyMTxbf2Omkg"
+                  GCS_KEY: "AIzaSyDGWb5ncKSvkeNl5ZO_zVnP_5KdiKjo-i4"
                   STAGE: prod
 
     build:
