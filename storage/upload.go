@@ -9,21 +9,19 @@ import (
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/option"
-)
 
-// TODO: read from appdata
-const customer = "TODO_PREFIX"
+	"github.com/amp-labs/cli/vars"
+)
 
 var now = time.Now()
 var year, month, day = now.Year(), int(now.Month()), now.Day()
 
 // TODO: this should get moved to the server instead, so API keys & bucket names
 // get managed there.
-const apiKey = "AIzaSyB1zaLK-0rQebuF5-g-7wt3qwg3WQhQrls"
-const bucketName = "ampersand-dev-deploy-uploads"
+var apiKey = vars.GCSKey
+var bucketName = vars.GCSBucket
 
 func Upload(zipPath string) (gcsUrl string, err error) {
-
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx, option.WithAPIKey(apiKey))
 	if err != nil {
@@ -35,7 +33,7 @@ func Upload(zipPath string) (gcsUrl string, err error) {
 		return "", fmt.Errorf("error reading zipped file: %v", err)
 	}
 
-	destination := fmt.Sprintf("%s/%d/%02d/%02d/%s", customer, year, month, day, filepath.Base(zipPath))
+	destination := fmt.Sprintf("%d/%02d/%02d/%s", year, month, day, filepath.Base(zipPath))
 
 	// Create a new writer object to write the zip file contents to the bucket
 	zipObject := client.Bucket(bucketName).Object(destination)

@@ -1,13 +1,16 @@
 package vars
 
 // These variables are set at build time (using -ldflags -X ...)
+// See Taskfile.yaml for more details.
 
 var (
-	ClerkRootURL = "https://welcomed-snapper-45.clerk.accounts.dev/"
-	LoginURL     = "https://ampersand-cli-auth-dev.web.app"
-	Stage        = "dev"
-	CommitID     = "unknown"
-	Version      = "latest"
-	BuildDate    = "unknown"
-	Branch       = "unknown"
+	ClerkRootURL = "unset"
+	LoginURL     = "unset"
+	Stage        = "unset"
+	CommitID     = "unset"
+	Version      = "unset"
+	BuildDate    = "unset"
+	Branch       = "unset"
+	GCSBucket    = "unset"
+	GCSKey       = "unset"
 )
