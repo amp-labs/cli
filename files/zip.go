@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
@@ -36,9 +37,18 @@ func zipSource(source string, dest string) error {
 	writer := zip.NewWriter(file)
 	defer writer.Close()
 
-	return filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
+	return filepath.WalkDir(source, func(path string, dir fs.DirEntry, err error) error {
 		if err != nil {
 			return fmt.Errorf("error zipping: %v", err)
+		}
+
+		info, err := dir.Info()
+		if err != nil {
+			return fmt.Errorf("error getting file info while zipping: %v", err)
+		}
+
+		if info.IsDir() {
+			return nil
 		}
 
 		header, err := zip.FileInfoHeader(info)
@@ -48,21 +58,15 @@ func zipSource(source string, dest string) error {
 
 		header.Method = zip.Deflate
 
-		header.Name, err = filepath.Rel(filepath.Dir(source), path)
+		header.Name, err = filepath.Rel(source, path)
+
 		if err != nil {
 			return fmt.Errorf("error adding file header while zipping: %v", err)
-		}
-		if info.IsDir() {
-			header.Name += "/"
 		}
 
 		headerWriter, err := writer.CreateHeader(header)
 		if err != nil {
 			return fmt.Errorf("error adding file header while zipping: %v", err)
-		}
-
-		if info.IsDir() {
-			return nil
 		}
 
 		f, err := os.Open(path)
