@@ -23,9 +23,10 @@ builds:
       - -X github.com/amp-labs/cli/vars.Stage=prod
       - -X github.com/amp-labs/cli/vars.BuildDate={{.Now}}
       - -X github.com/amp-labs/cli/vars.Version={{.Version}}
-      - -X github.com/amp-labs/cli/vars.ClerkRootURL=https://welcomed-snapper-45.clerk.accounts.dev/
+      - -X github.com/amp-labs/cli/vars.ClerkRootURL=https://clerk.withampersand.com/
       - -X github.com/amp-labs/cli/vars.LoginURL=https://ampersand-cli-auth-prod.web.app
-
+      - -X github.com/amp-labs/cli/vars.GCSBucket=ampersand-prod-deploy-uploads
+      - -X github.com/amp-labs/cli/vars.GCSKey=AIzaSyDGWb5ncKSvkeNl5ZO_zVnP_5KdiKjo-i4
 archives:
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of uname.
