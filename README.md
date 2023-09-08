@@ -1,1 +1,5 @@
-##AMPSERSAND CLI 
+##AMPSERSAND CLI
+
+### Local development
+
+Please see CONTRIBUTING.md.
