@@ -3,7 +3,7 @@ module github.com/amp-labs/cli
 go 1.20
 
 require (
-	cloud.google.com/go/storage v1.32.0
+	cloud.google.com/go/storage v1.33.0
 	github.com/adrg/xdg v0.4.0
 	github.com/alexkappa/mustache v0.0.0-20191113130723-8bb9cfca2bfa
 	github.com/clerkinc/clerk-sdk-go v1.48.1
