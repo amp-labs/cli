@@ -39,11 +39,11 @@ tasks:
                   STAGE: staging
 
     build-prod:
-        desc: Build a CLI configured for the dev stage
+        desc: Build a CLI configured for the prod stage
         cmds:
             - task: do_build
               vars:
-                  CLERK_URL: https://welcomed-snapper-45.clerk.accounts.dev/
+                  CLERK_URL: https://clerk.withampersand.com/
                   LOGIN_URL: https://ampersand-cli-auth-prod.web.app
                   GCS_BUCKET: ampersand-prod-deploy-uploads
                   GCS_KEY: "AIzaSyDGWb5ncKSvkeNl5ZO_zVnP_5KdiKjo-i4"
