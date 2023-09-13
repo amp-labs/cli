@@ -3,6 +3,7 @@ package cmd
 import (
 	"log"
 
+	"github.com/amp-labs/cli/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -29,8 +30,7 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cli.yaml)")
+	flags.Init(rootCmd)
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.

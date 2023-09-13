@@ -3,6 +3,9 @@ package logger
 import (
 	"fmt"
 	"os"
+	"time"
+
+	"github.com/amp-labs/cli/flags"
 )
 
 func Info(msg string) {
@@ -14,9 +17,9 @@ func Infof(msg string, a ...any) {
 }
 
 func Debug(msg string) {
-	// TODO: only print if debug mode is on
-	// TODO: print other metadata that might be helpful for debugging
-	fmt.Println("DEBUG:", msg)
+	if flags.GetDebugMode() {
+		fmt.Println(time.Now().Format(time.RFC3339), "DEBUG:", msg)
+	}
 }
 
 func Debugf(msg string, a ...any) {
