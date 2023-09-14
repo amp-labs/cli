@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"log"
-
+	"github.com/amp-labs/cli/flags"
+	"github.com/amp-labs/cli/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +21,7 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		log.Fatalf("unhandled error: %v", err)
+		logger.FatalErr("unhandled error: %v", err)
 	}
 }
 
@@ -29,8 +29,10 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cli.yaml)")
+	err := flags.Init(rootCmd)
+	if err != nil {
+		logger.FatalErr("unable to initialize flags: ", err)
+	}
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
