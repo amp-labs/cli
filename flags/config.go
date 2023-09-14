@@ -1,8 +1,6 @@
 package flags
 
 import (
-	"log"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -13,12 +11,10 @@ type FlagConfig struct {
 
 var Config FlagConfig
 
-func Init(rootCmd *cobra.Command) {
+// TODO: Will need a better implementation with multiple flags
+func Init(rootCmd *cobra.Command) error {
 	rootCmd.PersistentFlags().BoolVarP(&Config.DebugMode, "debug", "d", false, "Enable debug logging mode")
-	err := viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
-	if err != nil {
-		log.Fatal("unable to initialise flags: ", err)
-	}
+	return viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
 }
 
 func GetDebugMode() bool {
