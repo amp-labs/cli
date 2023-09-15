@@ -115,7 +115,9 @@ func (h *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		}
 
 		writer.WriteHeader(http.StatusOK)
-		_, _ = writer.Write([]byte(rsp)) // ok: no-direct-write-to-responsewriter
+
+		// ok: no-direct-write-to-responsewriter
+		_, _ = writer.Write([]byte(rsp))
 
 		go func() {
 			// Tell the user we're done and then forcefully exit the program.
