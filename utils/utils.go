@@ -11,5 +11,6 @@ func GetWorkingDir() string {
 	if err != nil {
 		logger.FatalErr("Unable to get working directory", err)
 	}
+
 	return workingDir
 }

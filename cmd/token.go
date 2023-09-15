@@ -12,11 +12,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// tokenCmd represents the generate-request-token command
-var tokenCmd = &cobra.Command{
-	Use:    "generate-request-token",
-	Short:  "Generate a request token",
-	Long:   "Generate a JWT token to be used for HTTP requests, and prints it. This command is useful for testing purposes.",
+// tokenCmd represents the generate-request-token command.
+var tokenCmd = &cobra.Command{ //nolint:gochecknoglobals
+	Use:   "generate-request-token",
+	Short: "Generate a request token",
+	Long: "Generate a JWT token to be used for HTTP requests, and prints it." +
+		" This command is useful for testing purposes.",
 	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		contents, err := os.ReadFile(getJwtPath())
@@ -46,8 +47,8 @@ var tokenCmd = &cobra.Command{
 			log.Fatalln(err)
 		}
 
-		if rsp.StatusCode != 200 {
-			log.Fatalln(fmt.Errorf("http %d", rsp.StatusCode))
+		if rsp.StatusCode != http.StatusOK {
+			log.Fatalln(fmt.Errorf("http %d", rsp.StatusCode)) //nolint:goerr113
 		}
 
 		cr := &clientResponse{}
@@ -56,7 +57,7 @@ var tokenCmd = &cobra.Command{
 		}
 
 		jwt := cr.Response.Sessions[0].LastActiveToken.Jwt
-		fmt.Println(jwt)
+		fmt.Println(jwt) //nolint:forbidigo
 	},
 }
 

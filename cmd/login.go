@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -20,9 +21,9 @@ import (
 	"github.com/tidwall/pretty"
 )
 
-// Html is shown to the user after they log in
-var Html = `<!doctype html>
-<html>
+// HTML is shown to the user after they log in.
+var HTML = `<!doctype html>` + "\n" + //nolint:gochecknoglobals
+	`<html>
         <head>
                 <meta charset="utf-8"/>
                 <title>Login</title>
@@ -41,7 +42,7 @@ const (
 	ClerkClientSessionPath = "%s/v1/client?_clerk_js_version=4.50.1&__dev_session=%s"
 )
 
-// loginData is the data that is stored in the jwt.json file
+// loginData is the data that is stored in the jwt.json file.
 type loginData struct {
 	UserID    string `json:"userId"`
 	SessionID string `json:"sessionId"`
@@ -58,32 +59,32 @@ type verification struct {
 
 type email struct {
 	ID           string       `json:"id"`
-	Address      string       `json:"email_address"`
+	Address      string       `json:"email_address"` //nolint:tagliatelle
 	Verification verification `json:"verification"`
 }
 
 type phone struct {
 	ID           string       `json:"id"`
-	Number       string       `json:"phone_number"`
+	Number       string       `json:"phone_number"` //nolint:tagliatelle
 	Verification verification `json:"verification"`
 }
 
 type user struct {
 	ID             string  `json:"id"`
 	Username       string  `json:"username"`
-	FirstName      string  `json:"first_name"`
-	LastName       string  `json:"last_name"`
-	ImageURL       string  `json:"image_url"`
-	PrimaryEmail   string  `json:"primary_email_address_id"`
-	PrimaryPhone   string  `json:"primary_phone_number_id"`
-	EmailAddresses []email `json:"email_addresses"`
-	PhoneNumbers   []phone `json:"phone_numbers"`
+	FirstName      string  `json:"first_name"`               //nolint:tagliatelle
+	LastName       string  `json:"last_name"`                //nolint:tagliatelle
+	ImageURL       string  `json:"image_url"`                //nolint:tagliatelle
+	PrimaryEmail   string  `json:"primary_email_address_id"` //nolint:tagliatelle
+	PrimaryPhone   string  `json:"primary_phone_number_id"`  //nolint:tagliatelle
+	EmailAddresses []email `json:"email_addresses"`          //nolint:tagliatelle
+	PhoneNumbers   []phone `json:"phone_numbers"`            //nolint:tagliatelle
 }
 
 type session struct {
-	LastActiveToken token `json:"last_active_token"`
-	CreatedAt       int64 `json:"created_at"`
-	UpdatedAt       int64 `json:"updated_at"`
+	LastActiveToken token `json:"last_active_token"` //nolint:tagliatelle
+	CreatedAt       int64 `json:"created_at"`        //nolint:tagliatelle
+	UpdatedAt       int64 `json:"updated_at"`        //nolint:tagliatelle
 	User            user  `json:"user"`
 }
 
@@ -97,47 +98,48 @@ type clientResponse struct {
 
 type handler struct{}
 
-func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// This path is followed after the user logs in. The CLI Auth Client redirects to here.
-	if r.URL.Path == "/done" && r.Method == "GET" {
-		// Extract the JWT token
-		bts, _ := base64.StdEncoding.DecodeString(r.URL.Query().Get("p"))
+const WaitBeforeExitSeconds = 3
 
-		// Process the JWT token
-		rsp, loginEmail, err := processLogin(bts, true)
+func (h *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	// This path is followed after the user logs in. The CLI Auth Client redirects to here.
+	switch {
+	case request.URL.Path == "/done" && request.Method == "GET":
+		bts, _ := base64.StdEncoding.DecodeString(request.URL.Query().Get("p"))
+
+		rsp, loginEmail, err := processLogin(request.Context(), bts, true)
 		if err != nil {
-			http.Error(w, err.Error(), 500)
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			log.Printf("error: %v", err)
+
 			return
 		}
 
-		w.WriteHeader(200)
-
-		// nosemgrep: go.lang.security.audit.xss.no-direct-write-to-responsewriter.no-direct-write-to-responsewriter
-		_, _ = w.Write([]byte(rsp))
+		writer.WriteHeader(http.StatusOK)
+		_, _ = writer.Write([]byte(rsp))
 
 		go func() {
 			// Tell the user we're done and then forcefully exit the program.
 			fmt.Printf("Successfully logged in as %s\n", loginEmail)
-			time.Sleep(3 * time.Second)
+			time.Sleep(WaitBeforeExitSeconds * time.Second)
 			os.Exit(0)
 		}()
 
 		return
-	} else if r.URL.Path == "/" && r.Method == "GET" {
-		// When the user first interacts with the login, this is what they see. (immediate redirect to the react app)
-		w.Header().Set("Location", vars.LoginURL)
-		w.WriteHeader(307) // redirect
-	} else {
-		w.WriteHeader(404)
+	case request.URL.Path == "/" && request.Method == "GET":
+		writer.Header().Set("Location", vars.LoginURL)
+		writer.WriteHeader(http.StatusTemporaryRedirect)
+	default:
+		writer.WriteHeader(http.StatusNotFound)
 	}
 }
 
+const JwtFilePermissions = 0o600
+
 // processLogin takes the JWT token, verifies it, and then stores it in the jwt.json file.
-func processLogin(payload []byte, write bool) (string, string, error) {
+func processLogin(ctx context.Context, payload []byte, write bool) (string, string, error) {
 	path := getJwtPath()
 	if write {
-		if err := os.WriteFile(path, pretty.Pretty(payload), 0600); err != nil {
+		if err := os.WriteFile(path, pretty.Pretty(payload), JwtFilePermissions); err != nil {
 			return "", "", err
 		}
 	}
@@ -149,7 +151,8 @@ func processLogin(payload []byte, write bool) (string, string, error) {
 
 	// Call out to clerk and ask for session info using the JWT token.
 	u := fmt.Sprintf(ClerkClientSessionPath, vars.ClerkRootURL, data.Token)
-	req, err := http.NewRequest(http.MethodGet, u, nil)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return "", "", err
 	}
@@ -161,13 +164,15 @@ func processLogin(payload []byte, write bool) (string, string, error) {
 		return "", "", err
 	}
 
+	defer func() { _ = rsp.Body.Close() }()
+
 	bb, err := io.ReadAll(rsp.Body)
 	if err != nil {
 		return "", "", err
 	}
 
-	if rsp.StatusCode != 200 {
-		return "", "", fmt.Errorf("http %d", rsp.StatusCode)
+	if rsp.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("http %d", rsp.StatusCode) //nolint:goerr113
 	}
 
 	cr := &clientResponse{}
@@ -175,8 +180,10 @@ func processLogin(payload []byte, write bool) (string, string, error) {
 		return "", "", err
 	}
 
-	jwt := cr.Response.Sessions[0].LastActiveToken.Jwt
+	return decodeJWT(cr.Response.Sessions[0].LastActiveToken.Jwt)
+}
 
+func decodeJWT(jwt string) (string, string, error) {
 	// Using a dummy value here because DecodeToken doesn't actually use the secret.
 	c, err := clerk.NewClient("dummy")
 	if err != nil {
@@ -190,33 +197,48 @@ func processLogin(payload []byte, write bool) (string, string, error) {
 	}
 
 	// Grab the email address from the claims.
-	em := claims.Extra["email"].(string)
-
-	// Render the HTML
-	tmpl := mustache.New()
-	if err := tmpl.ParseString(Html); err != nil {
-		return "", "", err
+	emailStr, ok := claims.Extra["email"].(string)
+	if !ok {
+		return "", "", fmt.Errorf("couldn't find email address in claims") //nolint:goerr113
 	}
-	ht, err := tmpl.RenderString(map[string]string{
-		"email": em,
-	})
+
+	ht, err := getHTML(emailStr)
 	if err != nil {
 		return "", "", err
 	}
 
 	// Return the HTML and email
-	return ht, em, nil
+	return ht, emailStr, nil
 }
 
-// loginCmd represents the login command
-var loginCmd = &cobra.Command{
+func getHTML(emailStr string) (string, error) {
+	// Render the HTML
+	tmpl := mustache.New()
+	if err := tmpl.ParseString(HTML); err != nil {
+		return "", err
+	}
+
+	ht, err := tmpl.RenderString(map[string]string{
+		"email": emailStr,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return ht, nil
+}
+
+const ReadHeaderTimeoutSeconds = 3
+
+// loginCmd represents the login command.
+var loginCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Use:   "login",
 	Short: "Log in to an Ampersand account",
 	Long:  "Log in to an Ampersand account.",
 	Run: func(cmd *cobra.Command, args []string) {
 		needLogin := false
 		path := getJwtPath()
-		fi, err := os.Stat(path)
+		fileInfo, err := os.Stat(path)
 		if err != nil {
 			if os.IsNotExist(err) {
 				needLogin = true
@@ -232,10 +254,15 @@ var loginCmd = &cobra.Command{
 				openBrowser(fmt.Sprintf("http://localhost:%d", ServerPort))
 			}()
 
+			server := &http.Server{
+				Addr:              fmt.Sprintf(":%d", ServerPort),
+				ReadHeaderTimeout: ReadHeaderTimeoutSeconds * time.Second,
+			}
+
 			// nosemgrep: go.lang.security.audit.net.use-tls.use-tls
-			log.Fatalln(http.ListenAndServe(fmt.Sprintf(":%d", ServerPort), nil))
+			log.Fatalln(server.ListenAndServe())
 		} else {
-			if fi.IsDir() {
+			if fileInfo.IsDir() {
 				log.Fatalln("jwt path isn't a regular file:", path)
 			}
 
@@ -244,12 +271,13 @@ var loginCmd = &cobra.Command{
 				log.Fatalln(err)
 			}
 
-			_, loginEmail, err := processLogin(contents, false)
+			_, loginEmail, err := processLogin(cmd.Context(), contents, false)
 			if err != nil {
 				log.Fatalln(err)
 			}
 
-			fmt.Printf("You're already logged in as %s\n", loginEmail)
+			fmt.Printf("You're already logged in as %s\n", loginEmail) //nolint:forbidigo
+
 			os.Exit(0)
 		}
 	},
@@ -259,6 +287,7 @@ func getJwtName() string {
 	if vars.Stage == "prod" {
 		return "amp/jwt.json"
 	}
+
 	return fmt.Sprintf("amp/jwt-%s.json", vars.Stage)
 }
 
@@ -268,6 +297,7 @@ func getJwtPath() string {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
 	return path
 }
 
@@ -283,8 +313,9 @@ func openBrowser(url string) {
 	case "darwin":
 		err = exec.Command("open", url).Start()
 	default:
-		err = fmt.Errorf("unsupported platform")
+		err = fmt.Errorf("unsupported platform: %s", runtime.GOOS) //nolint:goerr113
 	}
+
 	if err != nil {
 		log.Fatal(err)
 	}
