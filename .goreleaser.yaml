@@ -60,10 +60,10 @@ nfpms:
     file_name_template: "{{ .ConventionalFileName }}"
     vendor: Ampersand
     homepage: https://www.withampersand.com/
-    maintainer: Chris Eberle <chris@withampersand.com>
+    maintainer: Ampersand Team <support@withampersand.com>
     description: |-
       The CLI for Ampersand
-    license: Apache 2.0
+    license: MIT
     formats:
       - apk
       - deb
