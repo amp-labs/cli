@@ -53,3 +53,15 @@ tasks:
         desc: An alias for build-dev
         cmds:
             - task: build-dev
+
+    lint:
+        desc: Run the linter
+        cmds:
+            - golangci-lint run -c .golangci.yml
+
+    fix:
+        desc: Fix lint errors
+        cmds:
+            - wsl --allow-cuddle-declarations --fix ./...
+            - gci write .
+            - golangci-lint run -c .golangci.yml --fix
