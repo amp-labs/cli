@@ -116,7 +116,7 @@ func (h *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 
 		writer.WriteHeader(http.StatusOK)
 
-		// ok: no-direct-write-to-responsewriter
+		// nosemgrep: no-direct-write-to-responsewriter
 		_, _ = writer.Write([]byte(rsp))
 
 		go func() {
