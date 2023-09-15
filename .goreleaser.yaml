@@ -1,10 +1,4 @@
 # Documentation at https://goreleaser.com
-brews:
-  - tap:
-      owner: laurenzlong
-      name: homebrew-cli
-    folder: Formula
-    description: The Ampersand CLI
 before:
   hooks:
     - go mod tidy
@@ -13,6 +7,7 @@ builds:
   - env:
       - CGO_ENABLED=0
     binary: amp
+    buildmode: exe
     goos:
       - linux
       - windows
@@ -21,7 +16,7 @@ builds:
       - -X github.com/amp-labs/cli/vars.CommitID={{.FullCommit}}
       - -X github.com/amp-labs/cli/vars.Branch={{.Branch}}
       - -X github.com/amp-labs/cli/vars.Stage=prod
-      - -X github.com/amp-labs/cli/vars.BuildDate={{.Now}}
+      - -X github.com/amp-labs/cli/vars.BuildDate={{.Timestamp}}
       - -X github.com/amp-labs/cli/vars.Version={{.Version}}
       - -X github.com/amp-labs/cli/vars.ClerkRootURL=https://clerk.withampersand.com/
       - -X github.com/amp-labs/cli/vars.LoginURL=https://ampersand-cli-auth-prod.web.app
@@ -51,6 +46,49 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+
+brews:
+  - repository:
+      owner: laurenzlong
+      name: homebrew-cli
+    folder: Formula
+    description: The Ampersand CLI
+
+nfpms:
+  - id: ampersand_cli
+    package_name: ampersand-cli
+    file_name_template: "{{ .ConventionalFileName }}"
+    vendor: Ampersand
+    homepage: https://www.withampersand.com/
+    maintainer: Ampersand Team <support@withampersand.com>
+    description: |-
+      The CLI for Ampersand
+    license: MIT
+    formats:
+      - apk
+      - deb
+      - rpm
+      - termux.deb # Since: v1.11
+      - archlinux # Since: v1.13
+    provides:
+      - ampersand-cli
+    bindir: /usr/bin
+    version_metadata: git
+    release: "1"
+    section: default
+    priority: extra
+    meta: false
+
+    rpm:
+      summary: Ampersand CLI tool
+      group: Development/Tools
+      compression: gzip
+      prefixes:
+        - /usr/bin
+
+dockers:
+  - image_templates:
+      - ampersand/ampersand
 
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.
