@@ -8,20 +8,20 @@ import (
 )
 
 // Print out some basic info about the running binary. Useful for debugging.
-var versionCommand = &cobra.Command{
+var versionCommand = &cobra.Command{ //nolint:gochecknoglobals
 	Use: "version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Ampersand CLI")
+		fmt.Println("Ampersand CLI") //nolint:forbidigo
 
 		if vars.Stage == "prod" {
-			fmt.Println("version: " + vars.Version)
+			fmt.Println("version: " + vars.Version) //nolint:forbidigo
 		} else {
-			fmt.Println("version: " + vars.Version + " (" + vars.Stage + ")")
+			fmt.Println("version: " + vars.Version + " (" + vars.Stage + ")") //nolint:forbidigo
 		}
 
-		fmt.Println("build date: " + vars.BuildDate)
-		fmt.Println("commit: " + vars.CommitID)
-		fmt.Println("branch: " + vars.Branch)
+		fmt.Println("build date: " + vars.BuildDate) //nolint:forbidigo
+		fmt.Println("commit: " + vars.CommitID)      //nolint:forbidigo
+		fmt.Println("branch: " + vars.Branch)        //nolint:forbidigo
 	},
 }
 

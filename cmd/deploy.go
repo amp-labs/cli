@@ -3,15 +3,14 @@ package cmd
 import (
 	"path/filepath"
 
-	"github.com/spf13/cobra"
-
 	"github.com/amp-labs/cli/files"
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/storage"
 	"github.com/amp-labs/cli/utils"
+	"github.com/spf13/cobra"
 )
 
-var deployCmd = &cobra.Command{
+var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Use:   "deploy <sourceFolderPath>",
 	Short: "Deploy amp.yaml file",
 	Long:  "Deploy changes to amp.yaml file.",
@@ -28,11 +27,11 @@ var deployCmd = &cobra.Command{
 			logger.FatalErr("Unable to zip folder", err)
 		}
 
-		gcsUrl, err := storage.Upload(zipPath)
+		gcsURL, err := storage.Upload(zipPath)
 		if err != nil {
 			logger.FatalErr("Unable to upload to Google Cloud Storage", err)
 		}
-		logger.Debugf("Uploaded to %v", gcsUrl)
+		logger.Debugf("Uploaded to %v", gcsURL)
 		logger.Info("Successfully deployed changes to your integrations ....")
 	},
 }

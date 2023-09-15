@@ -4,13 +4,13 @@ package vars
 // See Taskfile.yaml for more details.
 
 var (
-	ClerkRootURL = "unset"
-	LoginURL     = "unset"
-	Stage        = "unset"
-	CommitID     = "unset"
-	Version      = "unset"
-	BuildDate    = "unset"
-	Branch       = "unset"
-	GCSBucket    = "unset"
-	GCSKey       = "unset"
+	ClerkRootURL = "unset" //nolint:gochecknoglobals
+	LoginURL     = "unset" //nolint:gochecknoglobals
+	Stage        = "unset" //nolint:gochecknoglobals
+	CommitID     = "unset" //nolint:gochecknoglobals
+	Version      = "unset" //nolint:gochecknoglobals
+	BuildDate    = "unset" //nolint:gochecknoglobals
+	Branch       = "unset" //nolint:gochecknoglobals
+	GCSBucket    = "unset" //nolint:gochecknoglobals
+	GCSKey       = "unset" //nolint:gochecknoglobals
 )

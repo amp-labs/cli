@@ -6,8 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
+// rootCmd represents the base command when called without any subcommands.
+var rootCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Use:   "amp",
 	Short: "Ampersand CLI",
 	Long:  "The Ampersand CLI allows you to deploy integration config files.",

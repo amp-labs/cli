@@ -8,8 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// logoutCmd represents the logout command
-var logoutCmd = &cobra.Command{
+// logoutCmd represents the logout command.
+var logoutCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Use:   "logout",
 	Short: "Log out of an ampersand account",
 	Long:  "Log out of an ampersand account.",
@@ -28,7 +28,7 @@ var logoutCmd = &cobra.Command{
 			log.Fatalln(err)
 		}
 
-		fmt.Println("logout successful")
+		fmt.Println("logout successful") //nolint:forbidigo
 	},
 }
 
