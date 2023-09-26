@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/storage v1.33.0
 	github.com/adrg/xdg v0.4.0
 	github.com/alexkappa/mustache v0.0.0-20191113130723-8bb9cfca2bfa
-	github.com/clerkinc/clerk-sdk-go v1.48.1
+	github.com/clerkinc/clerk-sdk-go v1.48.3
 	github.com/imdario/mergo v0.3.15
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
