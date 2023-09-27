@@ -49,8 +49,8 @@ changelog:
 
 brews:
   - repository:
-      owner: laurenzlong
-      name: homebrew-cli
+      owner: amp-labs
+      name: cli-homebrew
     folder: Formula
     description: The Ampersand CLI
 
