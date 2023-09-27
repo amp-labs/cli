@@ -50,7 +50,7 @@ changelog:
 brews:
   - repository:
       owner: amp-labs
-      name: cli
+      name: homebrew-cli
     folder: Formula
     description: The Ampersand CLI
 
