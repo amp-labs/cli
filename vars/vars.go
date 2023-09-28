@@ -6,6 +6,7 @@ package vars
 var (
 	ClerkRootURL = "unset" //nolint:gochecknoglobals
 	LoginURL     = "unset" //nolint:gochecknoglobals
+	ApiURL       = "unset" //nolint:gochecknoglobals
 	Stage        = "unset" //nolint:gochecknoglobals
 	CommitID     = "unset" //nolint:gochecknoglobals
 	Version      = "unset" //nolint:gochecknoglobals
