@@ -26,6 +26,8 @@ func NewRequestClient() *RequestClient {
 	return &RequestClient{Client: http.DefaultClient}
 }
 
+// Put makes a PUT request to the desired URL, and unmarshalls the
+// response body into `result`.
 func (c *RequestClient) Put(ctx context.Context,
 	url string, reqBody any, result any, headers ...Header,
 ) (*http.Response, error) {
@@ -36,6 +38,8 @@ func (c *RequestClient) Put(ctx context.Context,
 	return c.makeRequestAndParseResult(req, result)
 }
 
+// Post makes a POST request to the desired URL, and unmarshalls the
+// response body into `result`.
 func (c *RequestClient) Post(ctx context.Context,
 	url string, reqBody any, result any, headers ...Header,
 ) (*http.Response, error) {
