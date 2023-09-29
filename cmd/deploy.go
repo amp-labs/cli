@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"context"
-	"github.com/amp-labs/cli/flags"
 	"path/filepath"
 	"strings"
 
 	"github.com/amp-labs/cli/files"
+	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/request"
 	"github.com/amp-labs/cli/storage"
@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var apiKey string
+var apiKey string //nolint:gochecknoglobals
 
 var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Use:   "deploy <sourceFolderPath>",
@@ -41,7 +41,6 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 		logger.Debugf("Uploaded to %v", gcsURL)
 		integrations, err := request.NewAPIClient(projectId, &apiKey).
 			BatchUpsertIntegrations(context.Background(), request.BatchUpsertIntegrationsParams{SourceZipURL: gcsURL})
-
 		if err != nil {
 			logger.FatalErr("Unable to deploy integrations", err)
 		}
