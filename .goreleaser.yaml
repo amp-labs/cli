@@ -18,8 +18,9 @@ builds:
       - -X github.com/amp-labs/cli/vars.Stage=prod
       - -X github.com/amp-labs/cli/vars.BuildDate={{.Timestamp}}
       - -X github.com/amp-labs/cli/vars.Version={{.Version}}
-      - -X github.com/amp-labs/cli/vars.ClerkRootURL=https://clerk.withampersand.com/
-      - -X github.com/amp-labs/cli/vars.LoginURL=https://ampersand-cli-auth-prod.web.app
+      - -X github.com/amp-labs/cli/vars.ClerkRootURL=https://clerk.withampersand.com
+      - -X github.com/amp-labs/cli/vars.LoginURL=https://cli-signin.withampersand.com
+      - -X github.com/amp-labs/cli/vars.ApiURL=https://api.withampersand.com
       - -X github.com/amp-labs/cli/vars.GCSBucket=ampersand-prod-deploy-uploads
       - -X github.com/amp-labs/cli/vars.GCSKey=AIzaSyDGWb5ncKSvkeNl5ZO_zVnP_5KdiKjo-i4
 archives:

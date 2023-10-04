@@ -9,15 +9,25 @@ type FlagConfig struct {
 	DebugMode bool
 }
 
-var Config FlagConfig //nolint:gochecknoglobals
-
-// TODO: Will need a better implementation with multiple flags.
 func Init(rootCmd *cobra.Command) error {
-	rootCmd.PersistentFlags().BoolVarP(&Config.DebugMode, "debug", "d", false, "Enable debug logging mode")
+	rootCmd.PersistentFlags().BoolP("debug", "d", false, "Enable debug logging mode")
+	rootCmd.PersistentFlags().StringP("project", "p", "", "Ampersand project ID")
 
-	return viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
+	if err := viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug")); err != nil {
+		return err
+	}
+
+	if err := viper.BindPFlag("project", rootCmd.PersistentFlags().Lookup("project")); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func GetDebugMode() bool {
 	return viper.GetBool("debug")
+}
+
+func GetProjectId() string {
+	return viper.GetString("project")
 }
