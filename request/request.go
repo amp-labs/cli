@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/amp-labs/cli/logger"
 	"io"
 	"net/http"
-
-	"github.com/amp-labs/cli/logger"
+	"net/http/httputil"
 )
 
 type RequestClient struct {
@@ -55,14 +55,14 @@ func (c *RequestClient) Post(ctx context.Context,
 var ErrNone200Status = errors.New("error response from API")
 
 func (c *RequestClient) makeRequestAndParseResult(req *http.Request, result any) (*http.Response, error) {
-	logger.Debugf(">>> API REQUEST:\n%+v\n", req)
+
+	dump, _ := httputil.DumpRequest(req, false)
+	logger.Debugf("\n>>> API REQUEST:\n%v>>> END OF API REQUEST\n", string(dump))
 
 	res, payload, err := c.sendRequest(req)
 	if err != nil {
 		return nil, err
 	}
-
-	logger.Debugf("<<< API RESPONSE:\n%+v\n", res)
 
 	if res.StatusCode < 200 || res.StatusCode > 299 {
 		return res, fmt.Errorf("%w: HTTP Status %s", ErrNone200Status, res.Status)
@@ -127,6 +127,9 @@ func (c *RequestClient) sendRequest(req *http.Request) (*http.Response, []byte, 
 	if err != nil {
 		return nil, nil, fmt.Errorf("error sending request: %w", err)
 	}
+
+	dump, _ := httputil.DumpResponse(res, true)
+	logger.Debugf("\n<<< API RESPONSE:\n%v\n<<< END OF API RESPONSE\n", string(dump))
 
 	// Read the response body
 	body, err := io.ReadAll(res.Body)
