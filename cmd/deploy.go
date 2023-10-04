@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"path/filepath"
 	"strings"
 
@@ -40,7 +39,7 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 		}
 		logger.Debugf("Uploaded to %v", gcsURL)
 		integrations, err := request.NewAPIClient(projectId, &apiKey).
-			BatchUpsertIntegrations(context.Background(), request.BatchUpsertIntegrationsParams{SourceZipURL: gcsURL})
+			BatchUpsertIntegrations(cmd.Context(), request.BatchUpsertIntegrationsParams{SourceZipURL: gcsURL})
 		if err != nil {
 			logger.FatalErr("Unable to deploy integrations", err)
 		}
@@ -51,16 +50,17 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 		}
 
 		if len(names) == 0 {
-			logger.Infof("No integrations were found in the source file.")
+			logger.Infof("No integrations were found in the source file.\n")
 		} else if len(names) == 1 {
-			logger.Infof("Successfully deployed your integration %s.", names[0])
+			logger.Infof("Successfully deployed your integration %s.\n", names[0])
 		} else {
-			logger.Infof("Successfully deployed your integrations %s.", strings.Join(names, ","))
+			logger.Infof("Successfully deployed your integrations %s.\n", strings.Join(names, ", "))
 		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(deployCmd)
+	// TODO: use viper to bind this to an env variable so it can be set in CI/CD environments or in bashrc/zshrc.
 	deployCmd.Flags().StringVarP(&apiKey, "key", "k", "", "Ampersand API key")
 }

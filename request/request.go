@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 
 	"github.com/amp-labs/cli/logger"
@@ -99,7 +98,7 @@ func makeJSONPutRequest(ctx context.Context, url string, headers []Header, body 
 		return nil, fmt.Errorf("request body is not valid JSON, body is %v:\n%w", body, err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(jBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewReader(jBody))
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
@@ -135,7 +134,7 @@ func (c *RequestClient) sendRequest(req *http.Request) (*http.Response, []byte, 
 	defer func() {
 		if res != nil && res.Body != nil {
 			if closeErr := res.Body.Close(); closeErr != nil {
-				slog.Warn("unable to close response body", "error", closeErr)
+				logger.Debugf("unable to close response body %v", closeErr)
 			}
 		}
 	}()
