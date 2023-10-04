@@ -6,10 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/amp-labs/cli/logger"
 	"io"
 	"net/http"
 	"net/http/httputil"
+
+	"github.com/amp-labs/cli/logger"
 )
 
 type RequestClient struct {
@@ -55,7 +56,6 @@ func (c *RequestClient) Post(ctx context.Context,
 var ErrNone200Status = errors.New("error response from API")
 
 func (c *RequestClient) makeRequestAndParseResult(req *http.Request, result any) (*http.Response, error) {
-
 	dump, _ := httputil.DumpRequest(req, false)
 	logger.Debugf("\n>>> API REQUEST:\n%v>>> END OF API REQUEST\n", string(dump))
 
