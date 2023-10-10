@@ -27,7 +27,7 @@ func Debugf(msg string, a ...any) {
 }
 
 func Fatal(msg string) {
-	Debug(msg)
+	Infof(msg)
 	os.Exit(1)
 }
 
