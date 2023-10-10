@@ -13,7 +13,8 @@ tasks:
                 sh: git rev-parse --abbrev-ref HEAD
             BUILD_DATE:
                 sh: date -u '+%Y-%m-%d %I:%M%p'
-            VERSION: 0.1
+            VERSION:
+                sh: git tag --points-at HEAD | sed 's/^v//'
             PKG: github.com/amp-labs/cli/vars
 
     build-dev:

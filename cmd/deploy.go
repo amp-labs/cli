@@ -11,9 +11,8 @@ import (
 	"github.com/amp-labs/cli/storage"
 	"github.com/amp-labs/cli/utils"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
-
-var apiKey string //nolint:gochecknoglobals
 
 var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Use:   "deploy <sourceFolderPath>",
@@ -38,6 +37,9 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 			logger.FatalErr("Unable to upload to Google Cloud Storage", err)
 		}
 		logger.Debugf("Uploaded to %v", gcsURL)
+
+		apiKey := viper.GetString("key")
+
 		integrations, err := request.NewAPIClient(projectId, &apiKey).
 			BatchUpsertIntegrations(cmd.Context(), request.BatchUpsertIntegrationsParams{SourceZipURL: gcsURL})
 		if err != nil {
@@ -61,6 +63,13 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 
 func init() {
 	rootCmd.AddCommand(deployCmd)
-	// TODO: use viper to bind this to an env variable so it can be set in CI/CD environments or in bashrc/zshrc.
-	deployCmd.Flags().StringVarP(&apiKey, "key", "k", "", "Ampersand API key")
+	deployCmd.Flags().StringP("key", "k", "", "Ampersand API key")
+
+	if err := viper.BindPFlag("key", deployCmd.Flags().Lookup("key")); err != nil {
+		panic(err)
+	}
+
+	if err := viper.BindEnv("key", "AMP_API_KEY"); err != nil {
+		panic(err)
+	}
 }
