@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"path/filepath"
-	"strings"
 
 	"github.com/amp-labs/cli/files"
 	"github.com/amp-labs/cli/flags"
@@ -47,16 +46,21 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 		}
 
 		names := make([]string, len(integrations))
+		revisionIds := make([]string, len(integrations))
 		for idx, i := range integrations {
 			names[idx] = i.Name
+			revisionIds[idx] = i.LatestRevision.Id
 		}
 
 		if len(names) == 0 {
 			logger.Infof("No integrations were found in the source file.\n")
 		} else if len(names) == 1 {
-			logger.Infof("Successfully deployed your integration %s.\n", names[0])
+			logger.Infof("Successfully deployed your integration %s (revision ID: %s).\n", names[0], revisionIds[0])
 		} else {
-			logger.Infof("Successfully deployed your integrations %s.\n", strings.Join(names, ", "))
+			logger.Info("Successfully deployed your integrations:")
+			for _, i := range integrations {
+				logger.Infof("- %s (revision ID: %s)", i.Name, i.LatestRevision.Id)
+			}
 		}
 	},
 }

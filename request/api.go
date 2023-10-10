@@ -37,7 +37,12 @@ type BatchUpsertIntegrationsParams struct {
 }
 
 type Integration struct {
-	Name string `json:"name"`
+	Name           string    `json:"name"`
+	LatestRevision *Revision `json:"latestRevision"`
+}
+
+type Revision struct {
+	Id string `json:"id"`
 }
 
 func (c *APIClient) BatchUpsertIntegrations(
