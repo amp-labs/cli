@@ -29,7 +29,7 @@ func Zip(path string) (zippedFolder string, zipError error) {
 	}
 
 	// TODO: create in temporary folder, not cwd
-	dest := filepath.ToSlash(filepath.Join(wd, TmpDir, fmt.Sprintf("amp_%d.zip", now.Unix())))
+	dest := filepath.Join(wd, TmpDir, fmt.Sprintf("amp_%d.zip", now.Unix()))
 
 	if err := zipSource(path, dest); err != nil {
 		return "", err
