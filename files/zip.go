@@ -9,16 +9,26 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/utils"
 )
 
 var now = time.Now() //nolint:gochecknoglobals
 
+const (
+	TmpDir = ".amp" // This is used for zipping and uploading
+)
+
 func Zip(path string) (zippedFolder string, zipError error) {
 	wd := utils.GetWorkingDir()
+	if wd == "" {
+		logger.Fatal("unable to get working directory")
+
+		return
+	}
 
 	// TODO: create in temporary folder, not cwd
-	dest := filepath.ToSlash(filepath.Join(wd, fmt.Sprintf("amp_%d.zip", now.Unix())))
+	dest := filepath.ToSlash(filepath.Join(wd, TmpDir, fmt.Sprintf("amp_%d.zip", now.Unix())))
 
 	if err := zipSource(path, dest); err != nil {
 		return "", err
@@ -28,7 +38,7 @@ func Zip(path string) (zippedFolder string, zipError error) {
 }
 
 func zipSource(source string, dest string) error {
-	file, err := os.Create(dest)
+	file, err := ensureDirectoryAndCreateFile(dest)
 	if err != nil {
 		return fmt.Errorf("cannot create destination for zipping: %w", err)
 	}
@@ -82,4 +92,16 @@ func zipSource(source string, dest string) error {
 
 		return nil
 	})
+}
+
+// ensureDirectoryAndCreateFile creates the directory for the file if it doesn't exist
+// and then returns the created file.
+func ensureDirectoryAndCreateFile(path string) (*os.File, error) {
+	dir := filepath.Dir(path)
+
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return nil, fmt.Errorf("cannot create destination dir for zipping: %w", err)
+	}
+
+	return os.Create(path)
 }

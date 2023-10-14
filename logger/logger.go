@@ -2,7 +2,6 @@ package logger
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/amp-labs/cli/flags"
@@ -27,10 +26,14 @@ func Debugf(msg string, a ...any) {
 }
 
 func Fatal(msg string) {
-	Infof(msg)
-	os.Exit(1)
+	fmt.Println(msg)
+	AddDebugTip()
 }
 
 func FatalErr(msg string, err error) {
 	Fatal(fmt.Sprintf("%v, err: %v", msg, err))
+}
+
+func AddDebugTip() {
+	fmt.Println("For more information, run with --debug")
 }
