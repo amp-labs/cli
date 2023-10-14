@@ -16,7 +16,8 @@ import (
 var now = time.Now() //nolint:gochecknoglobals
 
 const (
-	TmpDir = ".amp" // This is used for zipping and uploading
+	TmpDir     = ".amp" // This is used for zipping and uploading
+	TmpDirPerm = 0o700
 )
 
 func Zip(path string) (zippedFolder string, zipError error) {
@@ -99,7 +100,7 @@ func zipSource(source string, dest string) error {
 func ensureDirectoryAndCreateFile(path string) (*os.File, error) {
 	dir := filepath.Dir(path)
 
-	if err := os.MkdirAll(dir, 0700); err != nil {
+	if err := os.MkdirAll(dir, TmpDirPerm); err != nil {
 		return nil, fmt.Errorf("cannot create destination dir for zipping: %w", err)
 	}
 
