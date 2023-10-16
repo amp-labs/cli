@@ -10,9 +10,10 @@ import (
 
 // logoutCmd represents the logout command.
 var logoutCmd = &cobra.Command{ //nolint:gochecknoglobals
-	Use:   "logout",
-	Short: "Log out of an ampersand account",
-	Long:  "Log out of an ampersand account.",
+	Use:    "logout",
+	Short:  "Log out of an ampersand account",
+	Long:   "Log out of an ampersand account.",
+	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		path := getJwtPath()
 		_, err := os.Stat(path)
