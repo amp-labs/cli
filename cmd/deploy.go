@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"path/filepath"
+	"strings"
+
 	"github.com/amp-labs/cli/files"
 	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
@@ -9,8 +12,6 @@ import (
 	"github.com/amp-labs/cli/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"path/filepath"
-	"strings"
 )
 
 var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
@@ -22,6 +23,11 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 		projectId := flags.GetProjectId()
 		if projectId == "" {
 			logger.Fatal("Must provide a project ID in the --project flag")
+		}
+
+		apiKey := viper.GetString("key")
+		if apiKey == "" {
+			logger.Fatal("Must provide an API key in the --key flag")
 		}
 
 		path := args[0]
@@ -42,11 +48,6 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 			logger.FatalErr("Unable to upload to Google Cloud Storage", err)
 		}
 		logger.Debugf("Uploaded to %v", gcsURL)
-
-		apiKey := viper.GetString("key")
-		if apiKey == "" {
-			logger.Fatal("Must provide an API key in the --key flag")
-		}
 
 		integrations, err := request.NewAPIClient(projectId, &apiKey).
 			BatchUpsertIntegrations(cmd.Context(), request.BatchUpsertIntegrationsParams{SourceZipURL: gcsURL})
