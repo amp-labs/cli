@@ -2,53 +2,22 @@ package files
 
 import (
 	"archive/zip"
+	"bytes"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
-	"time"
-
-	"github.com/amp-labs/cli/logger"
-	"github.com/amp-labs/cli/utils"
 )
 
-var now = time.Now() //nolint:gochecknoglobals
+const mode = 420
 
-const (
-	TmpDir     = ".amp" // This is used for zipping and uploading
-	TmpDirPerm = 0o700
-)
+// Zip creates a zip archive of the given directory in-memory
+func Zip(sourceDir string) ([]byte, error) {
+	var out bytes.Buffer
+	writer := zip.NewWriter(&out)
 
-func Zip(path string) (zippedFolder string, zipError error) {
-	wd := utils.GetWorkingDir()
-	if wd == "" {
-		logger.Fatal("unable to get working directory")
-
-		return
-	}
-
-	// TODO: create in temporary folder, not cwd
-	dest := filepath.Join(wd, TmpDir, fmt.Sprintf("amp_%d.zip", now.Unix()))
-
-	if err := zipSource(path, dest); err != nil {
-		return "", err
-	}
-
-	return dest, nil
-}
-
-func zipSource(source string, dest string) error {
-	file, err := ensureDirectoryAndCreateFile(dest)
-	if err != nil {
-		return fmt.Errorf("cannot create destination for zipping: %w", err)
-	}
-	defer file.Close()
-
-	writer := zip.NewWriter(file)
-	defer writer.Close()
-
-	return filepath.WalkDir(source, func(path string, dir fs.DirEntry, err error) error {
+	err := filepath.WalkDir(sourceDir, func(path string, dir fs.DirEntry, err error) error {
 		if err != nil {
 			return fmt.Errorf("error zipping: %w", err)
 		}
@@ -68,9 +37,9 @@ func zipSource(source string, dest string) error {
 		}
 
 		header.Method = zip.Deflate
+		header.SetMode(mode)
 
-		header.Name, err = filepath.Rel(source, path)
-
+		header.Name, err = filepath.Rel(sourceDir, path)
 		if err != nil {
 			return fmt.Errorf("error adding file header while zipping: %w", err)
 		}
@@ -80,29 +49,30 @@ func zipSource(source string, dest string) error {
 			return fmt.Errorf("error adding file header while zipping: %w", err)
 		}
 
-		f, err := os.Open(path)
+		file, err := os.Open(path)
 		if err != nil {
-			return fmt.Errorf("error opening file for zipping: %w", err)
+			return fmt.Errorf("error opening file while zipping: %w", err)
 		}
-		defer f.Close()
+		defer func(file *os.File) {
+			err := file.Close()
+			if err != nil {
+			}
+		}(file)
 
-		_, err = io.Copy(headerWriter, f)
+		_, err = io.Copy(headerWriter, file)
 		if err != nil {
 			return fmt.Errorf("error copying file for zipping: %w", err)
 		}
 
 		return nil
 	})
-}
-
-// ensureDirectoryAndCreateFile creates the directory for the file if it doesn't exist
-// and then returns the created file.
-func ensureDirectoryAndCreateFile(path string) (*os.File, error) {
-	dir := filepath.Dir(path)
-
-	if err := os.MkdirAll(dir, TmpDirPerm); err != nil {
-		return nil, fmt.Errorf("cannot create destination dir for zipping: %w", err)
+	if err != nil {
+		return nil, fmt.Errorf("unable to zip directory: %w", err)
 	}
 
-	return os.Create(path)
+	if err := writer.Close(); err != nil {
+		return nil, fmt.Errorf("error closing zip writer: %w", err)
+	}
+
+	return out.Bytes(), nil
 }

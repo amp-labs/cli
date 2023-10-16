@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/amp-labs/cli/files"
 	"github.com/amp-labs/cli/flags"
@@ -23,50 +25,37 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 		projectId := flags.GetProjectId()
 		if projectId == "" {
 			logger.Fatal("Must provide a project ID in the --project flag")
-
-			return
 		}
 
 		path := args[0]
 		workingDir := utils.GetWorkingDir()
 		if workingDir == "" {
 			logger.Fatal("Unable to get working directory")
-
-			return
 		}
 
 		folderName := filepath.Join(workingDir, path)
 
-		zipPath, err := files.Zip(folderName)
-		defer files.Remove(zipPath)
-
+		zippedData, err := files.Zip(folderName)
 		if err != nil {
 			logger.FatalErr("Unable to zip folder", err)
-
-			return
 		}
 
-		gcsURL, err := storage.Upload(zipPath)
+		uploadAs := fmt.Sprintf("amp_%d.zip", time.Now().Unix())
+		gcsURL, err := storage.Upload(zippedData, uploadAs)
 		if err != nil {
 			logger.FatalErr("Unable to upload to Google Cloud Storage", err)
-
-			return
 		}
 		logger.Debugf("Uploaded to %v", gcsURL)
 
 		apiKey := viper.GetString("key")
 		if apiKey == "" {
 			logger.Fatal("Must provide an API key in the --key flag")
-
-			return
 		}
 
 		integrations, err := request.NewAPIClient(projectId, &apiKey).
 			BatchUpsertIntegrations(cmd.Context(), request.BatchUpsertIntegrationsParams{SourceZipURL: gcsURL})
 		if err != nil {
 			logger.FatalErr("Unable to deploy integrations", err)
-
-			return
 		}
 
 		names := make([]string, len(integrations))

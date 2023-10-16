@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/amp-labs/cli/flags"
@@ -12,7 +13,7 @@ func Info(msg string) {
 }
 
 func Infof(msg string, a ...any) {
-	fmt.Println(fmt.Sprintf(msg, a...))
+	Info(fmt.Sprintf(msg, a...))
 }
 
 func Debug(msg string) {
@@ -26,12 +27,13 @@ func Debugf(msg string, a ...any) {
 }
 
 func Fatal(msg string) {
-	fmt.Println(msg)
-	AddDebugTip()
+	Infof(msg)
+	os.Exit(1)
 }
 
 func FatalErr(msg string, err error) {
 	Fatal(fmt.Sprintf("%v, err: %v", msg, err))
+	AddDebugTip()
 }
 
 func AddDebugTip() {

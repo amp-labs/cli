@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"time"
 
@@ -24,7 +23,8 @@ var (
 	bucketName = vars.GCSBucket //nolint:gochecknoglobals
 )
 
-func Upload(zipPath string) (gcsURL string, err error) {
+// Upload takes in a byte array and uploads it to GCS as per the given name
+func Upload(data []byte, as string) (gcsURL string, err error) {
 	ctx := context.Background()
 
 	client, err := storage.NewClient(ctx, option.WithAPIKey(apiKey))
@@ -32,19 +32,14 @@ func Upload(zipPath string) (gcsURL string, err error) {
 		return "", fmt.Errorf("error initializing GCS client: %w", err)
 	}
 
-	zipData, err := os.ReadFile(zipPath)
-	if err != nil {
-		return "", fmt.Errorf("error reading zipped file: %w", err)
-	}
-
-	destination := fmt.Sprintf("%d/%02d/%02d/%s", year, month, day, filepath.Base(zipPath))
+	destinationPath := fmt.Sprintf("%d/%02d/%02d/%s", year, month, day, filepath.Base(as))
 
 	// Create a new writer object to write the zip file contents to the bucket
-	zipObject := client.Bucket(bucketName).Object(destination)
+	zipObject := client.Bucket(bucketName).Object(destinationPath)
 	writer := zipObject.NewWriter(ctx)
 
 	// Write the zip file contents to the bucket using the writer object
-	if _, err := writer.Write(zipData); err != nil {
+	if _, err := writer.Write(data); err != nil {
 		return "", fmt.Errorf("error writing to GCS bucket: %w", err)
 	}
 
@@ -52,7 +47,7 @@ func Upload(zipPath string) (gcsURL string, err error) {
 		return "", fmt.Errorf("error closing writer: %w", err)
 	}
 
-	finalPath := fmt.Sprintf("gs://%s/%s", bucketName, destination)
+	finalPath := fmt.Sprintf("gs://%s/%s", bucketName, destinationPath)
 
 	return finalPath, nil
 }
