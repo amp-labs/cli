@@ -1,11 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-	"path/filepath"
-	"strings"
-	"time"
-
 	"github.com/amp-labs/cli/files"
 	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
@@ -14,6 +9,8 @@ import (
 	"github.com/amp-labs/cli/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"path/filepath"
+	"strings"
 )
 
 var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
@@ -40,8 +37,7 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 			logger.FatalErr("Unable to zip folder", err)
 		}
 
-		uploadAs := fmt.Sprintf("amp_%d.zip", time.Now().Unix())
-		gcsURL, err := storage.Upload(zippedData, uploadAs)
+		gcsURL, err := storage.Upload(zippedData, utils.NewTimestampedZipName())
 		if err != nil {
 			logger.FatalErr("Unable to upload to Google Cloud Storage", err)
 		}
