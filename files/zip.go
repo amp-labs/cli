@@ -12,8 +12,8 @@ import (
 
 const mode = 420
 
-// Zip creates a zip archive of the given directory in-memory
-func Zip(sourceDir string) ([]byte, error) {
+// Zip creates a zip archive of the given directory in-memory.
+func Zip(sourceDir string) ([]byte, error) { // nolint:funlen
 	var out bytes.Buffer
 	writer := zip.NewWriter(&out)
 

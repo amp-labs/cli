@@ -22,7 +22,7 @@ var (
 	bucketName = vars.GCSBucket //nolint:gochecknoglobals
 )
 
-// Upload takes in bytes and uploads it to GCS as per the given name
+// Upload takes in bytes and uploads it to GCS as per the given name.
 func Upload(data []byte, as string) (string, error) {
 	ctx := context.Background()
 
