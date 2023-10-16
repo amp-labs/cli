@@ -13,7 +13,7 @@ import (
 const mode = 420
 
 // Zip creates a zip archive of the given directory in-memory.
-func Zip(sourceDir string) ([]byte, error) { // nolint:funlen
+func Zip(sourceDir string) ([]byte, error) { // nolint:funlen,cyclop
 	var out bytes.Buffer
 	writer := zip.NewWriter(&out)
 
@@ -53,15 +53,15 @@ func Zip(sourceDir string) ([]byte, error) { // nolint:funlen
 		if err != nil {
 			return fmt.Errorf("error opening file while zipping: %w", err)
 		}
-		defer func(file *os.File) {
-			err := file.Close()
-			if err != nil {
-			}
-		}(file)
 
 		_, err = io.Copy(headerWriter, file)
 		if err != nil {
 			return fmt.Errorf("error copying file for zipping: %w", err)
+		}
+
+		err = file.Close()
+		if err != nil {
+			return fmt.Errorf("error closing file while zipping: %w", err)
 		}
 
 		return nil
