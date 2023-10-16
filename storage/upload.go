@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -23,8 +22,8 @@ var (
 	bucketName = vars.GCSBucket //nolint:gochecknoglobals
 )
 
-// Upload takes in a byte array and uploads it to GCS as per the given name
-func Upload(data []byte, as string) (gcsURL string, err error) {
+// Upload takes in bytes and uploads it to GCS as per the given name
+func Upload(data []byte, as string) (string, error) {
 	ctx := context.Background()
 
 	client, err := storage.NewClient(ctx, option.WithAPIKey(apiKey))
@@ -32,7 +31,7 @@ func Upload(data []byte, as string) (gcsURL string, err error) {
 		return "", fmt.Errorf("error initializing GCS client: %w", err)
 	}
 
-	destinationPath := fmt.Sprintf("%d/%02d/%02d/%s", year, month, day, filepath.Base(as))
+	destinationPath := fmt.Sprintf("%d/%02d/%02d/%s", year, month, day, as)
 
 	// Create a new writer object to write the zip file contents to the bucket
 	zipObject := client.Bucket(bucketName).Object(destinationPath)
