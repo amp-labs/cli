@@ -35,7 +35,7 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 			return
 		}
 
-		folderName := filepath.ToSlash(filepath.Join(workingDir, path))
+		folderName := filepath.Join(workingDir, path)
 
 		zipPath, err := files.Zip(folderName)
 		defer files.Remove(zipPath)
