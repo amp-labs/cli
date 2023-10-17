@@ -21,24 +21,33 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		projectId := flags.GetProjectId()
+		if projectId == "" {
+			logger.Fatal("Must provide a project ID in the --project flag")
+		}
+
+		apiKey := viper.GetString("key")
+		if apiKey == "" {
+			logger.Fatal("Must provide an API key in the --key flag or via the AMP_API_KEY environment variable")
+		}
+
 		path := args[0]
 		workingDir := utils.GetWorkingDir()
-		folderName := filepath.ToSlash(filepath.Join(workingDir, path))
+		if workingDir == "" {
+			logger.Fatal("Unable to get working directory")
+		}
 
-		zipPath, err := files.Zip(folderName)
-		defer files.Remove(zipPath)
+		folderName := filepath.Join(workingDir, path)
 
+		zippedData, err := files.Zip(folderName)
 		if err != nil {
 			logger.FatalErr("Unable to zip folder", err)
 		}
 
-		gcsURL, err := storage.Upload(zipPath)
+		gcsURL, err := storage.Upload(zippedData, utils.NewTimestampedZipName())
 		if err != nil {
 			logger.FatalErr("Unable to upload to Google Cloud Storage", err)
 		}
 		logger.Debugf("Uploaded to %v", gcsURL)
-
-		apiKey := viper.GetString("key")
 
 		integrations, err := request.NewAPIClient(projectId, &apiKey).
 			BatchUpsertIntegrations(cmd.Context(), request.BatchUpsertIntegrationsParams{SourceZipURL: gcsURL})

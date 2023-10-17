@@ -13,7 +13,7 @@ func Info(msg string) {
 }
 
 func Infof(msg string, a ...any) {
-	fmt.Println(fmt.Sprintf(msg, a...))
+	Info(fmt.Sprintf(msg, a...))
 }
 
 func Debug(msg string) {
@@ -33,4 +33,9 @@ func Fatal(msg string) {
 
 func FatalErr(msg string, err error) {
 	Fatal(fmt.Sprintf("%v, err: %v", msg, err))
+	PrintDebugTip()
+}
+
+func PrintDebugTip() {
+	fmt.Println("For more information, run with --debug")
 }
