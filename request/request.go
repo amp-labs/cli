@@ -6,10 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/amp-labs/cli/utils"
 	"io"
 	"net/http"
 	"net/http/httputil"
+
+	"github.com/amp-labs/cli/utils"
 
 	"github.com/amp-labs/cli/logger"
 )

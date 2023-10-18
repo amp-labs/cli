@@ -3,6 +3,7 @@ package request
 import (
 	"context"
 	"fmt"
+
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/vars"
 )
