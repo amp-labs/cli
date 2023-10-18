@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/amp-labs/cli/utils"
 
-	"github.com/amp-labs/cli/vars"
 	"github.com/spf13/cobra"
 )
 
@@ -13,15 +13,17 @@ var versionCommand = &cobra.Command{ //nolint:gochecknoglobals
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Ampersand CLI") //nolint:forbidigo
 
-		if vars.Stage == "prod" {
-			fmt.Println("version: " + vars.Version) //nolint:forbidigo
+		versionInfo := utils.GetVersionInformation()
+
+		if versionInfo.Stage == utils.Prod {
+			fmt.Println("version: " + versionInfo.Version) //nolint:forbidigo
 		} else {
-			fmt.Println("version: " + vars.Version + " (" + vars.Stage + ")") //nolint:forbidigo
+			fmt.Println("version: " + versionInfo.Version + " (" + string(versionInfo.Stage) + ")") //nolint:forbidigo
 		}
 
-		fmt.Println("build date: " + vars.BuildDate) //nolint:forbidigo
-		fmt.Println("commit: " + vars.CommitID)      //nolint:forbidigo
-		fmt.Println("branch: " + vars.Branch)        //nolint:forbidigo
+		fmt.Println("build date: " + versionInfo.BuildDate) //nolint:forbidigo
+		fmt.Println("commit: " + versionInfo.CommitID)      //nolint:forbidigo
+		fmt.Println("branch: " + versionInfo.Branch)        //nolint:forbidigo
 	},
 }
 
