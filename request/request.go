@@ -10,9 +10,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 
-	"github.com/amp-labs/cli/utils"
-
 	"github.com/amp-labs/cli/logger"
+	"github.com/amp-labs/cli/utils"
 )
 
 type RequestClient struct {
@@ -46,7 +45,9 @@ func NewRequestClient() *RequestClient {
 func (c *RequestClient) Put(ctx context.Context,
 	url string, reqBody any, result any, headers ...Header,
 ) (*http.Response, error) {
-	allHeaders := append(c.DefaultHeaders, headers...)
+	allHeaders := c.DefaultHeaders
+	allHeaders = append(allHeaders, headers...)
+
 	req, err := makeJSONPutRequest(ctx, url, allHeaders, reqBody)
 	if err != nil {
 		return nil, err
@@ -60,7 +61,9 @@ func (c *RequestClient) Put(ctx context.Context,
 func (c *RequestClient) Post(ctx context.Context,
 	url string, reqBody any, result any, headers ...Header,
 ) (*http.Response, error) {
-	allHeaders := append(c.DefaultHeaders, headers...)
+	allHeaders := c.DefaultHeaders
+	allHeaders = append(allHeaders, headers...)
+
 	req, err := makeJSONPostRequest(ctx, url, allHeaders, reqBody)
 	if err != nil {
 		return nil, err
