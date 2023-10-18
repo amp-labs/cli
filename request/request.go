@@ -11,10 +11,12 @@ import (
 	"net/http/httputil"
 
 	"github.com/amp-labs/cli/logger"
+	"github.com/amp-labs/cli/utils"
 )
 
 type RequestClient struct {
-	Client *http.Client
+	Client         *http.Client
+	DefaultHeaders []Header
 }
 
 // Header is a key/value pair that can be added to a request.
@@ -24,7 +26,18 @@ type Header struct {
 }
 
 func NewRequestClient() *RequestClient {
-	return &RequestClient{Client: http.DefaultClient}
+	versionInfo := utils.GetVersionInformation()
+
+	return &RequestClient{
+		Client: http.DefaultClient,
+		DefaultHeaders: []Header{
+			{Key: "X-Cli-Version", Value: versionInfo.Version},
+			{Key: "X-Cli-Commit", Value: versionInfo.CommitID},
+			{Key: "X-Cli-Branch", Value: versionInfo.Branch},
+			{Key: "X-Cli-Build-Date", Value: versionInfo.BuildDate},
+			{Key: "X-Cli-Stage", Value: string(versionInfo.Stage)},
+		},
+	}
 }
 
 // Put makes a PUT request to the desired URL, and unmarshalls the
@@ -32,7 +45,10 @@ func NewRequestClient() *RequestClient {
 func (c *RequestClient) Put(ctx context.Context,
 	url string, reqBody any, result any, headers ...Header,
 ) (*http.Response, error) {
-	req, err := makeJSONPutRequest(ctx, url, headers, reqBody)
+	allHeaders := c.DefaultHeaders
+	allHeaders = append(allHeaders, headers...)
+
+	req, err := makeJSONPutRequest(ctx, url, allHeaders, reqBody)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +61,10 @@ func (c *RequestClient) Put(ctx context.Context,
 func (c *RequestClient) Post(ctx context.Context,
 	url string, reqBody any, result any, headers ...Header,
 ) (*http.Response, error) {
-	req, err := makeJSONPostRequest(ctx, url, headers, reqBody)
+	allHeaders := c.DefaultHeaders
+	allHeaders = append(allHeaders, headers...)
+
+	req, err := makeJSONPostRequest(ctx, url, allHeaders, reqBody)
 	if err != nil {
 		return nil, err
 	}
