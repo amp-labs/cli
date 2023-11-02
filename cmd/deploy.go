@@ -95,13 +95,4 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 
 func init() {
 	rootCmd.AddCommand(deployCmd)
-	deployCmd.Flags().StringP("key", "k", "", "Ampersand API key")
-
-	if err := viper.BindPFlag("key", deployCmd.Flags().Lookup("key")); err != nil {
-		panic(err)
-	}
-
-	if err := viper.BindEnv("key", "AMP_API_KEY"); err != nil {
-		panic(err)
-	}
 }

@@ -69,7 +69,7 @@ func (c *RequestClient) Put(ctx context.Context,
 		return nil, err
 	}
 
-	return c.makeRequestAndParseResult(req, result)
+	return c.makeJSONRequestAndParseResult(req, result)
 }
 
 // Post makes a POST request to the desired URL, and unmarshalls the
@@ -85,12 +85,28 @@ func (c *RequestClient) Post(ctx context.Context,
 		return nil, err
 	}
 
-	return c.makeRequestAndParseResult(req, result)
+	return c.makeJSONRequestAndParseResult(req, result)
+}
+
+// Post makes a POST request to the desired URL, and unmarshalls the
+// response body into `result`.
+func (c *RequestClient) Delete(ctx context.Context,
+	url string, headers ...Header,
+) (*http.Response, error) {
+	allHeaders := c.DefaultHeaders
+	allHeaders = append(allHeaders, headers...)
+
+	req, err := makeDeleteRequest(ctx, url, allHeaders)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+
+	return c.makePlainTextRequestAndParseResult(req)
 }
 
 var ErrNone200Status = errors.New("error response from API")
 
-func (c *RequestClient) makeRequestAndParseResult(req *http.Request, result any) (*http.Response, error) {
+func (c *RequestClient) makeJSONRequestAndParseResult(req *http.Request, result any) (*http.Response, error) {
 	dump, _ := httputil.DumpRequest(req, false)
 	logger.Debugf("\n>>> API REQUEST:\n%v>>> END OF API REQUEST\n", string(dump))
 
@@ -117,6 +133,24 @@ func makeJSONGetRequest(ctx context.Context, url string, headers []Header) (*htt
 	}
 
 	return addAcceptJSONHeaders(req, headers)
+}
+
+func (c *RequestClient) makePlainTextRequestAndParseResult(req *http.Request) (*http.Response, error) {
+	dump, _ := httputil.DumpRequest(req, false)
+	logger.Debugf("\n>>> API REQUEST:\n%v>>> END OF API REQUEST\n", string(dump))
+
+	res, payload, err := c.sendRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode < 200 || res.StatusCode > 299 {
+		return res, fmt.Errorf("%w: HTTP Status %s", ErrNone200Status, res.Status)
+	}
+
+	logger.Info(string(payload))
+
+	return res, nil
 }
 
 func makeJSONPostRequest(ctx context.Context, url string, headers []Header, body any) (*http.Request, error) {
@@ -151,6 +185,27 @@ func makeJSONPutRequest(ctx context.Context, url string, headers []Header, body 
 	req.ContentLength = int64(len(jBody))
 
 	return addAcceptJSONHeaders(req, headers)
+}
+
+func makeDeleteRequest(ctx context.Context, url string, headers []Header) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+
+	headers = append(headers, Header{Key: "Content-Type", Value: "text/plain"})
+	req.ContentLength = 0
+
+	return addHeaders(req, headers), nil
+}
+
+func addHeaders(req *http.Request, headers []Header) *http.Request {
+	// Apply any custom headers
+	for _, hdr := range headers {
+		req.Header.Add(hdr.Key, hdr.Value)
+	}
+
+	return req
 }
 
 func addAcceptJSONHeaders(req *http.Request, headers []Header) (*http.Request, error) {

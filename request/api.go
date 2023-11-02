@@ -98,3 +98,21 @@ func (c *APIClient) GetPreSignedUploadURL(ctx context.Context, md5 string) (Sign
 
 	return *signed, nil
 }
+
+func (c *APIClient) DeleteIntegration(ctx context.Context, integrationId string) error {
+	url := fmt.Sprintf("%s/projects/%s/integrations/%s", c.Root, c.ProjectId, integrationId)
+
+	if c.APIKey != nil && *c.APIKey != "" {
+		header := Header{Key: "X-Api-Key", Value: *c.APIKey}
+		if _, err := c.RequestClient.Delete(ctx, url, header); err != nil { //nolint:bodyclose
+			return fmt.Errorf("error deleting integration: %w", err)
+		}
+
+		logger.Debugf("Deleted integration: %v", integrationId)
+	} else {
+		// TODO: Default to token authentication and set Authorization header, instead of failing.
+		logger.Fatal("Must provide an API key in the --key flag")
+	}
+
+	return nil
+}

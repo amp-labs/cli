@@ -8,8 +8,8 @@ import (
 	"github.com/amp-labs/cli/flags"
 )
 
-func Info(msg string) {
-	fmt.Println(msg)
+func Info(a ...any) {
+	fmt.Println(a...)
 }
 
 func Infof(msg string, a ...any) {
