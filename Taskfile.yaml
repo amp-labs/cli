@@ -4,8 +4,8 @@ tasks:
     do_build:
         desc: Build the CLI (don't call directly)
         cmds:
-        - go generate ./...
-        - CGO_ENABLED=0 go build -ldflags="-X {{.PKG}}.CommitID={{.GIT_COMMIT}} -X {{.PKG}}.Branch={{.GIT_BRANCH}} -X {{.PKG}}.Stage={{.STAGE}} -X '{{.PKG}}.BuildDate={{.BUILD_DATE}}' -X {{.PKG}}.Version={{.VERSION}} -X {{.PKG}}.ClerkRootURL={{.CLERK_URL}} -X {{.PKG}}.LoginURL={{.LOGIN_URL}} -X {{.PKG}}.ApiURL={{.API_URL}} -X {{.PKG}}.GCSBucket={{.GCS_BUCKET}} -X {{.PKG}}.GCSKey={{.GCS_KEY}}" -o bin/amp{{if eq OS "windows"}}.exe{{end}} main.go
+            - go generate ./...
+            - CGO_ENABLED=0 go build -ldflags="-X {{.PKG}}.CommitID={{.GIT_COMMIT}} -X {{.PKG}}.Branch={{.GIT_BRANCH}} -X {{.PKG}}.Stage={{.STAGE}} -X '{{.PKG}}.BuildDate={{.BUILD_DATE}}' -X {{.PKG}}.Version={{.VERSION}} -X {{.PKG}}.ClerkRootURL={{.CLERK_URL}} -X {{.PKG}}.LoginURL={{.LOGIN_URL}} -X {{.PKG}}.ApiURL={{.API_URL}} -X {{.PKG}}.GCSBucket={{.GCS_BUCKET}} -X {{.PKG}}.GCSKey={{.GCS_KEY}}" -o bin/amp{{if eq OS "windows"}}.exe{{end}} main.go
         vars:
             GIT_COMMIT:
                 sh: git log -n 1 --format=%H
@@ -16,6 +16,18 @@ tasks:
             VERSION:
                 sh: git tag --points-at HEAD | sed 's/^v//'
             PKG: github.com/amp-labs/cli/vars
+
+    build-local:
+        desc: Build a CLI configured for the local stage
+        cmds:
+            - task: do_build
+              vars:
+                  CLERK_URL: https://welcomed-snapper-45.clerk.accounts.dev
+                  LOGIN_URL: https://ampersand-cli-auth-dev.web.app
+                  API_URL: http://127.0.0.1:8080
+                  GCS_BUCKET: ampersand-dev-deploy-uploads
+                  GCS_KEY: "AIzaSyBvOQ41f7igI0wtclU0JgqBKfPtOluyjpg"
+                  STAGE: local
 
     build-dev:
         desc: Build a CLI configured for the dev stage
