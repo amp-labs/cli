@@ -18,7 +18,7 @@ tasks:
             PKG: github.com/amp-labs/cli/vars
 
     build-local:
-        desc: Build a CLI configured for the dev stage
+        desc: Build a CLI configured for the local stage
         cmds:
             - task: do_build
               vars:
