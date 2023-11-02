@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"crypto/md5"
+	"encoding/base64"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -43,14 +46,32 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 			logger.FatalErr("Unable to zip folder", err)
 		}
 
-		gcsURL, err := storage.Upload(zippedData, utils.NewTimestampedZipName())
+		hash := md5.New() //nolint:gosec
+		hash.Write(zippedData)
+		md5Bytes := hash.Sum(nil)
+		md5String := base64.StdEncoding.EncodeToString(md5Bytes)
+
+		client := request.NewAPIClient(projectId, &apiKey)
+
+		signed, err := client.GetPreSignedUploadURL(cmd.Context(), md5String)
 		if err != nil {
+			logger.FatalErr("Unable to get pre-signed upload URL", err)
+		}
+
+		if err := storage.Upload(cmd.Context(), zippedData, signed.URL, md5String); err != nil {
 			logger.FatalErr("Unable to upload to Google Cloud Storage", err)
 		}
+
+		if !strings.HasPrefix(signed.Path, "/") {
+			signed.Path = "/" + signed.Path
+		}
+
+		gcsURL := fmt.Sprintf("gs://%s%s", signed.Bucket, signed.Path)
+
 		logger.Debugf("Uploaded to %v", gcsURL)
 
-		integrations, err := request.NewAPIClient(projectId, &apiKey).
-			BatchUpsertIntegrations(cmd.Context(), request.BatchUpsertIntegrationsParams{SourceZipURL: gcsURL})
+		integrations, err := client.BatchUpsertIntegrations(cmd.Context(),
+			request.BatchUpsertIntegrationsParams{SourceZipURL: gcsURL})
 		if err != nil {
 			logger.FatalErr("Unable to deploy integrations", err)
 		}

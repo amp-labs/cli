@@ -63,3 +63,34 @@ func (c *APIClient) BatchUpsertIntegrations(
 
 	return integrations, nil
 }
+
+type SignedURL struct {
+	URL    string `json:"url"`
+	Bucket string `json:"bucket"`
+	Path   string `json:"path"`
+}
+
+func (c *APIClient) GetPreSignedUploadURL(ctx context.Context, md5 string) (SignedURL, error) {
+	url := fmt.Sprintf("%s/zip-upload-url", c.Root)
+	if len(md5) > 0 {
+		url = fmt.Sprintf("%s?md5=%s", url, md5)
+	}
+
+	var err error
+
+	signed := &SignedURL{}
+
+	if c.APIKey != nil && *c.APIKey != "" {
+		header := Header{Key: "X-Api-Key", Value: *c.APIKey}
+		_, err = c.RequestClient.Get(ctx, url, signed, header) //nolint:bodyclose
+	} else {
+		// TODO: Default to token authentication and set Authorization header, instead of failing.
+		logger.Fatal("Must provide an API key in the --key flag")
+	}
+
+	if err != nil {
+		return SignedURL{}, err
+	}
+
+	return *signed, nil
+}

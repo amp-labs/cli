@@ -40,6 +40,22 @@ func NewRequestClient() *RequestClient {
 	}
 }
 
+// Get makes a GET request to the desired URL, and unmarshalls the
+// response body into `result`.
+func (c *RequestClient) Get(ctx context.Context,
+	url string, result any, headers ...Header,
+) (*http.Response, error) {
+	allHeaders := c.DefaultHeaders
+	allHeaders = append(allHeaders, headers...)
+
+	req, err := makeJSONGetRequest(ctx, url, allHeaders)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.makeRequestAndParseResult(req, result)
+}
+
 // Put makes a PUT request to the desired URL, and unmarshalls the
 // response body into `result`.
 func (c *RequestClient) Put(ctx context.Context,
@@ -92,6 +108,15 @@ func (c *RequestClient) makeRequestAndParseResult(req *http.Request, result any)
 	}
 
 	return res, nil
+}
+
+func makeJSONGetRequest(ctx context.Context, url string, headers []Header) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+
+	return addAcceptJSONHeaders(req, headers)
 }
 
 func makeJSONPostRequest(ctx context.Context, url string, headers []Header, body any) (*http.Request, error) {

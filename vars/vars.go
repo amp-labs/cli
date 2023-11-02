@@ -12,6 +12,4 @@ var (
 	Version      = "unset" //nolint:gochecknoglobals
 	BuildDate    = "unset" //nolint:gochecknoglobals
 	Branch       = "unset" //nolint:gochecknoglobals
-	GCSBucket    = "unset" //nolint:gochecknoglobals
-	GCSKey       = "unset" //nolint:gochecknoglobals
 )
