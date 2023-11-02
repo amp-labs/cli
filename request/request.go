@@ -88,8 +88,7 @@ func (c *RequestClient) Post(ctx context.Context,
 	return c.makeJSONRequestAndParseResult(req, result)
 }
 
-// Post makes a POST request to the desired URL, and unmarshalls the
-// response body into `result`.
+// Delete makes a Delete request to the desired URL for plain text requests.
 func (c *RequestClient) Delete(ctx context.Context,
 	url string, headers ...Header,
 ) (*http.Response, error) {
