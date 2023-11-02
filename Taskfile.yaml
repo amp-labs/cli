@@ -53,6 +53,18 @@ tasks:
                   GCS_KEY: "AIzaSyDGWb5ncKSvkeNl5ZO_zVnP_5KdiKjo-i4"
                   STAGE: prod
 
+    build-local:
+        desc: Build a CLI configured for the local stage
+        cmds:
+            - task: do_build
+              vars:
+                  CLERK_URL: https://welcomed-snapper-45.clerk.accounts.dev
+                  LOGIN_URL: https://ampersand-cli-auth-dev.web.app
+                  API_URL: http://localhost:8080
+                  GCS_BUCKET: ampersand-dev-deploy-uploads
+                  GCS_KEY: "AIzaSyBvOQ41f7igI0wtclU0JgqBKfPtOluyjpg"
+                  STAGE: local
+
     build:
         desc: An alias for build-dev
         cmds:
