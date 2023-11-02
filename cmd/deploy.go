@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"crypto/md5"
+	"crypto/md5" //nolint:gosec
 	"encoding/base64"
 	"fmt"
 	"path/filepath"

@@ -3,10 +3,13 @@ package storage
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 )
+
+var ErrGcsFailure = errors.New("error uploading to GCS")
 
 // Upload takes in bytes and uploads it to GCS as per the given name.
 func Upload(ctx context.Context, data []byte, url, md5 string) error {
@@ -34,6 +37,6 @@ func Upload(ctx context.Context, data []byte, url, md5 string) error {
 			return fmt.Errorf("error reading response body: %w", err)
 		}
 
-		return fmt.Errorf("error uploading to GCS: %s", string(body))
+		return fmt.Errorf("%w: %s", ErrGcsFailure, string(body))
 	}
 }
