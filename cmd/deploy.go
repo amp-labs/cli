@@ -46,7 +46,9 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 			logger.FatalErr("Unable to zip folder", err)
 		}
 
+		// nosemgrep: go.lang.security.crypto.use-of-md5
 		hash := md5.New() //nolint:gosec
+
 		hash.Write(zippedData)
 		md5Bytes := hash.Sum(nil)
 		md5String := base64.StdEncoding.EncodeToString(md5Bytes)
