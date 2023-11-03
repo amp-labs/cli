@@ -3,6 +3,7 @@ package request
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/vars"
@@ -71,9 +72,11 @@ type SignedURL struct {
 }
 
 func (c *APIClient) GetPreSignedUploadURL(ctx context.Context, md5 string) (SignedURL, error) {
-	url := fmt.Sprintf("%s/generate-upload-url", c.Root)
+	genUrl := fmt.Sprintf("%s/generate-upload-url", c.Root)
 	if len(md5) > 0 {
-		url = fmt.Sprintf("%s?md5=%s", url, md5)
+		query := url.Values{}
+		query.Add("md5", md5)
+		genUrl = fmt.Sprintf("%s?%s", genUrl, query.Encode())
 	}
 
 	var err error
