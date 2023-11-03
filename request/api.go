@@ -72,11 +72,12 @@ type SignedURL struct {
 }
 
 func (c *APIClient) GetPreSignedUploadURL(ctx context.Context, md5 string) (SignedURL, error) {
-	genUrl := fmt.Sprintf("%s/generate-upload-url", c.Root)
+	genURL := fmt.Sprintf("%s/generate-upload-url", c.Root)
+
 	if len(md5) > 0 {
 		query := url.Values{}
 		query.Add("md5", md5)
-		genUrl = fmt.Sprintf("%s?%s", genUrl, query.Encode())
+		genURL = fmt.Sprintf("%s?%s", genURL, query.Encode())
 	}
 
 	var err error
@@ -85,7 +86,7 @@ func (c *APIClient) GetPreSignedUploadURL(ctx context.Context, md5 string) (Sign
 
 	if c.APIKey != nil && *c.APIKey != "" {
 		header := Header{Key: "X-Api-Key", Value: *c.APIKey}
-		_, err = c.RequestClient.Get(ctx, genUrl, signed, header) //nolint:bodyclose
+		_, err = c.RequestClient.Get(ctx, genURL, signed, header) //nolint:bodyclose
 	} else {
 		// TODO: Default to token authentication and set Authorization header, instead of failing.
 		logger.Fatal("Must provide an API key in the --key flag")
