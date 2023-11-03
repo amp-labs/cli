@@ -71,7 +71,7 @@ type SignedURL struct {
 }
 
 func (c *APIClient) GetPreSignedUploadURL(ctx context.Context, md5 string) (SignedURL, error) {
-	url := fmt.Sprintf("%s/zip-upload-url", c.Root)
+	url := fmt.Sprintf("%s/generate-upload-url", c.Root)
 	if len(md5) > 0 {
 		url = fmt.Sprintf("%s?md5=%s", url, md5)
 	}
