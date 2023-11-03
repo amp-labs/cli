@@ -1,52 +1,42 @@
 package storage
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
-	"time"
-
-	"cloud.google.com/go/storage"
-	"github.com/amp-labs/cli/vars"
-	"google.golang.org/api/option"
+	"io"
+	"net/http"
 )
 
-var (
-	now              = time.Now()                              //nolint:gochecknoglobals
-	year, month, day = now.Year(), int(now.Month()), now.Day() //nolint:gochecknoglobals
-)
-
-// TODO: this should get moved to the server instead, so API keys & bucket names
-// get managed there.
-var (
-	apiKey     = vars.GCSKey    //nolint:gochecknoglobals
-	bucketName = vars.GCSBucket //nolint:gochecknoglobals
-)
+var ErrGcsFailure = errors.New("error uploading to GCS")
 
 // Upload takes in bytes and uploads it to GCS as per the given name.
-func Upload(data []byte, as string) (string, error) {
-	ctx := context.Background()
-
-	client, err := storage.NewClient(ctx, option.WithAPIKey(apiKey))
+func Upload(ctx context.Context, data []byte, url, md5 string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewReader(data))
 	if err != nil {
-		return "", fmt.Errorf("error initializing GCS client: %w", err)
+		return fmt.Errorf("error creating request: %w", err)
 	}
 
-	destinationPath := fmt.Sprintf("%d/%02d/%02d/%s", year, month, day, as)
-
-	// Create a new writer object to write the zip file contents to the bucket
-	zipObject := client.Bucket(bucketName).Object(destinationPath)
-	writer := zipObject.NewWriter(ctx)
-
-	// Write the zip file contents to the bucket using the writer object
-	if _, err := writer.Write(data); err != nil {
-		return "", fmt.Errorf("error writing to GCS bucket: %w", err)
+	if len(md5) > 0 {
+		req.Header.Set("Content-MD5", md5)
 	}
 
-	if err := writer.Close(); err != nil {
-		return "", fmt.Errorf("error closing writer: %w", err)
+	rsp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("error sending request: %w", err)
 	}
 
-	finalPath := fmt.Sprintf("gs://%s/%s", bucketName, destinationPath)
+	defer rsp.Body.Close()
 
-	return finalPath, nil
+	if rsp.StatusCode >= 200 && rsp.StatusCode < 300 {
+		return nil
+	} else {
+		body, err := io.ReadAll(rsp.Body)
+		if err != nil {
+			return fmt.Errorf("error reading response body: %w", err)
+		}
+
+		return fmt.Errorf("%w: %s", ErrGcsFailure, string(body))
+	}
 }

@@ -1,9 +1,7 @@
 package utils
 
 import (
-	"fmt"
 	"os"
-	"time"
 
 	"github.com/amp-labs/cli/logger"
 )
@@ -17,9 +15,4 @@ func GetWorkingDir() string {
 	}
 
 	return workingDir
-}
-
-// NewTimestampedZipName returns a zip name with a timestamp.
-func NewTimestampedZipName() string {
-	return fmt.Sprintf("amp_%d.zip", time.Now().Unix())
 }

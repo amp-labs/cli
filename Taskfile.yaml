@@ -5,7 +5,7 @@ tasks:
         desc: Build the CLI (don't call directly)
         cmds:
             - go generate ./...
-            - CGO_ENABLED=0 go build -ldflags="-X {{.PKG}}.CommitID={{.GIT_COMMIT}} -X {{.PKG}}.Branch={{.GIT_BRANCH}} -X {{.PKG}}.Stage={{.STAGE}} -X '{{.PKG}}.BuildDate={{.BUILD_DATE}}' -X {{.PKG}}.Version={{.VERSION}} -X {{.PKG}}.ClerkRootURL={{.CLERK_URL}} -X {{.PKG}}.LoginURL={{.LOGIN_URL}} -X {{.PKG}}.ApiURL={{.API_URL}} -X {{.PKG}}.GCSBucket={{.GCS_BUCKET}} -X {{.PKG}}.GCSKey={{.GCS_KEY}}" -o bin/amp{{if eq OS "windows"}}.exe{{end}} main.go
+            - CGO_ENABLED=0 go build -ldflags="-X {{.PKG}}.CommitID={{.GIT_COMMIT}} -X {{.PKG}}.Branch={{.GIT_BRANCH}} -X {{.PKG}}.Stage={{.STAGE}} -X '{{.PKG}}.BuildDate={{.BUILD_DATE}}' -X {{.PKG}}.Version={{.VERSION}} -X {{.PKG}}.ClerkRootURL={{.CLERK_URL}} -X {{.PKG}}.LoginURL={{.LOGIN_URL}} -X {{.PKG}}.ApiURL={{.API_URL}}" -o bin/amp{{if eq OS "windows"}}.exe{{end}} main.go
         vars:
             GIT_COMMIT:
                 sh: git log -n 1 --format=%H
@@ -37,8 +37,6 @@ tasks:
                   CLERK_URL: https://welcomed-snapper-45.clerk.accounts.dev
                   LOGIN_URL: https://ampersand-cli-auth-dev.web.app
                   API_URL: https://dev-api.withampersand.com
-                  GCS_BUCKET: ampersand-dev-deploy-uploads
-                  GCS_KEY: "AIzaSyBvOQ41f7igI0wtclU0JgqBKfPtOluyjpg"
                   STAGE: dev
 
     build-staging:
@@ -49,8 +47,6 @@ tasks:
                   CLERK_URL: https://welcomed-snapper-45.clerk.accounts.dev
                   LOGIN_URL: https://ampersand-cli-auth-stag.web.app
                   API_URL: https://staging-api.withampersand.com
-                  GCS_BUCKET: ampersand-staging-deploy-uploads
-                  GCS_KEY: "AIzaSyBCgKKMfPJLm4e6k2tg_xJO5epVI1I2KK4"
                   STAGE: staging
 
     build-prod:
@@ -61,8 +57,6 @@ tasks:
                   CLERK_URL: https://clerk.withampersand.com
                   LOGIN_URL: https://cli-signin.withampersand.com
                   API_URL: https://api.withampersand.com
-                  GCS_BUCKET: ampersand-prod-deploy-uploads
-                  GCS_KEY: "AIzaSyDGWb5ncKSvkeNl5ZO_zVnP_5KdiKjo-i4"
                   STAGE: prod
 
     build:
