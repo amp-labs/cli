@@ -85,7 +85,7 @@ func (c *APIClient) GetPreSignedUploadURL(ctx context.Context, md5 string) (Sign
 
 	if c.APIKey != nil && *c.APIKey != "" {
 		header := Header{Key: "X-Api-Key", Value: *c.APIKey}
-		_, err = c.RequestClient.Get(ctx, url, signed, header) //nolint:bodyclose
+		_, err = c.RequestClient.Get(ctx, genUrl, signed, header) //nolint:bodyclose
 	} else {
 		// TODO: Default to token authentication and set Authorization header, instead of failing.
 		logger.Fatal("Must provide an API key in the --key flag")
