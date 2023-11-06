@@ -7,7 +7,7 @@ require (
 	github.com/alexkappa/mustache v0.0.0-20191113130723-8bb9cfca2bfa
 	github.com/clerkinc/clerk-sdk-go v1.48.4
 	github.com/imdario/mergo v0.3.15
-	github.com/spf13/cobra v1.7.0
+	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.17.0
 	github.com/tidwall/pretty v1.2.1
 )
