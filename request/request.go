@@ -100,10 +100,10 @@ func (c *RequestClient) Delete(ctx context.Context,
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 
-	return c.makeRequestAndParseTextResult(req)
+	return c.makeRequestAndParseResult(req)
 }
 
-var ErrNone200Status = errors.New("error response from API")
+var ErrNon200Status = errors.New("error response from API")
 
 func (c *RequestClient) makeRequestAndParseJSONResult(req *http.Request, result any) (*http.Response, error) {
 	dump, _ := httputil.DumpRequest(req, false)
@@ -115,7 +115,7 @@ func (c *RequestClient) makeRequestAndParseJSONResult(req *http.Request, result 
 	}
 
 	if res.StatusCode < 200 || res.StatusCode > 299 {
-		return res, fmt.Errorf("%w: HTTP Status %s", ErrNone200Status, res.Status)
+		return res, fmt.Errorf("%w: HTTP Status %s", ErrNon200Status, res.Status)
 	}
 
 	if err := json.Unmarshal(payload, result); err != nil {
@@ -134,7 +134,7 @@ func makeJSONGetRequest(ctx context.Context, url string, headers []Header) (*htt
 	return addAcceptJSONHeaders(req, headers)
 }
 
-func (c *RequestClient) makeRequestAndParseTextResult(req *http.Request) (*http.Response, error) {
+func (c *RequestClient) makeRequestAndParseResult(req *http.Request) (*http.Response, error) {
 	dump, _ := httputil.DumpRequest(req, false)
 	logger.Debugf("\n>>> API REQUEST:\n%v>>> END OF API REQUEST\n", string(dump))
 
@@ -144,7 +144,7 @@ func (c *RequestClient) makeRequestAndParseTextResult(req *http.Request) (*http.
 	}
 
 	if res.StatusCode < 200 || res.StatusCode > 299 {
-		return res, fmt.Errorf("%w: HTTP Status %s", ErrNone200Status, res.Status)
+		return res, fmt.Errorf("%w: HTTP Status %s", ErrNon200Status, res.Status)
 	}
 
 	return res, nil
@@ -190,7 +190,6 @@ func makeDeleteRequest(ctx context.Context, url string, headers []Header) (*http
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 
-	headers = append(headers, Header{Key: "Content-Type", Value: "text/plain"})
 	req.ContentLength = 0
 
 	return addHeaders(req, headers), nil
