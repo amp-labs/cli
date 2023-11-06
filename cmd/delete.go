@@ -8,7 +8,7 @@ import (
 )
 
 var deleteCmd = &cobra.Command{ //nolint:gochecknoglobals
-	Use:   "integration:delete <integrationId>",
+	Use:   "delete-integration <integrationId>",
 	Short: "Delete integration",
 	Long:  "Delete integration",
 	Args:  cobra.ExactArgs(1),
@@ -31,6 +31,8 @@ var deleteCmd = &cobra.Command{ //nolint:gochecknoglobals
 		if err != nil {
 			logger.FatalErr("Unable to delete integration", err)
 		}
+
+		logger.Info("Successfully deleted integration.")
 	},
 }
 

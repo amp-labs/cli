@@ -69,7 +69,7 @@ func (c *RequestClient) Put(ctx context.Context,
 		return nil, err
 	}
 
-	return c.makeJSONRequestAndParseResult(req, result)
+	return c.makeRequestAndParseJSONResult(req, result)
 }
 
 // Post makes a POST request to the desired URL, and unmarshalls the
@@ -85,7 +85,7 @@ func (c *RequestClient) Post(ctx context.Context,
 		return nil, err
 	}
 
-	return c.makeJSONRequestAndParseResult(req, result)
+	return c.makeRequestAndParseJSONResult(req, result)
 }
 
 // Delete makes a Delete request to the desired URL for plain text requests.
@@ -100,12 +100,12 @@ func (c *RequestClient) Delete(ctx context.Context,
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 
-	return c.makePlainTextRequestAndParseResult(req)
+	return c.makeRequestAndParseTextResult(req)
 }
 
 var ErrNone200Status = errors.New("error response from API")
 
-func (c *RequestClient) makeJSONRequestAndParseResult(req *http.Request, result any) (*http.Response, error) {
+func (c *RequestClient) makeRequestAndParseJSONResult(req *http.Request, result any) (*http.Response, error) {
 	dump, _ := httputil.DumpRequest(req, false)
 	logger.Debugf("\n>>> API REQUEST:\n%v>>> END OF API REQUEST\n", string(dump))
 
@@ -134,11 +134,11 @@ func makeJSONGetRequest(ctx context.Context, url string, headers []Header) (*htt
 	return addAcceptJSONHeaders(req, headers)
 }
 
-func (c *RequestClient) makePlainTextRequestAndParseResult(req *http.Request) (*http.Response, error) {
+func (c *RequestClient) makeRequestAndParseTextResult(req *http.Request) (*http.Response, error) {
 	dump, _ := httputil.DumpRequest(req, false)
 	logger.Debugf("\n>>> API REQUEST:\n%v>>> END OF API REQUEST\n", string(dump))
 
-	res, payload, err := c.sendRequest(req)
+	res, _, err := c.sendRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -146,8 +146,6 @@ func (c *RequestClient) makePlainTextRequestAndParseResult(req *http.Request) (*
 	if res.StatusCode < 200 || res.StatusCode > 299 {
 		return res, fmt.Errorf("%w: HTTP Status %s", ErrNone200Status, res.Status)
 	}
-
-	logger.Info(string(payload))
 
 	return res, nil
 }
