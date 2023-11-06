@@ -53,7 +53,7 @@ func (c *RequestClient) Get(ctx context.Context,
 		return nil, err
 	}
 
-	return c.makeRequestAndParseResult(req, result)
+	return c.makeRequestAndParseJSONResult(req, result)
 }
 
 // Put makes a PUT request to the desired URL, and unmarshalls the
