@@ -12,6 +12,7 @@ type FlagConfig struct {
 func Init(rootCmd *cobra.Command) error {
 	rootCmd.PersistentFlags().BoolP("debug", "d", false, "Enable debug logging mode")
 	rootCmd.PersistentFlags().StringP("project", "p", "", "Ampersand project ID")
+	rootCmd.PersistentFlags().StringP("key", "k", "", "Ampersand API key")
 
 	if err := viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug")); err != nil {
 		return err
@@ -19,6 +20,14 @@ func Init(rootCmd *cobra.Command) error {
 
 	if err := viper.BindPFlag("project", rootCmd.PersistentFlags().Lookup("project")); err != nil {
 		return err
+	}
+
+	if err := viper.BindPFlag("key", rootCmd.PersistentFlags().Lookup("key")); err != nil {
+		return err
+	}
+
+	if err := viper.BindEnv("key", "AMP_API_KEY"); err != nil {
+		panic(err)
 	}
 
 	return nil
@@ -30,4 +39,8 @@ func GetDebugMode() bool {
 
 func GetProjectId() string {
 	return viper.GetString("project")
+}
+
+func GetAPIKey() string {
+	return viper.GetString("key")
 }
