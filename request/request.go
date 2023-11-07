@@ -100,7 +100,7 @@ func (c *RequestClient) Delete(ctx context.Context,
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 
-	return c.makeRequestAndParseResult(req)
+	return c.makeRequest(req)
 }
 
 var ErrNon200Status = errors.New("error response from API")
@@ -134,7 +134,7 @@ func makeJSONGetRequest(ctx context.Context, url string, headers []Header) (*htt
 	return addAcceptJSONHeaders(req, headers)
 }
 
-func (c *RequestClient) makeRequestAndParseResult(req *http.Request) (*http.Response, error) {
+func (c *RequestClient) makeRequest(req *http.Request) (*http.Response, error) {
 	dump, _ := httputil.DumpRequest(req, false)
 	logger.Debugf("\n>>> API REQUEST:\n%v>>> END OF API REQUEST\n", string(dump))
 
