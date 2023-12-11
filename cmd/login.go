@@ -141,7 +141,7 @@ func (h *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 const JwtFilePermissions = 0o600
 
 // processLogin takes the JWT token, verifies it, and then stores it in the jwt.json file.
-func processLogin(ctx context.Context, payload []byte, write bool) (string, string, error) {
+func processLogin(ctx context.Context, payload []byte, write bool) (string, string, error) { //nolint:cyclop
 	data := &loginData{}
 	if err := json.Unmarshal(payload, data); err != nil {
 		return "", "", err
