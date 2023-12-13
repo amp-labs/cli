@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"runtime"
@@ -38,15 +39,17 @@ var HTML = `<!doctype html>` + "\n" + //nolint:gochecknoglobals
 </html>`
 
 const (
-	ServerPort             = 3535
-	ClerkClientSessionPath = "%s/v1/client?_clerk_js_version=4.50.1&__dev_session=%s"
+	ServerPort                 = 3535
+	ClerkClientSessionPathDev  = "%s/v1/client?_clerk_js_version=4.50.1&__dev_session=%s"
+	ClerkClientSessionPathProd = "%s/v1/client?_clerk_js_version=4.50.1"
 )
 
 // loginData is the data that is stored in the jwt.json file.
 type loginData struct {
-	UserID    string `json:"userId"`
-	SessionID string `json:"sessionId"`
-	Token     string `json:"token"`
+	UserID    string            `json:"userId"`
+	SessionID string            `json:"sessionId"`
+	Token     string            `json:"token"`
+	Cookies   map[string]string `json:"cookies"`
 }
 
 type token struct {
@@ -138,7 +141,12 @@ func (h *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 const JwtFilePermissions = 0o600
 
 // processLogin takes the JWT token, verifies it, and then stores it in the jwt.json file.
-func processLogin(ctx context.Context, payload []byte, write bool) (string, string, error) {
+func processLogin(ctx context.Context, payload []byte, write bool) (string, string, error) { //nolint:cyclop
+	data := &loginData{}
+	if err := json.Unmarshal(payload, data); err != nil {
+		return "", "", err
+	}
+
 	path := getJwtPath()
 	if write {
 		if err := os.WriteFile(path, pretty.Pretty(payload), JwtFilePermissions); err != nil {
@@ -146,20 +154,24 @@ func processLogin(ctx context.Context, payload []byte, write bool) (string, stri
 		}
 	}
 
-	data := &loginData{}
-	if err := json.Unmarshal(payload, data); err != nil {
-		return "", "", err
-	}
-
 	// Call out to clerk and ask for session info using the JWT token.
-	u := fmt.Sprintf(ClerkClientSessionPath, vars.ClerkRootURL, data.Token)
+	u := getClerkURL(data)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return "", "", err
 	}
 
-	req.Header.Set("Origin", fmt.Sprintf("http://localhost:%d", ServerPort))
+	for k, v := range data.Cookies {
+		req.AddCookie(&http.Cookie{
+			Name:     k,
+			Value:    v,
+			Path:     "/",
+			Domain:   getClerkDomain(),
+			Secure:   true,
+			HttpOnly: true,
+		})
+	}
 
 	rsp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -174,7 +186,7 @@ func processLogin(ctx context.Context, payload []byte, write bool) (string, stri
 	}
 
 	if rsp.StatusCode != http.StatusOK {
-		return "", "", fmt.Errorf("http %d", rsp.StatusCode) //nolint:goerr113
+		return "", "", fmt.Errorf("http %d (%s)", rsp.StatusCode, string(bb)) //nolint:goerr113
 	}
 
 	cr := &clientResponse{}
@@ -182,7 +194,28 @@ func processLogin(ctx context.Context, payload []byte, write bool) (string, stri
 		return "", "", err
 	}
 
+	if len(cr.Response.Sessions) == 0 {
+		return "", "", fmt.Errorf("no sessions found in response") //nolint:goerr113
+	}
+
 	return decodeJWT(cr.Response.Sessions[0].LastActiveToken.Jwt)
+}
+
+func getClerkURL(data *loginData) string {
+	if vars.Stage == "prod" {
+		return fmt.Sprintf(ClerkClientSessionPathProd, vars.ClerkRootURL)
+	}
+
+	return fmt.Sprintf(ClerkClientSessionPathDev, vars.ClerkRootURL, data.Token)
+}
+
+func getClerkDomain() string {
+	u, err := url.Parse(vars.ClerkRootURL)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	return u.Hostname()
 }
 
 func decodeJWT(jwt string) (string, string, error) {

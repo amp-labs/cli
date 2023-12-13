@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/amp-labs/cli/vars"
 	"github.com/spf13/cobra"
 )
 
@@ -31,10 +30,21 @@ var tokenCmd = &cobra.Command{ //nolint:gochecknoglobals
 		}
 
 		// Call out to clerk and ask for session info using the JWT token.
-		u := fmt.Sprintf(ClerkClientSessionPath, vars.ClerkRootURL, data.Token)
+		u := getClerkURL(data)
 		req, err := http.NewRequest(http.MethodGet, u, nil)
 		if err != nil {
 			log.Fatalln(err)
+		}
+
+		for k, v := range data.Cookies {
+			req.AddCookie(&http.Cookie{
+				Name:     k,
+				Value:    v,
+				Path:     "/",
+				Domain:   getClerkDomain(),
+				Secure:   true,
+				HttpOnly: true,
+			})
 		}
 
 		rsp, err := http.DefaultClient.Do(req)
