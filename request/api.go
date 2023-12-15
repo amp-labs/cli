@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/amp-labs/cli/clerk"
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/vars"
 )
@@ -44,20 +45,16 @@ type Integration struct {
 func (c *APIClient) BatchUpsertIntegrations(
 	ctx context.Context, reqParams BatchUpsertIntegrationsParams,
 ) ([]Integration, error) {
-	url := fmt.Sprintf("%s/projects/%s/integrations:batch", c.Root, c.ProjectId)
+	intURL := fmt.Sprintf("%s/projects/%s/integrations:batch", c.Root, c.ProjectId)
 
 	var integrations []Integration
 
-	var err error
-
-	if c.APIKey != nil && *c.APIKey != "" {
-		header := Header{Key: "X-Api-Key", Value: *c.APIKey}
-		_, err = c.RequestClient.Put(ctx, url, reqParams, &integrations, header) //nolint:bodyclose
-	} else {
-		// TODO: Default to token authentication and set Authorization header, instead of failing.
-		logger.Fatal("Must provide an API key in the --key flag")
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return nil, err
 	}
 
+	_, err = c.RequestClient.Put(ctx, intURL, reqParams, &integrations, auth) //nolint:bodyclose
 	if err != nil {
 		return nil, err
 	}
@@ -82,16 +79,14 @@ func (c *APIClient) GetPreSignedUploadURL(ctx context.Context, md5 string) (Sign
 
 	var err error
 
-	signed := &SignedURL{}
-
-	if c.APIKey != nil && *c.APIKey != "" {
-		header := Header{Key: "X-Api-Key", Value: *c.APIKey}
-		_, err = c.RequestClient.Get(ctx, genURL, signed, header) //nolint:bodyclose
-	} else {
-		// TODO: Default to token authentication and set Authorization header, instead of failing.
-		logger.Fatal("Must provide an API key in the --key flag")
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return SignedURL{}, err
 	}
 
+	signed := &SignedURL{}
+
+	_, err = c.RequestClient.Get(ctx, genURL, signed, auth) //nolint:bodyclose
 	if err != nil {
 		return SignedURL{}, err
 	}
@@ -100,19 +95,36 @@ func (c *APIClient) GetPreSignedUploadURL(ctx context.Context, md5 string) (Sign
 }
 
 func (c *APIClient) DeleteIntegration(ctx context.Context, integrationId string) error {
-	url := fmt.Sprintf("%s/projects/%s/integrations/%s", c.Root, c.ProjectId, integrationId)
+	delURL := fmt.Sprintf("%s/projects/%s/integrations/%s", c.Root, c.ProjectId, integrationId)
 
-	if c.APIKey != nil && *c.APIKey != "" {
-		header := Header{Key: "X-Api-Key", Value: *c.APIKey}
-		if _, err := c.RequestClient.Delete(ctx, url, header); err != nil { //nolint:bodyclose
-			return fmt.Errorf("error deleting integration: %w", err)
-		}
-
-		logger.Debugf("Deleted integration: %v", integrationId)
-	} else {
-		// TODO: Default to token authentication and set Authorization header, instead of failing.
-		logger.Fatal("Must provide an API key in the --key flag")
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return err
 	}
 
+	if _, err := c.RequestClient.Delete(ctx, delURL, auth); err != nil { //nolint:bodyclose
+		return fmt.Errorf("error deleting integration: %w", err)
+	}
+
+	logger.Debugf("Deleted integration: %v", integrationId)
+
 	return nil
+}
+
+func (c *APIClient) getAuthHeader(ctx context.Context) (Header, error) {
+	if c.APIKey != nil && *c.APIKey != "" {
+		header := Header{Key: "X-Api-Key", Value: *c.APIKey}
+
+		return header, nil
+	}
+
+	jwt, err := clerk.FetchJwt(ctx)
+	if err != nil {
+		return Header{}, err
+	}
+
+	return Header{
+		Key:   "Authorization",
+		Value: fmt.Sprintf("Bearer %s", jwt),
+	}, nil
 }

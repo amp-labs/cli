@@ -5,17 +5,17 @@ import (
 	"log"
 	"os"
 
+	"github.com/amp-labs/cli/clerk"
 	"github.com/spf13/cobra"
 )
 
 // logoutCmd represents the logout command.
 var logoutCmd = &cobra.Command{ //nolint:gochecknoglobals
-	Use:    "logout",
-	Short:  "Log out of an ampersand account",
-	Long:   "Log out of an ampersand account.",
-	Hidden: true,
+	Use:   "logout",
+	Short: "Log out of an ampersand account",
+	Long:  "Log out of an ampersand account.",
 	Run: func(cmd *cobra.Command, args []string) {
-		path := getJwtPath()
+		path := clerk.GetJwtPath()
 		_, err := os.Stat(path)
 		if err != nil {
 			if os.IsNotExist(err) {
