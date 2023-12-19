@@ -118,13 +118,24 @@ func (c *APIClient) getAuthHeader(ctx context.Context) (Header, error) {
 		return header, nil
 	}
 
-	jwt, err := clerk.FetchJwt(ctx)
+	haveJwtSession, err := clerk.HasSession()
 	if err != nil {
 		return Header{}, err
 	}
 
-	return Header{
-		Key:   "Authorization",
-		Value: fmt.Sprintf("Bearer %s", jwt),
-	}, nil
+	if haveJwtSession {
+		jwt, err := clerk.FetchJwt(ctx)
+		if err != nil {
+			return Header{}, err
+		}
+
+		return Header{
+			Key:   "Authorization",
+			Value: fmt.Sprintf("Bearer %s", jwt),
+		}, nil
+	}
+
+	logger.Fatal("no authentication method found, please either log in (amp login) or provide an API key (--key)")
+
+	panic("unreachable")
 }

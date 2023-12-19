@@ -93,7 +93,7 @@ type clientResponse struct {
 	Response response `json:"response"`
 }
 
-func GetURL(data *LoginData) string {
+func GetSessionURL(data *LoginData) string {
 	if vars.Stage == "prod" {
 		return fmt.Sprintf(ClientSessionPathProd, vars.ClerkRootURL)
 	}
@@ -101,7 +101,7 @@ func GetURL(data *LoginData) string {
 	return fmt.Sprintf(ClientSessionPathDev, vars.ClerkRootURL, data.Token)
 }
 
-func GetJwtName() string {
+func GetJwtFile() string {
 	if vars.Stage == "prod" {
 		return "amp/jwt.json"
 	}
@@ -111,7 +111,7 @@ func GetJwtName() string {
 
 // GetJwtPath returns the path to the jwt.json file where the JWT token is stored.
 func GetJwtPath() string {
-	path, err := xdg.ConfigFile(GetJwtName())
+	path, err := xdg.ConfigFile(GetJwtFile())
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -126,6 +126,27 @@ func GetClerkDomain() string {
 	}
 
 	return u.Hostname()
+}
+
+func HasSession() (bool, error) {
+	if clerkLogin != nil {
+		return true, nil
+	}
+
+	st, err := os.Stat(GetJwtPath())
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		} else {
+			return false, err
+		}
+	}
+
+	if st != nil {
+		return !st.IsDir(), nil
+	}
+
+	return false, nil
 }
 
 func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
@@ -144,7 +165,7 @@ func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 	}
 
 	// Call out to clerk and ask for session info using the JWT token.
-	u := GetURL(clerkLogin)
+	u := GetSessionURL(clerkLogin)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
