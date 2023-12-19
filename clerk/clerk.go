@@ -27,8 +27,8 @@ var HTML = `<!doctype html>` + "\n" + //nolint:gochecknoglobals
                 <![endif]-->
         </head>
         <body>
-            <h1>Successfully logged in as {{email}}</h1>
-        <h2>Please close this tab or page and return to the CLI</h2>
+            <h3>Successfully logged in as {{email}}</h3>
+            <div>Please close this tab or page and return to the CLI</div>
         </body>
 </html>`
 
