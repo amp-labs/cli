@@ -22,9 +22,6 @@ var deleteCmd = &cobra.Command{ //nolint:gochecknoglobals
 		}
 
 		apiKey := flags.GetAPIKey()
-		if apiKey == "" {
-			logger.Fatal("Must provide an API key in the --key flag or via the AMP_API_KEY environment variable")
-		}
 
 		err := request.NewAPIClient(projectId, &apiKey).
 			DeleteIntegration(cmd.Context(), integrationId)

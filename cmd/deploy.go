@@ -29,9 +29,6 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 		}
 
 		apiKey := viper.GetString("key")
-		if apiKey == "" {
-			logger.Fatal("Must provide an API key in the --key flag or via the AMP_API_KEY environment variable")
-		}
 
 		path := args[0]
 		workingDir := utils.GetWorkingDir()
