@@ -135,7 +135,7 @@ func (c *APIClient) getAuthHeader(ctx context.Context) (Header, error) {
 		}, nil
 	}
 
-	logger.Fatal("no authentication method found, please either log in (amp login) or provide an API key (--key)")
+	logger.Fatal("no authentication method found, please run 'amp login' or provide an API key through the key flag")
 
 	panic("unreachable")
 }
