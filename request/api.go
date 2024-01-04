@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"os"
 
 	"github.com/amp-labs/cli/clerk"
 	"github.com/amp-labs/cli/logger"
@@ -26,8 +27,14 @@ func NewAPIClient(projectId string, key *string) *APIClient {
 		logger.Fatal("Must provide a project ID in the --project flag")
 	}
 
+	// For testing reasons, sometimes it's useful to override the API endpoint
+	rootURL, ok := os.LookupEnv("AMP_API_URL")
+	if !ok {
+		rootURL = vars.ApiURL
+	}
+
 	return &APIClient{
-		Root:          fmt.Sprintf("%s/%s", vars.ApiURL, API_VERSION),
+		Root:          fmt.Sprintf("%s/%s", rootURL, API_VERSION),
 		ProjectId:     projectId,
 		APIKey:        key,
 		RequestClient: NewRequestClient(),
