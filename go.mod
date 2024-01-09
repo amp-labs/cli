@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/adrg/xdg v0.4.0
 	github.com/alexkappa/mustache v1.0.0
-	github.com/clerkinc/clerk-sdk-go v1.48.4
+	github.com/clerkinc/clerk-sdk-go v1.49.0
 	github.com/imdario/mergo v0.3.15
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2

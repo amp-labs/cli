@@ -3,8 +3,8 @@ github.com/adrg/xdg v0.4.0/go.mod h1:N6ag73EX4wyxeaoeHctc1mas01KZgsj5tYiAIwqJE/E
 github.com/alexkappa/mustache v1.0.0 h1:GeF7AKKpKKVq8emIwYRQPsKPDWSGYQGWWSsddge62M4=
 github.com/alexkappa/mustache v1.0.0/go.mod h1:6v0WNoCZEQ8K5OZAv82ScIARg2bDqFD+Jl0LWxnApas=
 github.com/brianvoe/gofakeit/v6 v6.19.0/go.mod h1:Ow6qC71xtwm79anlwKRlWZW6zVq9D2XHE4QSSMP/rU8=
-github.com/clerkinc/clerk-sdk-go v1.48.4 h1:Cq12M+Ep1ip06X7uNkk714dqJxzgJURLvEDuMUDprEw=
-github.com/clerkinc/clerk-sdk-go v1.48.4/go.mod h1:pejhMTTDAuw5aBpiHBEOOOHMAsxNfPvKfM5qexFJYlc=
+github.com/clerkinc/clerk-sdk-go v1.49.0 h1:tJLIAx3qfP2cNQJ/iPq6OF1BSB0NzI3alcOuEueexoA=
+github.com/clerkinc/clerk-sdk-go v1.49.0/go.mod h1:pejhMTTDAuw5aBpiHBEOOOHMAsxNfPvKfM5qexFJYlc=
 github.com/cpuguy83/go-md2man/v2 v2.0.3/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
