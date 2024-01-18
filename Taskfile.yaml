@@ -44,8 +44,8 @@ tasks:
         cmds:
             - task: do_build
               vars:
-                  CLERK_URL: https://welcomed-snapper-45.clerk.accounts.dev
-                  LOGIN_URL: https://ampersand-cli-auth-stag.web.app
+                  CLERK_URL: https://clerk.withampersand.com
+                  LOGIN_URL: https://staging-cli-signin.withampersand.com
                   API_URL: https://staging-api.withampersand.com
                   STAGE: staging
 
