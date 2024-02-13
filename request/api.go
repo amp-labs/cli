@@ -76,7 +76,7 @@ type SignedURL struct {
 }
 
 func (c *APIClient) GetPreSignedUploadURL(ctx context.Context, md5 string) (SignedURL, error) {
-	genURL := fmt.Sprintf("%s/generate-upload-url", c.Root)
+	genURL := c.Root + "/generate-upload-url"
 
 	if len(md5) > 0 {
 		query := url.Values{}
@@ -138,7 +138,7 @@ func (c *APIClient) getAuthHeader(ctx context.Context) (Header, error) {
 
 		return Header{
 			Key:   "Authorization",
-			Value: fmt.Sprintf("Bearer %s", jwt),
+			Value: "Bearer " + jwt,
 		}, nil
 	}
 
