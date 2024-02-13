@@ -3,6 +3,7 @@ package clerk
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -216,7 +217,7 @@ func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 	}
 
 	if len(cr.Response.Sessions) == 0 {
-		return "", fmt.Errorf("no sessions found in response") //nolint:goerr113
+		return "", errors.New("no sessions found in response")
 	}
 
 	jwt := cr.Response.Sessions[0].LastActiveToken.Jwt
@@ -240,7 +241,7 @@ func DecodeJWT(jwt string) (string, string, error) {
 	// Grab the email address from the claims.
 	emailStr, ok := claims.Extra["email"].(string)
 	if !ok {
-		return "", "", fmt.Errorf("couldn't find email address in claims") //nolint:goerr113
+		return "", "", errors.New("couldn't find email address in claims")
 	}
 
 	ht, err := getHTML(emailStr)
