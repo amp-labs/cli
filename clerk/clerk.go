@@ -159,6 +159,8 @@ func HasSession() (bool, error) {
 	return false, nil
 }
 
+var ErrNoSessions = errors.New("no sessions found in response")
+
 func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 	if clerkLogin == nil {
 		contents, err := os.ReadFile(GetJwtPath())
@@ -217,13 +219,15 @@ func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 	}
 
 	if len(cr.Response.Sessions) == 0 {
-		return "", errors.New("no sessions found in response")
+		return "", ErrNoSessions
 	}
 
 	jwt := cr.Response.Sessions[0].LastActiveToken.Jwt
 
 	return jwt, nil
 }
+
+var ErrMissingEmail = errors.New("couldn't find email address in claims")
 
 func DecodeJWT(jwt string) (string, string, error) {
 	// Using a dummy value here because DecodeToken doesn't actually use the secret.
@@ -241,7 +245,7 @@ func DecodeJWT(jwt string) (string, string, error) {
 	// Grab the email address from the claims.
 	emailStr, ok := claims.Extra["email"].(string)
 	if !ok {
-		return "", "", errors.New("couldn't find email address in claims")
+		return "", "", ErrMissingEmail
 	}
 
 	ht, err := getHTML(emailStr)
