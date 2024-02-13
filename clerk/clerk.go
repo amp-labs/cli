@@ -93,12 +93,21 @@ type clientResponse struct {
 	Response response `json:"response"`
 }
 
-func GetSessionURL(data *LoginData) string {
-	if vars.Stage == "prod" {
-		return fmt.Sprintf(ClientSessionPathProd, vars.ClerkRootURL)
+func GetClerkRootURL() string {
+	clerkRoot, ok := os.LookupEnv("AMP_CLERK_URL_OVERRIDE")
+	if ok {
+		return clerkRoot
 	}
 
-	return fmt.Sprintf(ClientSessionPathDev, vars.ClerkRootURL, data.Token)
+	return vars.ClerkRootURL
+}
+
+func GetSessionURL(data *LoginData) string {
+	if vars.Stage == "prod" {
+		return fmt.Sprintf(ClientSessionPathProd, GetClerkRootURL())
+	}
+
+	return fmt.Sprintf(ClientSessionPathDev, GetClerkRootURL(), data.Token)
 }
 
 func GetJwtFile() string {
@@ -120,7 +129,7 @@ func GetJwtPath() string {
 }
 
 func GetClerkDomain() string {
-	u, err := url.Parse(vars.ClerkRootURL)
+	u, err := url.Parse(GetClerkRootURL())
 	if err != nil {
 		log.Fatalln(err)
 	}

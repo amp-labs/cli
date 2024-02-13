@@ -54,7 +54,13 @@ func (h *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 
 		return
 	case request.URL.Path == "/" && request.Method == "GET":
-		writer.Header().Set("Location", vars.LoginURL)
+		loginURL, ok := os.LookupEnv("AMP_LOGIN_URL_OVERRIDE")
+		if ok {
+			writer.Header().Set("Location", loginURL)
+		} else {
+			writer.Header().Set("Location", vars.LoginURL)
+		}
+
 		writer.WriteHeader(http.StatusTemporaryRedirect)
 	default:
 		writer.WriteHeader(http.StatusNotFound)
