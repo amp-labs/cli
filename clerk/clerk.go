@@ -173,19 +173,20 @@ func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 		return "", fmt.Errorf("error creating request: %w", err)
 	}
 
-	for k, v := range clerkLogin.Cookies {
+	for cookieName, cookieValue := range clerkLogin.Cookies {
 		// This is doing the same thing that net/http does (filtering out
 		// invalid characters), but it's doing it in a way that's not
 		// going to log a noisy error message.
 		var sb strings.Builder
-		for _, r := range v {
-			if validCookieValueRune(r) {
-				sb.WriteRune(r)
+
+		for _, char := range cookieValue {
+			if validCookieValueRune(char) {
+				sb.WriteRune(char)
 			}
 		}
 
 		req.AddCookie(&http.Cookie{
-			Name:     k,
+			Name:     cookieName,
 			Value:    sb.String(),
 			Path:     "/",
 			Domain:   GetClerkDomain(),
