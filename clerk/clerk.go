@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/adrg/xdg"
 	"github.com/alexkappa/mustache"
@@ -173,9 +174,19 @@ func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 	}
 
 	for k, v := range clerkLogin.Cookies {
+		// This is doing the same thing that net/http does (filtering out
+		// invalid characters), but it's doing it in a way that's not
+		// going to log a noisy error message.
+		var sb strings.Builder
+		for _, r := range v {
+			if validCookieValueRune(r) {
+				sb.WriteRune(r)
+			}
+		}
+
 		req.AddCookie(&http.Cookie{
 			Name:     k,
-			Value:    v,
+			Value:    sb.String(),
 			Path:     "/",
 			Domain:   GetClerkDomain(),
 			Secure:   true,
@@ -258,4 +269,8 @@ func getHTML(emailStr string) (string, error) {
 	}
 
 	return ht, nil
+}
+
+func validCookieValueRune(r rune) bool {
+	return 0x20 <= r && r < 0x7f && r != '"' && r != ';' && r != '\\'
 }
