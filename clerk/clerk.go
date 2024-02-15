@@ -177,17 +177,21 @@ func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 		// This is doing the same thing that net/http does (filtering out
 		// invalid characters), but it's doing it in a way that's not
 		// going to log a noisy error message.
-		var sb strings.Builder
+		var builder strings.Builder
 
+		// See the function http.sanitizeCookieValue for where this
+		// logic comes from. It's not a verbatim copy, although
+		// validCookieValueRune is essentially identical to
+		// validCookieValueByte.
 		for _, char := range cookieValue {
 			if validCookieValueRune(char) {
-				sb.WriteRune(char)
+				builder.WriteRune(char)
 			}
 		}
 
 		req.AddCookie(&http.Cookie{
 			Name:     cookieName,
-			Value:    sb.String(),
+			Value:    builder.String(),
 			Path:     "/",
 			Domain:   GetClerkDomain(),
 			Secure:   true,
