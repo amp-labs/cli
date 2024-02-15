@@ -3,6 +3,7 @@ package clerk
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -94,12 +95,21 @@ type clientResponse struct {
 	Response response `json:"response"`
 }
 
-func GetSessionURL(data *LoginData) string {
-	if vars.Stage == "prod" {
-		return fmt.Sprintf(ClientSessionPathProd, vars.ClerkRootURL)
+func GetClerkRootURL() string {
+	clerkRoot, ok := os.LookupEnv("AMP_CLERK_URL_OVERRIDE")
+	if ok {
+		return clerkRoot
 	}
 
-	return fmt.Sprintf(ClientSessionPathDev, vars.ClerkRootURL, data.Token)
+	return vars.ClerkRootURL
+}
+
+func GetSessionURL(data *LoginData) string {
+	if vars.Stage == "prod" {
+		return fmt.Sprintf(ClientSessionPathProd, GetClerkRootURL())
+	}
+
+	return fmt.Sprintf(ClientSessionPathDev, GetClerkRootURL(), data.Token)
 }
 
 func GetJwtFile() string {
@@ -121,7 +131,7 @@ func GetJwtPath() string {
 }
 
 func GetClerkDomain() string {
-	u, err := url.Parse(vars.ClerkRootURL)
+	u, err := url.Parse(GetClerkRootURL())
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -149,6 +159,8 @@ func HasSession() (bool, error) {
 
 	return false, nil
 }
+
+var ErrNoSessions = errors.New("no sessions found in response")
 
 func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 	if clerkLogin == nil {
@@ -223,13 +235,15 @@ func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 	}
 
 	if len(cr.Response.Sessions) == 0 {
-		return "", fmt.Errorf("no sessions found in response") //nolint:goerr113
+		return "", ErrNoSessions
 	}
 
 	jwt := cr.Response.Sessions[0].LastActiveToken.Jwt
 
 	return jwt, nil
 }
+
+var ErrMissingEmail = errors.New("couldn't find email address in claims")
 
 func DecodeJWT(jwt string) (string, string, error) {
 	// Using a dummy value here because DecodeToken doesn't actually use the secret.
@@ -247,7 +261,7 @@ func DecodeJWT(jwt string) (string, string, error) {
 	// Grab the email address from the claims.
 	emailStr, ok := claims.Extra["email"].(string)
 	if !ok {
-		return "", "", fmt.Errorf("couldn't find email address in claims") //nolint:goerr113
+		return "", "", ErrMissingEmail
 	}
 
 	ht, err := getHTML(emailStr)
