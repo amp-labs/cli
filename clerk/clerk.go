@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/adrg/xdg"
 	"github.com/alexkappa/mustache"
@@ -172,10 +173,25 @@ func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 		return "", fmt.Errorf("error creating request: %w", err)
 	}
 
-	for k, v := range clerkLogin.Cookies {
+	for cookieName, cookieValue := range clerkLogin.Cookies {
+		// This is doing the same thing that net/http does (filtering out
+		// invalid characters), but it's doing it in a way that's not
+		// going to log a noisy error message.
+		var builder strings.Builder
+
+		// See the function http.sanitizeCookieValue for where this
+		// logic comes from. It's not a verbatim copy, although
+		// validCookieValueRune is essentially identical to
+		// validCookieValueByte.
+		for _, char := range cookieValue {
+			if validCookieValueRune(char) {
+				builder.WriteRune(char)
+			}
+		}
+
 		req.AddCookie(&http.Cookie{
-			Name:     k,
-			Value:    v,
+			Name:     cookieName,
+			Value:    builder.String(),
 			Path:     "/",
 			Domain:   GetClerkDomain(),
 			Secure:   true,
@@ -258,4 +274,8 @@ func getHTML(emailStr string) (string, error) {
 	}
 
 	return ht, nil
+}
+
+func validCookieValueRune(r rune) bool {
+	return 0x20 <= r && r < 0x7f && r != '"' && r != ';' && r != '\\'
 }
