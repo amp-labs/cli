@@ -19,6 +19,7 @@ import (
 
 var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Use:   "deploy <sourceFolderPath>",
+	Aliases: []string{"deploy:integration"},
 	Short: "Deploy amp.yaml file",
 	Long:  "Deploy changes to amp.yaml file.",
 	Args:  cobra.ExactArgs(1),
