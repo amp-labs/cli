@@ -1,4 +1,4 @@
-##AMPERSAND CLI
+## Ampersand CLI
 
 ### Local development
 
