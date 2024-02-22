@@ -3,12 +3,14 @@ package clerk
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/adrg/xdg"
 	"github.com/alexkappa/mustache"
@@ -93,12 +95,21 @@ type clientResponse struct {
 	Response response `json:"response"`
 }
 
-func GetSessionURL(data *LoginData) string {
-	if vars.Stage == "prod" {
-		return fmt.Sprintf(ClientSessionPathProd, vars.ClerkRootURL)
+func GetClerkRootURL() string {
+	clerkRoot, ok := os.LookupEnv("AMP_CLERK_URL_OVERRIDE")
+	if ok {
+		return clerkRoot
 	}
 
-	return fmt.Sprintf(ClientSessionPathDev, vars.ClerkRootURL, data.Token)
+	return vars.ClerkRootURL
+}
+
+func GetSessionURL(data *LoginData) string {
+	if vars.Stage == "prod" {
+		return fmt.Sprintf(ClientSessionPathProd, GetClerkRootURL())
+	}
+
+	return fmt.Sprintf(ClientSessionPathDev, GetClerkRootURL(), data.Token)
 }
 
 func GetJwtFile() string {
@@ -120,7 +131,7 @@ func GetJwtPath() string {
 }
 
 func GetClerkDomain() string {
-	u, err := url.Parse(vars.ClerkRootURL)
+	u, err := url.Parse(GetClerkRootURL())
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -149,6 +160,8 @@ func HasSession() (bool, error) {
 	return false, nil
 }
 
+var ErrNoSessions = errors.New("no sessions found in response")
+
 func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 	if clerkLogin == nil {
 		contents, err := os.ReadFile(GetJwtPath())
@@ -172,10 +185,25 @@ func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 		return "", fmt.Errorf("error creating request: %w", err)
 	}
 
-	for k, v := range clerkLogin.Cookies {
+	for cookieName, cookieValue := range clerkLogin.Cookies {
+		// This is doing the same thing that net/http does (filtering out
+		// invalid characters), but it's doing it in a way that's not
+		// going to log a noisy error message.
+		var builder strings.Builder
+
+		// See the function http.sanitizeCookieValue for where this
+		// logic comes from. It's not a verbatim copy, although
+		// validCookieValueRune is essentially identical to
+		// validCookieValueByte.
+		for _, char := range cookieValue {
+			if validCookieValueRune(char) {
+				builder.WriteRune(char)
+			}
+		}
+
 		req.AddCookie(&http.Cookie{
-			Name:     k,
-			Value:    v,
+			Name:     cookieName,
+			Value:    builder.String(),
 			Path:     "/",
 			Domain:   GetClerkDomain(),
 			Secure:   true,
@@ -207,13 +235,15 @@ func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 	}
 
 	if len(cr.Response.Sessions) == 0 {
-		return "", fmt.Errorf("no sessions found in response") //nolint:goerr113
+		return "", ErrNoSessions
 	}
 
 	jwt := cr.Response.Sessions[0].LastActiveToken.Jwt
 
 	return jwt, nil
 }
+
+var ErrMissingEmail = errors.New("couldn't find email address in claims")
 
 func DecodeJWT(jwt string) (string, string, error) {
 	// Using a dummy value here because DecodeToken doesn't actually use the secret.
@@ -231,7 +261,7 @@ func DecodeJWT(jwt string) (string, string, error) {
 	// Grab the email address from the claims.
 	emailStr, ok := claims.Extra["email"].(string)
 	if !ok {
-		return "", "", fmt.Errorf("couldn't find email address in claims") //nolint:goerr113
+		return "", "", ErrMissingEmail
 	}
 
 	ht, err := getHTML(emailStr)
@@ -258,4 +288,8 @@ func getHTML(emailStr string) (string, error) {
 	}
 
 	return ht, nil
+}
+
+func validCookieValueRune(r rune) bool {
+	return 0x20 <= r && r < 0x7f && r != '"' && r != ';' && r != '\\'
 }
