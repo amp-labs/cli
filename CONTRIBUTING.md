@@ -32,6 +32,14 @@ Now you can run `lamp` commands from anywhere on your computer, and it'll use yo
 
 If this doesn't work, then you'll need to add `/usr/local/bin` to your PATH variable.
 
+You should also install the following linting tools by following the linked instructions:
+
+- https://golangci-lint.run/usage/install/#local-installation
+- https://github.com/daixiang0/gci?tab=readme-ov-file#installation
+- https://github.com/bombsimon/wsl?tab=readme-ov-file#installation
+
+These will allow you to run `task lint` (to lint your code) and `task fix` (to fix linting errors automatically).
+
 ### Steps for setup on Windows Operating System.
 
 1. Download Taskfile by following the instructions at: https://taskfile.dev/installation/.
@@ -52,7 +60,7 @@ If this doesn't work, then you'll need to add `/usr/local/bin` to your PATH vari
 
 ### Ongoing Development
 
-Whenever you make code changes, and want to test it locally, run 
+Whenever you make code changes, and want to test it locally, run
 
 ```
 task build
