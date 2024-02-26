@@ -11,7 +11,7 @@ var deleteInstallationCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Use:   "delete:installation <integrationId> <installationId>",
 	Short: "Delete installation",
 	Long:  "Delete installation",
-	Args:  cobra.ExactArgs(2),
+	Args:  cobra.ExactArgs(2), //nolint:gomnd
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Debug("Deleting installation")
 
