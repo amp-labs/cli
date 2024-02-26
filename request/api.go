@@ -132,7 +132,7 @@ func (c *APIClient) DeleteInstallation(ctx context.Context, integrationId string
 		return fmt.Errorf("error deleting installation: %w", err)
 	}
 
-	logger.Debugf("Deleted installation: %v", integrationId)
+	logger.Debugf("Deleted installation: %v", installationId)
 
 	return nil
 }
