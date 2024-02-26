@@ -8,7 +8,7 @@ import (
 )
 
 var deleteCmd = &cobra.Command{ //nolint:gochecknoglobals
-	Use:   "delete-integration <integrationId>",
+	Use:   "delete:integration <integrationId>",
 	Short: "Delete integration",
 	Long:  "Delete integration",
 	Args:  cobra.ExactArgs(1),
