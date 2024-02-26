@@ -118,6 +118,25 @@ func (c *APIClient) DeleteIntegration(ctx context.Context, integrationId string)
 	return nil
 }
 
+func (c *APIClient) DeleteInstallation(ctx context.Context, integrationId string, installationId string) error {
+	delURL := fmt.Sprintf(
+		"%s/projects/%s/integrations/%s/installations/%s", c.Root, c.ProjectId, integrationId, installationId,
+	)
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return err
+	}
+
+	if _, err := c.RequestClient.Delete(ctx, delURL, auth); err != nil { //nolint:bodyclose
+		return fmt.Errorf("error deleting installation: %w", err)
+	}
+
+	logger.Debugf("Deleted installation: %v", installationId)
+
+	return nil
+}
+
 func (c *APIClient) getAuthHeader(ctx context.Context) (Header, error) {
 	if c.APIKey != nil && *c.APIKey != "" {
 		header := Header{Key: "X-Api-Key", Value: *c.APIKey}
