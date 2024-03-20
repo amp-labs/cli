@@ -31,11 +31,12 @@ func NewRequestClient() *RequestClient {
 	return &RequestClient{
 		Client: http.DefaultClient,
 		DefaultHeaders: []Header{
-			{Key: "X-Cli-Version", Value: versionInfo.Version},
-			{Key: "X-Cli-Commit", Value: versionInfo.CommitID},
-			{Key: "X-Cli-Branch", Value: versionInfo.Branch},
-			{Key: "X-Cli-Build-Date", Value: versionInfo.BuildDate},
-			{Key: "X-Cli-Stage", Value: string(versionInfo.Stage)},
+			{Key: "X-Amp-Client-Application", Value: "cli"},
+			{Key: "X-Amp-Client-Version", Value: versionInfo.Version},
+			{Key: "X-Amp-Client-Commit", Value: versionInfo.CommitID},
+			{Key: "X-Amp-Client-Branch", Value: versionInfo.Branch},
+			{Key: "X-Amp-Client-Build-Date", Value: versionInfo.BuildDate},
+			{Key: "X-Amp-Client-Stage", Value: string(versionInfo.Stage)},
 		},
 	}
 }
