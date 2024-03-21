@@ -14,6 +14,8 @@ import (
 	"github.com/amp-labs/cli/utils"
 )
 
+const clientName = "amp-cli"
+
 type RequestClient struct {
 	Client         *http.Client
 	DefaultHeaders []Header
@@ -28,16 +30,26 @@ type Header struct {
 func NewRequestClient() *RequestClient {
 	versionInfo := utils.GetVersionInformation()
 
+	headers := []Header{
+		{Key: "X-Amp-Client", Value: clientName},
+		{Key: "X-Amp-Client-Version", Value: versionInfo.Version},
+		{Key: "X-Amp-Client-Commit", Value: versionInfo.CommitID},
+		{Key: "X-Amp-Client-Branch", Value: versionInfo.Branch},
+		{Key: "X-Amp-Client-Build-Date", Value: versionInfo.BuildDate},
+	}
+
+	if versionInfo.Stage != utils.Prod {
+		// We really only care if these are non-prod clients. Otherwise
+		// it's safe to just assume prod.
+		headers = append(headers, Header{
+			Key:   "X-Amp-Client-Stage",
+			Value: string(versionInfo.Stage),
+		})
+	}
+
 	return &RequestClient{
-		Client: http.DefaultClient,
-		DefaultHeaders: []Header{
-			{Key: "X-Amp-Client-Application", Value: "cli"},
-			{Key: "X-Amp-Client-Version", Value: versionInfo.Version},
-			{Key: "X-Amp-Client-Commit", Value: versionInfo.CommitID},
-			{Key: "X-Amp-Client-Branch", Value: versionInfo.Branch},
-			{Key: "X-Amp-Client-Build-Date", Value: versionInfo.BuildDate},
-			{Key: "X-Amp-Client-Stage", Value: string(versionInfo.Stage)},
-		},
+		Client:         http.DefaultClient,
+		DefaultHeaders: headers,
 	}
 }
 
