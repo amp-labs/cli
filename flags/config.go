@@ -30,6 +30,14 @@ func Init(rootCmd *cobra.Command) error {
 		panic(err)
 	}
 
+	if err := viper.BindEnv("project", "AMP_PROJECT_ID"); err != nil {
+		panic(err)
+	}
+
+	if err := viper.BindEnv("debug", "AMP_DEBUG"); err != nil {
+		panic(err)
+	}
+
 	return nil
 }
 

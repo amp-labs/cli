@@ -3,75 +3,120 @@ package files
 import (
 	"archive/zip"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
 )
 
-const mode = 420
+const (
+	mode     = 420
+	yamlName = "amp.yaml"
+)
+
+func chdir(dir string, f func() error) error {
+	wd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("error getting current working directory: %w", err)
+	}
+
+	err = os.Chdir(dir)
+	if err != nil {
+		return fmt.Errorf("error changing directory: %w", err)
+	}
+
+	var errs []error
+
+	err = f()
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	err = os.Chdir(wd)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("error changing directory: %w", err))
+	}
+
+	if len(errs) == 1 {
+		return errs[0]
+	} else if len(errs) > 1 {
+		return errors.Join(errs...)
+	}
+
+	return nil
+}
 
 // Zip creates a zip archive of the given directory in-memory.
-func Zip(sourceDir string) ([]byte, error) { // nolint:funlen,cyclop
+func Zip(source string) ([]byte, error) { // nolint:funlen,cyclop
+	st, err := os.Stat(source)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("source %q does not exist: %w", source, err)
+		} else {
+			return nil, fmt.Errorf("stat %q: %w", source, err)
+		}
+	}
+
+	if st == nil {
+		return nil, fmt.Errorf("source %q does not exist: %w", source, err)
+	}
+
+	var sourceDir string
+	if st.IsDir() {
+		sourceDir = source
+	} else {
+		sourceDir = filepath.Dir(source)
+	}
+
 	var out bytes.Buffer
-	writer := zip.NewWriter(&out)
 
-	err := filepath.WalkDir(sourceDir, func(path string, dir fs.DirEntry, err error) error {
+	chdirErr := chdir(sourceDir, func() error {
+		yamlStat, err := os.Stat(yamlName)
 		if err != nil {
-			return fmt.Errorf("error zipping: %w", err)
+			if os.IsNotExist(err) {
+				return fmt.Errorf("%s does not exist in %q: %w", yamlName, sourceDir, err)
+			} else {
+				return fmt.Errorf("stat %q: %w", yamlName, err)
+			}
 		}
 
-		info, err := dir.Info()
-		if err != nil {
-			return fmt.Errorf("error getting file info while zipping: %w", err)
-		}
+		writer := zip.NewWriter(&out)
 
-		if info.IsDir() {
-			return nil
-		}
-
-		header, err := zip.FileInfoHeader(info)
+		header, err := zip.FileInfoHeader(yamlStat)
 		if err != nil {
 			return fmt.Errorf("error adding file header while zipping: %w", err)
 		}
 
 		header.Method = zip.Deflate
 		header.SetMode(mode)
-
-		header.Name, err = filepath.Rel(sourceDir, path)
-		if err != nil {
-			return fmt.Errorf("error adding file header while zipping: %w", err)
-		}
+		header.Name = yamlName
 
 		headerWriter, err := writer.CreateHeader(header)
 		if err != nil {
 			return fmt.Errorf("error adding file header while zipping: %w", err)
 		}
 
-		file, err := os.Open(path)
+		contents, err := os.ReadFile(yamlName)
 		if err != nil {
-			return fmt.Errorf("error opening file while zipping: %w", err)
+			if err != nil {
+				return fmt.Errorf("error opening %s file while zipping: %w", yamlName, err)
+			}
 		}
 
-		_, err = io.Copy(headerWriter, file)
+		_, err = io.Copy(headerWriter, bytes.NewReader(contents))
 		if err != nil {
 			return fmt.Errorf("error copying file for zipping: %w", err)
 		}
 
-		err = file.Close()
-		if err != nil {
-			return fmt.Errorf("error closing file while zipping: %w", err)
+		if err := writer.Close(); err != nil {
+			return fmt.Errorf("error closing zip writer: %w", err)
 		}
 
 		return nil
 	})
-	if err != nil {
-		return nil, fmt.Errorf("unable to zip directory: %w", err)
-	}
-
-	if err := writer.Close(); err != nil {
-		return nil, fmt.Errorf("error closing zip writer: %w", err)
+	if chdirErr != nil {
+		return nil, err
 	}
 
 	return out.Bytes(), nil

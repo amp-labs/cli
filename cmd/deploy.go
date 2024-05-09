@@ -4,7 +4,6 @@ import (
 	"crypto/md5" //nolint:gosec
 	"encoding/base64"
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/amp-labs/cli/files"
@@ -12,13 +11,12 @@ import (
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/request"
 	"github.com/amp-labs/cli/storage"
-	"github.com/amp-labs/cli/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
-	Use:     "deploy <sourceFolderPath>",
+	Use:     "deploy <ampYamlPath>",
 	Aliases: []string{"deploy:integration"},
 	Short:   "Deploy amp.yaml file",
 	Long:    "Deploy changes to amp.yaml file.",
@@ -26,20 +24,12 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Run: func(cmd *cobra.Command, args []string) {
 		projectId := flags.GetProjectId()
 		if projectId == "" {
-			logger.Fatal("Must provide a project ID in the --project flag")
+			logger.Fatal("Must provide a project ID using the --project flag or the AMP_PROJECT_ID environment variable.")
 		}
 
 		apiKey := viper.GetString("key")
 
-		path := args[0]
-		workingDir := utils.GetWorkingDir()
-		if workingDir == "" {
-			logger.Fatal("Unable to get working directory")
-		}
-
-		folderName := filepath.Join(workingDir, path)
-
-		zippedData, err := files.Zip(folderName)
+		zippedData, err := files.Zip(args[0])
 		if err != nil {
 			logger.FatalErr("Unable to zip folder", err)
 		}
