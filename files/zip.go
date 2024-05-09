@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	mode     = 420
-	yamlName = "amp.yaml"
+	mode        = 420
+	yamlName    = "amp.yaml"
+	yamlAltName = "amp.yml"
 )
 
 func chdir(dir string, function func() error) error {
@@ -66,6 +67,11 @@ func Zip(source string) ([]byte, error) { // nolint:funlen,cyclop
 	if info.IsDir() {
 		sourceDir = source
 	} else {
+		name := filepath.Base(source)
+		if name != yamlName && name != yamlAltName {
+			return nil, fmt.Errorf("source %q is not a directory nor an %q file", source, yamlName)
+		}
+
 		sourceDir = filepath.Dir(source)
 	}
 
@@ -75,7 +81,14 @@ func Zip(source string) ([]byte, error) { // nolint:funlen,cyclop
 		yamlStat, err := os.Stat(yamlName)
 		if err != nil {
 			if os.IsNotExist(err) {
-				return fmt.Errorf("%s does not exist in %q: %w", yamlName, sourceDir, err)
+				yamlStat, err = os.Stat(yamlAltName)
+				if err != nil {
+					if os.IsNotExist(err) {
+						return fmt.Errorf("%s does not exist in %q: %w", yamlName, sourceDir, err)
+					} else {
+						return fmt.Errorf("stat %q: %w", yamlAltName, err)
+					}
+				}
 			} else {
 				return fmt.Errorf("stat %q: %w", yamlName, err)
 			}
@@ -97,10 +110,10 @@ func Zip(source string) ([]byte, error) { // nolint:funlen,cyclop
 			return fmt.Errorf("error adding file header while zipping: %w", err)
 		}
 
-		contents, err := os.ReadFile(yamlName)
+		contents, err := os.ReadFile(yamlStat.Name())
 		if err != nil {
 			if err != nil {
-				return fmt.Errorf("error opening %s file while zipping: %w", yamlName, err)
+				return fmt.Errorf("error opening %s file while zipping: %w", yamlStat.Name(), err)
 			}
 		}
 
