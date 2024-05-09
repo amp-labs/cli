@@ -15,8 +15,8 @@ const (
 	yamlName = "amp.yaml"
 )
 
-func chdir(dir string, f func() error) error {
-	wd, err := os.Getwd()
+func chdir(dir string, function func() error) error {
+	origDir, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("error getting current working directory: %w", err)
 	}
@@ -28,12 +28,12 @@ func chdir(dir string, f func() error) error {
 
 	var errs []error
 
-	err = f()
+	err = function()
 	if err != nil {
 		errs = append(errs, err)
 	}
 
-	err = os.Chdir(wd)
+	err = os.Chdir(origDir)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("error changing directory: %w", err))
 	}
@@ -49,7 +49,7 @@ func chdir(dir string, f func() error) error {
 
 // Zip creates a zip archive of the given directory in-memory.
 func Zip(source string) ([]byte, error) { // nolint:funlen,cyclop
-	st, err := os.Stat(source)
+	info, err := os.Stat(source)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, fmt.Errorf("source %q does not exist: %w", source, err)
@@ -58,12 +58,12 @@ func Zip(source string) ([]byte, error) { // nolint:funlen,cyclop
 		}
 	}
 
-	if st == nil {
+	if info == nil {
 		return nil, fmt.Errorf("source %q does not exist: %w", source, err)
 	}
 
 	var sourceDir string
-	if st.IsDir() {
+	if info.IsDir() {
 		sourceDir = source
 	} else {
 		sourceDir = filepath.Dir(source)
