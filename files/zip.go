@@ -129,7 +129,7 @@ func Zip(source string) ([]byte, error) { // nolint:funlen,cyclop
 		return nil
 	})
 	if chdirErr != nil {
-		return nil, err
+		return nil, chdirErr
 	}
 
 	return out.Bytes(), nil
