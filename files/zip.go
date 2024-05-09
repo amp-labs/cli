@@ -117,6 +117,15 @@ func Zip(source string) ([]byte, error) { // nolint:funlen,cyclop
 			}
 		}
 
+		manifest, err := ParseManifest(contents)
+		if err != nil {
+			return fmt.Errorf("error parsing manifest file %q: %w", yamlStat.Name(), err)
+		}
+
+		if err := ValidateManifest(manifest); err != nil {
+			return fmt.Errorf("error validating manifest file %q: %w", yamlStat.Name(), err)
+		}
+
 		_, err = io.Copy(headerWriter, bytes.NewReader(contents))
 		if err != nil {
 			return fmt.Errorf("error copying file for zipping: %w", err)

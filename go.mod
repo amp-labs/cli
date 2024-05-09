@@ -11,6 +11,7 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	github.com/tidwall/pretty v1.2.1
+	sigs.k8s.io/yaml v1.4.0
 )
 
 require (
