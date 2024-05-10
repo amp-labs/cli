@@ -1,11 +1,16 @@
 package files
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/amp-labs/cli/openapi"
 	"sigs.k8s.io/yaml"
 )
+
+const manifestVersion = "1.0.0"
+
+var ErrBadManifest = errors.New("invalid manifest")
 
 func ParseManifest(yamlData []byte) (*openapi.Manifest, error) {
 	manifest := &openapi.Manifest{}
@@ -18,12 +23,14 @@ func ParseManifest(yamlData []byte) (*openapi.Manifest, error) {
 }
 
 func ValidateManifest(manifest *openapi.Manifest) error {
-	if manifest.SpecVersion != "1.0.0" {
-		return fmt.Errorf("invalid spec version: %s (only 1.0.0 is supported)", manifest.SpecVersion)
+	if manifest.SpecVersion != manifestVersion {
+		return fmt.Errorf("%w: invalid spec version: %s (only %s is supported)",
+			ErrBadManifest, manifest.SpecVersion, manifestVersion)
 	}
 
 	if len(manifest.Integrations) == 0 {
-		return fmt.Errorf("no integrations found in manifest, please define at least one integration")
+		return fmt.Errorf("%w: no integrations found in manifest, please define at least one integration",
+			ErrBadManifest)
 	}
 
 	return nil
