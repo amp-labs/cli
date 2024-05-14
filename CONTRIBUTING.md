@@ -67,3 +67,7 @@ task build
 ```
 
 Now you can run `lamp` commands from anywhere on your computer and it'll use your latest code!
+
+## Trouble shooitng
+
+If you encounter issues with `lamp login` try `lamp logout` and login again. 
