@@ -125,6 +125,15 @@ func importYaml(writer *zip.Writer) error {
 		return fmt.Errorf("error opening %s file while zipping: %w", yamlStat.Name(), err)
 	}
 
+	manifest, err := ParseManifest(contents)
+	if err != nil {
+		return fmt.Errorf("error parsing manifest: %w", err)
+	}
+
+	if err := ValidateManifest(manifest); err != nil {
+		return fmt.Errorf("error validating manifest: %w", err)
+	}
+
 	_, err = io.Copy(headerWriter, bytes.NewReader(contents))
 	if err != nil {
 		return fmt.Errorf("error copying file for zipping: %w", err)
