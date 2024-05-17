@@ -36,7 +36,7 @@ func ValidateManifest(manifest *openapi.Manifest) error {
 	}
 
 	for idx, integ := range manifest.Integrations {
-		if err := ValidateIntegration(integ, tracker.PushObj("integrations").PushArr(idx)); err != nil {
+		if err := validateIntegration(integ, tracker.PushObj("integrations").PushArr(idx)); err != nil {
 			return err
 		}
 	}
@@ -44,7 +44,7 @@ func ValidateManifest(manifest *openapi.Manifest) error {
 	return nil
 }
 
-func ValidateProxy(proxy *openapi.IntegrationProxy, path *pathTracker) error {
+func validateProxy(proxy *openapi.IntegrationProxy, path *pathTracker) error {
 	if proxy.Enabled == nil {
 		return fmt.Errorf("%w: %s: the enabled field is required",
 			ErrMissingField, path.PushObj("enabled").String())
@@ -53,7 +53,7 @@ func ValidateProxy(proxy *openapi.IntegrationProxy, path *pathTracker) error {
 	return nil
 }
 
-func ValidateRead(read *openapi.IntegrationRead, path *pathTracker) error {
+func validateRead(read *openapi.IntegrationRead, path *pathTracker) error {
 	path = path.PushObj("objects")
 
 	if read.Objects == nil {
@@ -86,7 +86,7 @@ func ValidateRead(read *openapi.IntegrationRead, path *pathTracker) error {
 	return nil
 }
 
-func ValidateWrite(write *openapi.IntegrationWrite, path *pathTracker) error {
+func validateWrite(write *openapi.IntegrationWrite, path *pathTracker) error {
 	path = path.PushObj("objects")
 
 	if write.Objects == nil {
@@ -109,7 +109,7 @@ func ValidateWrite(write *openapi.IntegrationWrite, path *pathTracker) error {
 	return nil
 }
 
-func ValidateIntegration(integration openapi.Integration, path *pathTracker) error { //nolint:cyclop
+func validateIntegration(integration openapi.Integration, path *pathTracker) error { //nolint:cyclop
 	if integration.Name == "" {
 		return fmt.Errorf("%w: %s: name is required",
 			ErrBadManifest, path.PushObj("name").String())
@@ -126,19 +126,19 @@ func ValidateIntegration(integration openapi.Integration, path *pathTracker) err
 	}
 
 	if integration.Proxy != nil {
-		if err := ValidateProxy(integration.Proxy, path.PushObj("proxy")); err != nil {
+		if err := validateProxy(integration.Proxy, path.PushObj("proxy")); err != nil {
 			return err
 		}
 	}
 
 	if integration.Read != nil {
-		if err := ValidateRead(integration.Read, path.PushObj("read")); err != nil {
+		if err := validateRead(integration.Read, path.PushObj("read")); err != nil {
 			return err
 		}
 	}
 
 	if integration.Write != nil {
-		if err := ValidateWrite(integration.Write, path.PushObj("write")); err != nil {
+		if err := validateWrite(integration.Write, path.PushObj("write")); err != nil {
 			return err
 		}
 	}
