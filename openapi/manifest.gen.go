@@ -55,7 +55,7 @@ type HydratedIntegrationProxy struct {
 
 // HydratedIntegrationRead defines model for HydratedIntegrationRead.
 type HydratedIntegrationRead struct {
-	StandardObjects *[]HydratedIntegrationObject `json:"standardObjects,omitempty"`
+	Objects *[]HydratedIntegrationObject `json:"objects,omitempty"`
 }
 
 // HydratedIntegrationWrite defines model for HydratedIntegrationWrite.
@@ -114,7 +114,7 @@ type IntegrationProxy struct {
 
 // IntegrationRead defines model for IntegrationRead.
 type IntegrationRead struct {
-	StandardObjects *[]IntegrationObject `json:"standardObjects,omitempty"`
+	Objects *[]IntegrationObject `json:"objects,omitempty"`
 }
 
 // IntegrationWrite defines model for IntegrationWrite.
