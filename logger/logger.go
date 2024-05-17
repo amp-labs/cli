@@ -32,7 +32,7 @@ func Fatal(msg string) {
 }
 
 func FatalErr(msg string, err error) {
-	Fatal(fmt.Sprintf("%v, err: %v", msg, err))
+	Fatal(fmt.Sprintf("%v\nerr: %v", msg, err))
 	PrintDebugTip()
 }
 
