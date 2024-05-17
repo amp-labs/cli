@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -111,19 +112,7 @@ var loginCmd = &cobra.Command{ //nolint:gochecknoglobals
 		}
 
 		if needLogin {
-			http.Handle("/", &handler{})
-			go func() {
-				time.Sleep(1 * time.Second)
-				openBrowser(fmt.Sprintf("http://localhost:%d", ServerPort))
-			}()
-
-			server := &http.Server{
-				Addr:              fmt.Sprintf(":%d", ServerPort),
-				ReadHeaderTimeout: ReadHeaderTimeoutSeconds * time.Second,
-			}
-
-			// nosemgrep: go.lang.security.audit.net.use-tls.use-tls
-			log.Fatalln(server.ListenAndServe())
+			doLogin()
 		} else {
 			if fileInfo.IsDir() {
 				log.Fatalln("jwt path isn't a regular file:", path)
@@ -136,7 +125,13 @@ var loginCmd = &cobra.Command{ //nolint:gochecknoglobals
 
 			_, loginEmail, err := processLogin(cmd.Context(), contents, false)
 			if err != nil {
-				log.Fatalln(err)
+				if errors.Is(err, clerk.ErrNoSessions) {
+					doLogin()
+
+					os.Exit(0)
+				} else {
+					log.Fatalln(err)
+				}
 			}
 
 			fmt.Printf("You're already logged in as %s\n", loginEmail) //nolint:forbidigo
@@ -144,6 +139,25 @@ var loginCmd = &cobra.Command{ //nolint:gochecknoglobals
 			os.Exit(0)
 		}
 	},
+}
+
+func doLogin() {
+	http.Handle("/", &handler{})
+
+	runBrowser := func() {
+		time.Sleep(1 * time.Second)
+		openBrowser(fmt.Sprintf("http://localhost:%d", ServerPort))
+	}
+
+	go runBrowser()
+
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%d", ServerPort),
+		ReadHeaderTimeout: ReadHeaderTimeoutSeconds * time.Second,
+	}
+
+	// nosemgrep: go.lang.security.audit.net.use-tls.use-tls
+	log.Fatalln(server.ListenAndServe())
 }
 
 // openBrowser tries to open the URL in a browser. Should work on most standard platforms.

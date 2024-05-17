@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
 	"github.com/amp-labs/cli/clerk"
+	"github.com/amp-labs/cli/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +20,11 @@ var tokenCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Run: func(cmd *cobra.Command, args []string) {
 		jwt, err := clerk.FetchJwt(cmd.Context())
 		if err != nil {
-			log.Fatalln(err)
+			if errors.Is(err, clerk.ErrNoSessions) {
+				logger.FatalErr("Clerk session has expired, please log in using amp login", err)
+			} else {
+				log.Fatalln(err)
+			}
 		}
 
 		fmt.Println(jwt) //nolint:forbidigo
