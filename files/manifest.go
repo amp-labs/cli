@@ -51,15 +51,15 @@ func ValidateProxy(proxy *openapi.IntegrationProxy) error {
 }
 
 func ValidateRead(read *openapi.IntegrationRead) error {
-	if read.StandardObjects == nil {
+	if read.Objects == nil {
 		return fmt.Errorf("%w: standardObjects is required", ErrMissingField)
 	}
 
-	if len(*read.StandardObjects) == 0 {
+	if len(*read.Objects) == 0 {
 		return fmt.Errorf("%w: standardObjects must contain at least one object", ErrBadManifest)
 	}
 
-	for idx, obj := range *read.StandardObjects {
+	for idx, obj := range *read.Objects {
 		if obj.ObjectName == "" {
 			return fmt.Errorf("%w: standardObjects[%d]: object name is required", ErrMissingField, idx)
 		}
