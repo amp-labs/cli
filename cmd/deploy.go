@@ -74,7 +74,7 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 			request.BatchUpsertIntegrationsParams{SourceZipURL: gcsURL})
 		if err != nil {
 			logger.FatalErr(
-				"Unable to deploy integrations, you can try to run the command again with '--debug' flag to troubleshoot.\n",
+				"Unable to deploy integrations, you can run the command again with '--debug' flag to troubleshoot.\n",
 				err,
 			)
 		}
