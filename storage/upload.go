@@ -19,6 +19,7 @@ func Upload(ctx context.Context, data []byte, url, md5 string) error {
 	}
 
 	if len(md5) > 0 {
+		//nolint:canonicalheader
 		req.Header.Set("Content-MD5", md5)
 	}
 

@@ -2,7 +2,7 @@
 
 ### First Time Set Up
 
-1. Download Taskfile by following the instructions at: https://taskfile.dev/installation/
+1. Download Taskfile by following the instructions at: <https://taskfile.dev/installation/>
 
 2. Run the following command from the root of the repo to build the CLI, this will create an executable file called `amp` in the bin folder.
 
@@ -17,15 +17,19 @@ sudo ln -s $PWD/bin/amp /usr/local/bin/lamp
 ```
 
 You can test if this worked by running the following:
+
 ```
 which lamp
 ```
+
 It should print `/usr/local/bin/lamp`
 
 Now you can run the following from anywhere on your computer:
+
 ```
 lamp
 ```
+
 This should print a list of available commands in the CLI.
 
 Now you can run `lamp` commands from anywhere on your computer, and it'll use your local version!
@@ -34,15 +38,15 @@ If this doesn't work, then you'll need to add `/usr/local/bin` to your PATH vari
 
 You should also install the following linting tools by following the linked instructions:
 
-- https://golangci-lint.run/usage/install/#local-installation
-- https://github.com/daixiang0/gci?tab=readme-ov-file#installation
-- https://github.com/bombsimon/wsl?tab=readme-ov-file#installation
+- <https://golangci-lint.run/usage/install/#local-installation>
+- <https://github.com/daixiang0/gci?tab=readme-ov-file#installation>
+- <https://github.com/bombsimon/wsl?tab=readme-ov-file#installation>
 
 These will allow you to run `task lint` (to lint your code) and `task fix` (to fix linting errors automatically).
 
-### Steps for setup on Windows Operating System.
+### Steps for setup on Windows Operating System
 
-1. Download Taskfile by following the instructions at: https://taskfile.dev/installation/.
+1. Download Taskfile by following the instructions at: <https://taskfile.dev/installation/>.
 
 2. Run the following command from the root of the repo to build the CLI, this will create an executable file called `amp` in the bin folder.
     `task build`
@@ -57,7 +61,6 @@ These will allow you to run `task lint` (to lint your code) and `task fix` (to f
 
 5. You can now run the command `lamp` from anywhere in the command line, and it will execute the `amp.exe` file.
 
-
 ### Ongoing Development
 
 Whenever you make code changes, and want to test it locally, run
@@ -67,3 +70,7 @@ task build
 ```
 
 Now you can run `lamp` commands from anywhere on your computer and it'll use your latest code!
+
+## Trouble shooitng
+
+If you encounter issues with `lamp login` try `lamp logout` and login again.
