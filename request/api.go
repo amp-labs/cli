@@ -93,7 +93,10 @@ func (c *APIClient) GetPreSignedUploadURL(ctx context.Context, md5 string) (Sign
 
 	signed := &SignedURL{}
 
-	_, err = c.RequestClient.Get(ctx, genURL, signed, auth) //nolint:bodyclose
+	_, err = c.RequestClient.Get(ctx, genURL, signed, auth, Header{ //nolint:bodyclose
+		Key:   "x-amp-request-type",
+		Value: "api",
+	})
 	if err != nil {
 		return SignedURL{}, err
 	}
