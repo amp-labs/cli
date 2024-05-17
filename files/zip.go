@@ -131,7 +131,7 @@ func importYaml(writer *zip.Writer) error {
 	}
 
 	if err := ValidateManifest(manifest); err != nil {
-		return fmt.Errorf("error validating manifest: %w", err)
+		return err
 	}
 
 	_, err = io.Copy(headerWriter, bytes.NewReader(contents))

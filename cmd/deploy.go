@@ -3,7 +3,9 @@ package cmd
 import (
 	"crypto/md5" //nolint:gosec
 	"encoding/base64"
+	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/amp-labs/cli/files"
@@ -31,7 +33,12 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 
 		zippedData, err := files.Zip(args[0])
 		if err != nil {
-			logger.FatalErr("Unable to zip folder", err)
+			if errors.Is(err, files.ErrBadManifest) || errors.Is(err, files.ErrMissingField) {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			} else {
+				logger.FatalErr("Unable to zip the source", err)
+			}
 		}
 
 		// nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-md5
