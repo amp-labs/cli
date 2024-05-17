@@ -71,11 +71,6 @@ func ValidateRead(read *openapi.IntegrationRead) error {
 		if obj.Schedule == "" {
 			return fmt.Errorf("%w: standardObjects[%d]: schedule is required", ErrMissingField, idx)
 		}
-
-		if _, _, _, err := parseCronString(obj.Schedule); err != nil {
-			return fmt.Errorf("%w: standardObjects[%d]: cron expression for schedule is invalid: %w",
-				ErrBadManifest, idx, err)
-		}
 	}
 
 	return nil
