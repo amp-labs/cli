@@ -19,6 +19,8 @@ var logoutCmd = &cobra.Command{ //nolint:gochecknoglobals
 		_, err := os.Stat(path)
 		if err != nil {
 			if os.IsNotExist(err) {
+				fmt.Println("You're already logged out") //nolint:forbidigo
+
 				return
 			} else {
 				log.Fatalln(err)

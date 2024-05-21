@@ -48,7 +48,7 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 		signed, err := client.GetPreSignedUploadURL(cmd.Context(), md5String)
 		if err != nil {
 			if errors.Is(err, clerk.ErrNoSessions) {
-				logger.FatalErr("Clerk session has expired, please log in using amp login", err)
+				logger.FatalErr("Authenticated session has expired, please log in using amp login", err)
 			} else {
 				logger.FatalErr("Unable to get pre-signed upload URL", err)
 			}

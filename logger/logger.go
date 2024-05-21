@@ -27,7 +27,7 @@ func Debugf(msg string, a ...any) {
 }
 
 func Fatal(msg string) {
-	Infof(msg)
+	Info(msg)
 	os.Exit(1)
 }
 
@@ -37,5 +37,5 @@ func FatalErr(msg string, err error) {
 }
 
 func PrintDebugTip() {
-	fmt.Println("For more information, run with --debug")
+	fmt.Println("For more information, run again with --debug")
 }

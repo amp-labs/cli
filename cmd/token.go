@@ -21,7 +21,7 @@ var tokenCmd = &cobra.Command{ //nolint:gochecknoglobals
 		jwt, err := clerk.FetchJwt(cmd.Context())
 		if err != nil {
 			if errors.Is(err, clerk.ErrNoSessions) {
-				logger.FatalErr("Clerk session has expired, please log in using amp login", err)
+				logger.FatalErr("Authenticated session has expired, please log in using amp login", err)
 			} else {
 				log.Fatalln(err)
 			}

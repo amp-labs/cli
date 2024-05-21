@@ -31,7 +31,7 @@ var deleteInstallationCmd = &cobra.Command{ //nolint:gochecknoglobals
 			DeleteInstallation(cmd.Context(), integrationId, installationId)
 		if err != nil {
 			if errors.Is(err, clerk.ErrNoSessions) {
-				logger.FatalErr("Clerk session has expired, please log in using amp login", err)
+				logger.FatalErr("Authenticated session has expired, please log in using amp login", err)
 			} else {
 				logger.FatalErr("Unable to delete installation", err)
 			}
