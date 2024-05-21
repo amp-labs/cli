@@ -8,12 +8,14 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"strings"
 
 	"github.com/adrg/xdg"
 	"github.com/alexkappa/mustache"
+	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/vars"
 	"github.com/clerkinc/clerk-sdk-go/clerk"
 )
@@ -211,6 +213,9 @@ func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 		})
 	}
 
+	dump, _ := httputil.DumpRequest(req, false)
+	logger.Debugf("\n>>> API REQUEST:\n%v>>> END OF API REQUEST\n", string(dump))
+
 	rsp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("error sending request: %w", err)
@@ -219,6 +224,9 @@ func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 	defer func() {
 		_ = rsp.Body.Close()
 	}()
+
+	dump, _ = httputil.DumpResponse(rsp, true)
+	logger.Debugf("\n<<< API RESPONSE:\n%v\n<<< END OF API RESPONSE\n", string(dump))
 
 	bb, err := io.ReadAll(rsp.Body)
 	if err != nil {

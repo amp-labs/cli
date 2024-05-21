@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"errors"
+
+	"github.com/amp-labs/cli/clerk"
 	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/request"
@@ -27,7 +30,11 @@ var deleteInstallationCmd = &cobra.Command{ //nolint:gochecknoglobals
 		err := request.NewAPIClient(projectId, &apiKey).
 			DeleteInstallation(cmd.Context(), integrationId, installationId)
 		if err != nil {
-			logger.FatalErr("Unable to delete installation", err)
+			if errors.Is(err, clerk.ErrNoSessions) {
+				logger.FatalErr("Authenticated session has expired, please log in using amp login", err)
+			} else {
+				logger.FatalErr("Unable to delete installation", err)
+			}
 		}
 
 		logger.Info("Successfully deleted installation.")

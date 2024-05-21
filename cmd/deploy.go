@@ -3,9 +3,11 @@ package cmd
 import (
 	"crypto/md5" //nolint:gosec
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/amp-labs/cli/clerk"
 	"github.com/amp-labs/cli/files"
 	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
@@ -45,6 +47,12 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 
 		signed, err := client.GetPreSignedUploadURL(cmd.Context(), md5String)
 		if err != nil {
+			if errors.Is(err, clerk.ErrNoSessions) {
+				logger.FatalErr("Authenticated session has expired, please log in using amp login", err)
+			} else {
+				logger.FatalErr("Unable to get pre-signed upload URL", err)
+			}
+
 			logger.FatalErr("Unable to get pre-signed upload URL", err)
 		}
 

@@ -21,7 +21,7 @@ var rootCmd = &cobra.Command{ //nolint:gochecknoglobals
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		logger.FatalErr("unhandled error: %v", err)
+		logger.FatalErr("exiting because of unhandled error", err)
 	}
 }
 
@@ -31,6 +31,6 @@ func init() {
 	// will be global for your application.
 	err := flags.Init(rootCmd)
 	if err != nil {
-		logger.FatalErr("unable to initialize flags: ", err)
+		logger.FatalErr("unable to initialize flags", err)
 	}
 }
