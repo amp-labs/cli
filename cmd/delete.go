@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"errors"
+
+	"github.com/amp-labs/cli/clerk"
 	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/request"
@@ -26,7 +29,11 @@ var deleteCmd = &cobra.Command{ //nolint:gochecknoglobals
 		err := request.NewAPIClient(projectId, &apiKey).
 			DeleteIntegration(cmd.Context(), integrationId)
 		if err != nil {
-			logger.FatalErr("Unable to delete integration", err)
+			if errors.Is(err, clerk.ErrNoSessions) {
+				logger.FatalErr("Authenticated session has expired, please log in using amp login", err)
+			} else {
+				logger.FatalErr("Unable to delete integration", err)
+			}
 		}
 
 		logger.Info("Successfully deleted integration.")
