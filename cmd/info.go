@@ -8,6 +8,7 @@ import (
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/request"
 	"github.com/amp-labs/cli/vars"
+
 	//nolint:gosec
 	"github.com/spf13/cobra"
 )
