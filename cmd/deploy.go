@@ -70,7 +70,10 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 		integrations, err := client.BatchUpsertIntegrations(cmd.Context(),
 			request.BatchUpsertIntegrationsParams{SourceZipURL: gcsURL})
 		if err != nil {
-			logger.FatalErr("Unable to deploy integrations", err)
+			logger.FatalErr(
+				"Unable to deploy integrations, you can run the command again with '--debug' flag to troubleshoot.\n",
+				err,
+			)
 		}
 
 		names := make([]string, len(integrations))
