@@ -101,6 +101,24 @@ func (c *APIClient) GetPreSignedUploadURL(ctx context.Context, md5 string) (Sign
 	return *signed, nil
 }
 
+func (c *APIClient) GetMyInfo(ctx context.Context) (map[string]any, error) {
+	myInfoURL := c.Root + "/my-info"
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	myInfo := make(map[string]any)
+
+	_, err = c.RequestClient.Get(ctx, myInfoURL, &myInfo, auth) //nolint:bodyclose
+	if err != nil {
+		return nil, err
+	}
+
+	return myInfo, nil
+}
+
 func (c *APIClient) DeleteIntegration(ctx context.Context, integrationId string) error {
 	delURL := fmt.Sprintf("%s/projects/%s/integrations/%s", c.Root, c.ProjectId, integrationId)
 
