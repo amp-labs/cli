@@ -34,7 +34,7 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 
 		zippedData, err := files.Zip(args[0])
 		if err != nil {
-			if errors.Is(err, files.ErrBadManifest) || errors.Is(err, files.ErrMissingField) {
+			if errors.Is(err, files.ErrBadManifest) {
 				fmt.Println(err.Error())
 				os.Exit(1)
 			} else {

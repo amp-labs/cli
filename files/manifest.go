@@ -10,8 +10,6 @@ import (
 
 const manifestVersion = "1.0.0"
 
-var ErrMissingField = errors.New("missing field")
-
 func ParseManifest(yamlData []byte) (*openapi.Manifest, error) {
 	manifest := &openapi.Manifest{}
 
@@ -22,17 +20,28 @@ func ParseManifest(yamlData []byte) (*openapi.Manifest, error) {
 	return manifest, nil
 }
 
+func validationError(tracker *pathTracker, msg string, args ...any) error {
+	err1 := fmt.Errorf(msg, args...)                                                //nolint:err113
+	err2 := fmt.Errorf("the validation error happened at the %s", tracker.String()) //nolint:err113
+
+	return errors.Join(ErrBadManifest, err1, err2)
+}
+
 func ValidateManifest(manifest *openapi.Manifest) error {
 	var tracker pathTracker
 
+	if manifest.SpecVersion == "" {
+		return validationError(tracker.PushObj("specVersion"), "specVersion is required")
+	}
+
 	if manifest.SpecVersion != manifestVersion {
-		return fmt.Errorf("%w: %s: invalid spec version: %s (only %s is supported)",
-			ErrBadManifest, tracker.PushObj("specVersion").String(), manifest.SpecVersion, manifestVersion)
+		return validationError(tracker.PushObj("specVersion"),
+			"invalid spec version: %s (only %s is supported)", manifest.SpecVersion, manifestVersion)
 	}
 
 	if len(manifest.Integrations) == 0 {
-		return fmt.Errorf("%w: %s: no integrations found in manifest, please define at least one integration",
-			ErrBadManifest, tracker.PushObj("integrations").String())
+		return validationError(tracker.PushObj("integrations"),
+			"no integrations found in manifest, please define at least one integration")
 	}
 
 	for idx, integ := range manifest.Integrations {
@@ -46,8 +55,7 @@ func ValidateManifest(manifest *openapi.Manifest) error {
 
 func validateProxy(proxy *openapi.IntegrationProxy, path *pathTracker) error {
 	if proxy.Enabled == nil {
-		return fmt.Errorf("%w: %s: the enabled field is required",
-			ErrMissingField, path.PushObj("enabled").String())
+		return validationError(path.PushObj("enabled"), "enabled is required")
 	}
 
 	return nil
@@ -57,29 +65,24 @@ func validateRead(read *openapi.IntegrationRead, path *pathTracker) error {
 	path = path.PushObj("objects")
 
 	if read.Objects == nil {
-		return fmt.Errorf("%w: %s: objects is required",
-			ErrMissingField, path.String())
+		return validationError(path, "objects is required")
 	}
 
 	if len(*read.Objects) == 0 {
-		return fmt.Errorf("%w: %s: objects must contain at least one object",
-			ErrBadManifest, path.String())
+		return validationError(path, "objects must contain at least one object")
 	}
 
 	for idx, obj := range *read.Objects {
 		if obj.ObjectName == "" {
-			return fmt.Errorf("%w: %s: objectName is required",
-				ErrMissingField, path.PushArr(idx).PushObj("objectName").String())
+			return validationError(path.PushArr(idx).PushObj("objectName"), "objectName is required")
 		}
 
 		if obj.Destination == "" {
-			return fmt.Errorf("%w: %s: destination is required",
-				ErrMissingField, path.PushArr(idx).PushObj("destination").String())
+			return validationError(path.PushArr(idx).PushObj("destination"), "destination is required")
 		}
 
 		if obj.Schedule == "" {
-			return fmt.Errorf("%w: %s: schedule is required",
-				ErrMissingField, path.PushArr(idx).PushObj("schedule").String())
+			return validationError(path.PushArr(idx).PushObj("schedule"), "schedule is required")
 		}
 	}
 
@@ -90,19 +93,17 @@ func validateWrite(write *openapi.IntegrationWrite, path *pathTracker) error {
 	path = path.PushObj("objects")
 
 	if write.Objects == nil {
-		return fmt.Errorf("%w: %s: objects is required",
-			ErrMissingField, path.String())
+		return validationError(path, "objects is required")
 	}
 
 	if len(*write.Objects) == 0 {
-		return fmt.Errorf("%w: %s: objects must contain at least one object",
-			ErrBadManifest, path.String())
+		return validationError(path, "objects must contain at least one object")
 	}
 
 	for idx, obj := range *write.Objects {
 		if obj.ObjectName == "" {
-			return fmt.Errorf("%w: %s: object name is required",
-				ErrMissingField, path.PushArr(idx).PushObj("objectName").String())
+			return validationError(path.PushArr(idx).PushObj("objectName"),
+				"objectName is required")
 		}
 	}
 
@@ -111,18 +112,15 @@ func validateWrite(write *openapi.IntegrationWrite, path *pathTracker) error {
 
 func validateIntegration(integration openapi.Integration, path *pathTracker) error { //nolint:cyclop
 	if integration.Name == "" {
-		return fmt.Errorf("%w: %s: name is required",
-			ErrBadManifest, path.PushObj("name").String())
+		return validationError(path.PushObj("name"), "name is required")
 	}
 
 	if integration.Provider == "" {
-		return fmt.Errorf("%w: %s: provider is required",
-			ErrBadManifest, path.PushObj("provider").String())
+		return validationError(path.PushObj("provider"), "provider is required")
 	}
 
 	if integration.Proxy == nil && integration.Read == nil && integration.Write == nil {
-		return fmt.Errorf("%w: %s: at least one of proxy, read, or write is required",
-			ErrBadManifest, path.String())
+		return validationError(path, "at least one of proxy, read, or write is required")
 	}
 
 	if integration.Proxy != nil {

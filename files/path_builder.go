@@ -34,7 +34,7 @@ func (p *pathTracker) String() string {
 		parts = append(parts, c.String())
 	}
 
-	return "JSON path " + strings.Join(parts, "")
+	return "YAML path \"" + strings.Join(parts, "") + "\""
 }
 
 func (p *pathTracker) PushObj(fieldName string) *pathTracker {
