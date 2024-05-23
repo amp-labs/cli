@@ -22,7 +22,7 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Use:     "deploy <ampYamlSourcePath>",
 	Aliases: []string{"deploy:integration"},
 	Short:   "Deploy changes to integrations",
-	Long:    "Deploy changes to integrations, you can either provide a path to the folder that contains amp.yaml or a path to the file itself",
+	Long:    "Deploy changes to integrations, you can either provide a path to the folder that contains amp.yaml or a path to the file itself", //nolint:lll
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		projectId := flags.GetProjectId()
