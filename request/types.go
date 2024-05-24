@@ -7,76 +7,76 @@ import (
 )
 
 type Installation struct {
-	Id            string      `json:"id"                     mapstructure:"Id"`
-	ProjectId     string      `json:"projectId"              mapstructure:"ProjectId"`
-	IntegrationId string      `json:"integrationId"          mapstructure:"IntegrationId"`
-	GroupRef      string      `json:"groupRef,omitempty"     mapstructure:"GroupRef"`
-	Group         *Group      `json:"group"                  mapstructure:"Group"`
-	ConnectionId  string      `json:"connectionId,omitempty" mapstructure:"ConnectionId"`
-	Connection    *Connection `json:"connection"             mapstructure:"Connection"`
-	CreatedBy     string      `json:"createdBy"              mapstructure:"CreatedBy"`
-	Config        *Config     `json:"config"                 mapstructure:"Config"`
-	CreateTime    time.Time   `json:"createTime"             mapstructure:"CreateTime"`
-	HealthStatus  string      `json:"healthStatus"           mapstructure:"HealthStatus"`
+	Id            string      `json:"id"`
+	ProjectId     string      `json:"projectId"`
+	IntegrationId string      `json:"integrationId"`
+	GroupRef      string      `json:"groupRef,omitempty"`
+	Group         *Group      `json:"group"`
+	ConnectionId  string      `json:"connectionId,omitempty"`
+	Connection    *Connection `json:"connection"`
+	CreatedBy     string      `json:"createdBy"`
+	Config        *Config     `json:"config"`
+	CreateTime    time.Time   `json:"createTime"`
+	HealthStatus  string      `json:"healthStatus"`
 }
 
 type Group struct {
-	GroupRef   string    `json:"groupRef"   mapstructure:"GroupRef"   validate:"required"`
-	GroupName  string    `json:"groupName"  mapstructure:"GroupName"  validate:"required"`
-	ProjectId  string    `json:"projectId"  mapstructure:"ProjectId"`
-	CreateTime time.Time `json:"createTime" mapstructure:"CreateTime"`
-	UpdateTime time.Time `json:"updateTime" mapstructure:"UpdateTime"`
+	GroupRef   string    `json:"groupRef"`
+	GroupName  string    `json:"groupName"`
+	ProjectId  string    `json:"projectId"`
+	CreateTime time.Time `json:"createTime"`
+	UpdateTime time.Time `json:"updateTime"`
 }
 
 type Connection struct {
-	Id                   string             `json:"id"                    mapstructure:"Id"`
-	ProjectId            string             `json:"projectId"             mapstructure:"ProjectId"`
-	ProviderApp          *ProviderApp       `json:"providerApp,omitempty" mapstructure:"ProviderApp"`
-	Group                *Group             `json:"group"                 mapstructure:"Group"`
-	Consumer             *Consumer          `json:"consumer"              mapstructure:"Consumer"`
-	ProviderWorkspaceRef string             `json:"providerWorkspaceRef"  mapstructure:"ProviderWorkspaceRef"`
-	ProviderConsumerRef  string             `json:"providerConsumerRef"   mapstructure:"ProviderConsumerRef"`
-	CreateTime           time.Time          `json:"createTime"            mapstructure:"CreateTime"`
-	UpdateTime           time.Time          `json:"updateTime"            mapstructure:"UpdateTime"`
-	Scopes               []string           `json:"scopes"                mapstructure:"Scopes"`
-	Status               string             `json:"status"                mapstructure:"Status"`
-	CatalogVars          *map[string]string `json:"catalogVars,omitempty" mapstructure:"CatalogVars"`
+	Id                   string             `json:"id"`
+	ProjectId            string             `json:"projectId"`
+	ProviderApp          *ProviderApp       `json:"providerApp,omitempty"`
+	Group                *Group             `json:"group"`
+	Consumer             *Consumer          `json:"consumer"`
+	ProviderWorkspaceRef string             `json:"providerWorkspaceRef"`
+	ProviderConsumerRef  string             `json:"providerConsumerRef"`
+	CreateTime           time.Time          `json:"createTime"`
+	UpdateTime           time.Time          `json:"updateTime"`
+	Scopes               []string           `json:"scopes"`
+	Status               string             `json:"status"`
+	CatalogVars          *map[string]string `json:"catalogVars,omitempty"`
 }
 
 type ProviderApp struct {
-	Id           string    `json:"id"                     mapstructure:"Id"`
-	CreateTime   time.Time `json:"createTime"             mapstructure:"CreateTime"`
-	UpdateTime   time.Time `json:"updateTime"             mapstructure:"UpdateTime"`
-	ExternalRef  string    `json:"externalRef"            mapstructure:"ExternalRef"`
-	Provider     string    `json:"provider"               mapstructure:"Provider"     validate:"required"`
-	ClientId     string    `json:"clientId"               mapstructure:"ClientId"     validate:"required"`
-	ClientSecret string    `json:"clientSecret,omitempty" mapstructure:"ClientSecret" validate:"required"`
-	Scopes       []string  `json:"scopes"                 mapstructure:"Scopes"`
-	ProjectId    string    `json:"projectId"              mapstructure:"ProjectId"`
+	Id           string    `json:"id"`
+	CreateTime   time.Time `json:"createTime"`
+	UpdateTime   time.Time `json:"updateTime"`
+	ExternalRef  string    `json:"externalRef"`
+	Provider     string    `json:"provider"`
+	ClientId     string    `json:"clientId"`
+	ClientSecret string    `json:"clientSecret,omitempty"`
+	Scopes       []string  `json:"scopes"`
+	ProjectId    string    `json:"projectId"`
 }
 
 type Config struct {
-	Id             string    `json:"id"             mapstructure:"Id"`
-	RevisionId     string    `json:"revisionId"     mapstructure:"RevisionId"`
-	CreatedBy      string    `json:"createdBy"      mapstructure:"CreatedBy"      validate:"required"`
-	Content        any       `json:"content"        mapstructure:"Content"        validate:"required"`
-	InstallationId string    `json:"installationId" mapstructure:"InstallationId"`
-	CreateTime     time.Time `json:"createTime"     mapstructure:"CreateTime"`
+	Id             string    `json:"id"`
+	RevisionId     string    `json:"revisionId"`
+	CreatedBy      string    `json:"createdBy"`
+	Content        any       `json:"content"`
+	InstallationId string    `json:"installationId"`
+	CreateTime     time.Time `json:"createTime"`
 }
 
 type Consumer struct {
-	ConsumerRef  string    `json:"consumerRef"  mapstructure:"ConsumerRef"  validate:"required"`
-	ConsumerName string    `json:"consumerName" mapstructure:"ConsumerName" validate:"required"`
-	ProjectId    string    `json:"projectId"    mapstructure:"ProjectId"`
-	CreateTime   time.Time `json:"createTime"   mapstructure:"CreateTime"`
-	UpdateTime   time.Time `json:"updateTime"   mapstructure:"UpdateTime"`
+	ConsumerRef  string    `json:"consumerRef"`
+	ConsumerName string    `json:"consumerName"`
+	ProjectId    string    `json:"projectId"`
+	CreateTime   time.Time `json:"createTime"`
+	UpdateTime   time.Time `json:"updateTime"`
 }
 
 type Integration struct {
 	Id             string    `json:"id"`
-	Provider       string    `json:"provider"       validate:"required"`
+	Provider       string    `json:"provider"`
 	ProjectId      string    `json:"projectId"`
-	Name           string    `json:"name"           validate:"required"`
+	Name           string    `json:"name"`
 	CreateTime     time.Time `json:"createTime"`
 	UpdateTime     time.Time `json:"updateTime"`
 	LatestRevision *Revision `json:"latestRevision"`
