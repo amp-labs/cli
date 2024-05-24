@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
+	"github.com/amp-labs/cli/clerk"
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/request"
 	"github.com/amp-labs/cli/vars"
@@ -22,13 +24,17 @@ var myInfoCmd = &cobra.Command{ //nolint:gochecknoglobals
 		}
 
 		client := &request.APIClient{
-			Root:          fmt.Sprintf("%s/%s", rootURL, request.API_VERSION),
-			RequestClient: request.NewRequestClient(),
+			Root:   fmt.Sprintf("%s/%s", rootURL, request.ApiVersion),
+			Client: request.NewRequestClient(),
 		}
 
 		info, err := client.GetMyInfo(cmd.Context())
 		if err != nil {
-			logger.FatalErr("Failed to get user info", err)
+			if errors.Is(err, clerk.ErrNoSessions) {
+				logger.FatalErr("Authenticated session has expired, please log in using amp login", err)
+			} else {
+				logger.FatalErr("Failed to get user info", err)
+			}
 		}
 
 		js, err := json.MarshalIndent(info, "", "  ")

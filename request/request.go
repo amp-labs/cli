@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"net/http/httputil"
 
@@ -16,7 +17,7 @@ import (
 
 const clientName = "amp-cli"
 
-type RequestClient struct {
+type Client struct {
 	Client         *http.Client
 	DefaultHeaders []Header
 }
@@ -27,7 +28,61 @@ type Header struct {
 	Value string
 }
 
-func NewRequestClient() *RequestClient {
+type InputValidationIssue struct {
+	In           string         `json:"in,omitempty"`
+	Name         string         `json:"name,omitempty"`
+	Value        any            `json:"value,omitempty"`
+	Detail       string         `json:"detail,omitempty"`
+	Href         string         `json:"href,omitempty"`
+	Instance     string         `json:"instance,omitempty"`
+	Status       int32          `json:"status,omitempty"`
+	Title        string         `json:"title,omitempty"`
+	Type         string         `json:"type,omitempty"`
+	Subsystem    string         `json:"subsystem,omitempty"`
+	Time         string         `json:"time,omitempty"`
+	RequestID    string         `json:"requestId,omitempty"`
+	Causes       []string       `json:"causes,omitempty"`
+	Remedy       string         `json:"remedy,omitempty"`
+	SupportEmail string         `json:"supportEmail,omitempty"`
+	SupportPhone string         `json:"supportPhone,omitempty"`
+	SupportURL   string         `json:"supportUrl,omitempty"`
+	Retryable    *bool          `json:"retryable,omitempty"`
+	RetryAfter   string         `json:"retryAfter,omitempty"`
+	Context      map[string]any `json:"context,omitempty"`
+}
+
+type ProblemError struct {
+	Detail       string                 `json:"detail,omitempty"`
+	Href         string                 `json:"href,omitempty"`
+	Instance     string                 `json:"instance,omitempty"`
+	Status       int32                  `json:"status,omitempty"`
+	Title        string                 `json:"title,omitempty"`
+	Type         string                 `json:"type,omitempty"`
+	Subsystem    string                 `json:"subsystem,omitempty"`
+	Time         string                 `json:"time,omitempty"`
+	RequestID    string                 `json:"requestId,omitempty"`
+	Causes       []string               `json:"causes,omitempty"`
+	Remedy       string                 `json:"remedy,omitempty"`
+	SupportEmail string                 `json:"supportEmail,omitempty"`
+	SupportPhone string                 `json:"supportPhone,omitempty"`
+	SupportURL   string                 `json:"supportUrl,omitempty"`
+	Retryable    *bool                  `json:"retryable,omitempty"`
+	RetryAfter   string                 `json:"retryAfter,omitempty"`
+	Context      map[string]any         `json:"context,omitempty"`
+	Issues       []InputValidationIssue `json:"issues,omitempty"`
+}
+
+func (p *ProblemError) Error() string {
+	if p == nil {
+		return "<nil>"
+	}
+
+	js, _ := json.MarshalIndent(p, "", "  ") //nolint:errchkjson
+
+	return string(js)
+}
+
+func NewRequestClient() *Client {
 	versionInfo := utils.GetVersionInformation()
 
 	headers := []Header{
@@ -47,7 +102,7 @@ func NewRequestClient() *RequestClient {
 		})
 	}
 
-	return &RequestClient{
+	return &Client{
 		Client:         http.DefaultClient,
 		DefaultHeaders: headers,
 	}
@@ -55,7 +110,7 @@ func NewRequestClient() *RequestClient {
 
 // Get makes a GET request to the desired URL, and unmarshalls the
 // response body into `result`.
-func (c *RequestClient) Get(ctx context.Context,
+func (c *Client) Get(ctx context.Context,
 	url string, result any, headers ...Header,
 ) (*http.Response, error) {
 	allHeaders := c.DefaultHeaders
@@ -71,7 +126,7 @@ func (c *RequestClient) Get(ctx context.Context,
 
 // Put makes a PUT request to the desired URL, and unmarshalls the
 // response body into `result`.
-func (c *RequestClient) Put(ctx context.Context,
+func (c *Client) Put(ctx context.Context,
 	url string, reqBody any, result any, headers ...Header,
 ) (*http.Response, error) {
 	allHeaders := c.DefaultHeaders
@@ -87,7 +142,7 @@ func (c *RequestClient) Put(ctx context.Context,
 
 // Post makes a POST request to the desired URL, and unmarshalls the
 // response body into `result`.
-func (c *RequestClient) Post(ctx context.Context,
+func (c *Client) Post(ctx context.Context,
 	url string, reqBody any, result any, headers ...Header,
 ) (*http.Response, error) {
 	allHeaders := c.DefaultHeaders
@@ -102,7 +157,7 @@ func (c *RequestClient) Post(ctx context.Context,
 }
 
 // Delete makes a Delete request to the desired URL for plain text requests.
-func (c *RequestClient) Delete(ctx context.Context,
+func (c *Client) Delete(ctx context.Context,
 	url string, headers ...Header,
 ) (*http.Response, error) {
 	allHeaders := c.DefaultHeaders
@@ -118,7 +173,7 @@ func (c *RequestClient) Delete(ctx context.Context,
 
 var ErrNon200Status = errors.New("error response from API")
 
-func (c *RequestClient) makeRequestAndParseJSONResult(req *http.Request, result any) (*http.Response, error) {
+func (c *Client) makeRequestAndParseJSONResult(req *http.Request, result any) (*http.Response, error) {
 	dump, _ := httputil.DumpRequest(req, false)
 	logger.Debugf("\n>>> API REQUEST:\n%v>>> END OF API REQUEST\n", string(dump))
 
@@ -127,7 +182,20 @@ func (c *RequestClient) makeRequestAndParseJSONResult(req *http.Request, result 
 		return nil, err
 	}
 
-	if res.StatusCode < 200 || res.StatusCode > 299 {
+	if res.StatusCode < 200 || res.StatusCode > 299 { //nolint:nestif
+		ct := res.Header.Get("Content-Type")
+		if len(ct) > 0 {
+			mt, _, err := mime.ParseMediaType(ct)
+			if err == nil {
+				if mt == "application/problem+json" {
+					prob := &ProblemError{}
+					if err := json.Unmarshal(payload, prob); err == nil {
+						return res, fmt.Errorf("%w: %w", ErrNon200Status, prob)
+					}
+				}
+			}
+		}
+
 		return res, fmt.Errorf("%w: HTTP Status %s", ErrNon200Status, res.Status)
 	}
 
@@ -147,7 +215,7 @@ func makeJSONGetRequest(ctx context.Context, url string, headers []Header) (*htt
 	return addAcceptJSONHeaders(req, headers)
 }
 
-func (c *RequestClient) makeRequest(req *http.Request) (*http.Response, error) {
+func (c *Client) makeRequest(req *http.Request) (*http.Response, error) {
 	dump, _ := httputil.DumpRequest(req, false)
 	logger.Debugf("\n>>> API REQUEST:\n%v>>> END OF API REQUEST\n", string(dump))
 
@@ -229,7 +297,7 @@ func addAcceptJSONHeaders(req *http.Request, headers []Header) (*http.Request, e
 	return req, nil
 }
 
-func (c *RequestClient) sendRequest(req *http.Request) (*http.Response, []byte, error) {
+func (c *Client) sendRequest(req *http.Request) (*http.Response, []byte, error) {
 	// Send the request
 	res, err := c.Client.Do(req)
 	if err != nil {

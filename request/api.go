@@ -11,13 +11,13 @@ import (
 	"github.com/amp-labs/cli/vars"
 )
 
-var API_VERSION = "v1" //nolint:gochecknoglobals
+var ApiVersion = "v1" //nolint:gochecknoglobals
 
 type APIClient struct {
-	Root          string
-	ProjectId     string
-	APIKey        *string
-	RequestClient *RequestClient
+	Root      string
+	ProjectId string
+	APIKey    *string
+	Client    *Client
 }
 
 func NewAPIClient(projectId string, key *string) *APIClient {
@@ -34,10 +34,10 @@ func NewAPIClient(projectId string, key *string) *APIClient {
 	}
 
 	return &APIClient{
-		Root:          fmt.Sprintf("%s/%s", rootURL, API_VERSION),
-		ProjectId:     projectId,
-		APIKey:        key,
-		RequestClient: NewRequestClient(),
+		Root:      fmt.Sprintf("%s/%s", rootURL, ApiVersion),
+		ProjectId: projectId,
+		APIKey:    key,
+		Client:    NewRequestClient(),
 	}
 }
 
@@ -61,7 +61,7 @@ func (c *APIClient) BatchUpsertIntegrations(
 		return nil, err
 	}
 
-	_, err = c.RequestClient.Put(ctx, intURL, reqParams, &integrations, auth) //nolint:bodyclose
+	_, err = c.Client.Put(ctx, intURL, reqParams, &integrations, auth) //nolint:bodyclose
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (c *APIClient) GetPreSignedUploadURL(ctx context.Context, md5 string) (Sign
 
 	signed := &SignedURL{}
 
-	_, err = c.RequestClient.Get(ctx, genURL, signed, auth) //nolint:bodyclose
+	_, err = c.Client.Get(ctx, genURL, signed, auth) //nolint:bodyclose
 	if err != nil {
 		return SignedURL{}, err
 	}
@@ -111,7 +111,7 @@ func (c *APIClient) GetMyInfo(ctx context.Context) (map[string]any, error) {
 
 	myInfo := make(map[string]any)
 
-	_, err = c.RequestClient.Get(ctx, myInfoURL, &myInfo, auth) //nolint:bodyclose
+	_, err = c.Client.Get(ctx, myInfoURL, &myInfo, auth) //nolint:bodyclose
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func (c *APIClient) DeleteIntegration(ctx context.Context, integrationId string)
 		return err
 	}
 
-	if _, err := c.RequestClient.Delete(ctx, delURL, auth); err != nil { //nolint:bodyclose
+	if _, err := c.Client.Delete(ctx, delURL, auth); err != nil { //nolint:bodyclose
 		return fmt.Errorf("error deleting integration: %w", err)
 	}
 
@@ -146,7 +146,7 @@ func (c *APIClient) DeleteInstallation(ctx context.Context, integrationId string
 		return err
 	}
 
-	if _, err := c.RequestClient.Delete(ctx, delURL, auth); err != nil { //nolint:bodyclose
+	if _, err := c.Client.Delete(ctx, delURL, auth); err != nil { //nolint:bodyclose
 		return fmt.Errorf("error deleting installation: %w", err)
 	}
 
