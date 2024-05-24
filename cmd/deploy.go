@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/amp-labs/cli/clerk"
@@ -21,7 +22,7 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Use:     "deploy <ampYamlSourcePath>",
 	Aliases: []string{"deploy:integration"},
 	Short:   "Deploy changes to integrations",
-	Long:    "Deploy changes to integrations, you can either provide a path to the folder that contains amp.yaml or a path to the file itself",
+	Long:    "Deploy changes to integrations, you can either provide a path to the folder that contains amp.yaml or a path to the file itself", //nolint:lll
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		projectId := flags.GetProjectId()
@@ -33,7 +34,12 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 
 		zippedData, err := files.Zip(args[0])
 		if err != nil {
-			logger.FatalErr("Unable to zip folder", err)
+			if errors.Is(err, files.ErrBadManifest) {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			} else {
+				logger.FatalErr("Unable to zip the source", err)
+			}
 		}
 
 		// nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-md5

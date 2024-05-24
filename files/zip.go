@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 )
 
-var ErrBadManifest = errors.New("invalid manifest")
+var ErrBadManifest = errors.New("Invalid manifest") //nolint:stylecheck
 
 const (
 	mode        = 0o644
@@ -123,6 +123,15 @@ func importYaml(writer *zip.Writer) error {
 	contents, err := os.ReadFile(yamlStat.Name())
 	if err != nil {
 		return fmt.Errorf("error opening %s file while zipping: %w", yamlStat.Name(), err)
+	}
+
+	manifest, err := ParseManifest(contents)
+	if err != nil {
+		return fmt.Errorf("error parsing manifest: %w", err)
+	}
+
+	if err := ValidateManifest(manifest); err != nil {
+		return err
 	}
 
 	_, err = io.Copy(headerWriter, bytes.NewReader(contents))
