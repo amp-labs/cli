@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 )
 
-var ErrBadManifest = errors.New("Invalid manifest")
+var ErrBadManifest = errors.New("Invalid manifest") //nolint:stylecheck
 
 const (
 	mode        = 0o644
