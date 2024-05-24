@@ -22,7 +22,7 @@ func ParseManifest(yamlData []byte) (*openapi.Manifest, error) {
 
 func validationError(tracker *pathTracker, msg string, args ...any) error {
 	err1 := fmt.Errorf(msg, args...)                                                //nolint:err113
-	err2 := fmt.Errorf("the validation error happened at the %s", tracker.String()) //nolint:err113
+	err2 := fmt.Errorf("The validation error happened at the %s", tracker.String()) //nolint:err113
 
 	return errors.Join(ErrBadManifest, err1, err2)
 }
@@ -31,17 +31,17 @@ func ValidateManifest(manifest *openapi.Manifest) error {
 	var tracker pathTracker
 
 	if manifest.SpecVersion == "" {
-		return validationError(tracker.PushObj("specVersion"), "specVersion is required")
+		return validationError(tracker.PushObj("specVersion"), "The 'specVersion' field is required")
 	}
 
 	if manifest.SpecVersion != manifestVersion {
 		return validationError(tracker.PushObj("specVersion"),
-			"invalid spec version: %s (only %s is supported)", manifest.SpecVersion, manifestVersion)
+			"Invalid spec version: %s (only %s is supported)", manifest.SpecVersion, manifestVersion)
 	}
 
 	if len(manifest.Integrations) == 0 {
 		return validationError(tracker.PushObj("integrations"),
-			"no integrations found in manifest, please define at least one integration")
+			"No integrations found in manifest, please define at least one integration")
 	}
 
 	for idx, integ := range manifest.Integrations {
@@ -55,7 +55,7 @@ func ValidateManifest(manifest *openapi.Manifest) error {
 
 func validateProxy(proxy *openapi.IntegrationProxy, path *pathTracker) error {
 	if proxy.Enabled == nil {
-		return validationError(path.PushObj("enabled"), "enabled is required")
+		return validationError(path.PushObj("enabled"), "The field 'enabled' is required")
 	}
 
 	return nil
@@ -65,24 +65,24 @@ func validateRead(read *openapi.IntegrationRead, path *pathTracker) error {
 	path = path.PushObj("objects")
 
 	if read.Objects == nil {
-		return validationError(path, "objects is required")
+		return validationError(path, "The field 'objects' is required")
 	}
 
 	if len(*read.Objects) == 0 {
-		return validationError(path, "objects must contain at least one object")
+		return validationError(path, "The 'objects' field must contain at least one object")
 	}
 
 	for idx, obj := range *read.Objects {
 		if obj.ObjectName == "" {
-			return validationError(path.PushArr(idx).PushObj("objectName"), "objectName is required")
+			return validationError(path.PushArr(idx).PushObj("objectName"), "The field 'objectName' is required")
 		}
 
 		if obj.Destination == "" {
-			return validationError(path.PushArr(idx).PushObj("destination"), "destination is required")
+			return validationError(path.PushArr(idx).PushObj("destination"), "The field 'destination' is required")
 		}
 
 		if obj.Schedule == "" {
-			return validationError(path.PushArr(idx).PushObj("schedule"), "schedule is required")
+			return validationError(path.PushArr(idx).PushObj("schedule"), "The field 'schedule' is required")
 		}
 	}
 
@@ -93,17 +93,17 @@ func validateWrite(write *openapi.IntegrationWrite, path *pathTracker) error {
 	path = path.PushObj("objects")
 
 	if write.Objects == nil {
-		return validationError(path, "objects is required")
+		return validationError(path, "The 'objects' field is required")
 	}
 
 	if len(*write.Objects) == 0 {
-		return validationError(path, "objects must contain at least one object")
+		return validationError(path, "The 'objects' field must contain at least one object")
 	}
 
 	for idx, obj := range *write.Objects {
 		if obj.ObjectName == "" {
 			return validationError(path.PushArr(idx).PushObj("objectName"),
-				"objectName is required")
+				"The field 'objectName' is required")
 		}
 	}
 
@@ -112,15 +112,15 @@ func validateWrite(write *openapi.IntegrationWrite, path *pathTracker) error {
 
 func validateIntegration(integration openapi.Integration, path *pathTracker) error { //nolint:cyclop
 	if integration.Name == "" {
-		return validationError(path.PushObj("name"), "name is required")
+		return validationError(path.PushObj("name"), "The field 'name' is required")
 	}
 
 	if integration.Provider == "" {
-		return validationError(path.PushObj("provider"), "provider is required")
+		return validationError(path.PushObj("provider"), "The field 'provider' is required")
 	}
 
 	if integration.Proxy == nil && integration.Read == nil && integration.Write == nil {
-		return validationError(path, "at least one of proxy, read, or write is required")
+		return validationError(path, "At least one of proxy, read, or write is required")
 	}
 
 	if integration.Proxy != nil {
