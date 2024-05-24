@@ -111,7 +111,7 @@ func (c *APIClient) GetMyInfo(ctx context.Context) (map[string]any, error) {
 
 	myInfo := make(map[string]any)
 
-	_, err = c.RequestClient.Get(ctx, myInfoURL, &myInfo, auth) //nolint:bodyclose
+	_, err = c.Client.Get(ctx, myInfoURL, &myInfo, auth) //nolint:bodyclose
 	if err != nil {
 		return nil, err
 	}

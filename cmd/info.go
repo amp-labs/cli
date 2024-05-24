@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra" //nolint:gosec
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/request"
 	"github.com/amp-labs/cli/vars"
-	"github.com/spf13/cobra" //nolint:gosec
 )
 
 var myInfoCmd = &cobra.Command{ //nolint:gochecknoglobals
@@ -22,8 +22,8 @@ var myInfoCmd = &cobra.Command{ //nolint:gochecknoglobals
 		}
 
 		client := &request.APIClient{
-			Root:          fmt.Sprintf("%s/%s", rootURL, request.API_VERSION),
-			RequestClient: request.NewRequestClient(),
+			Root:   fmt.Sprintf("%s/%s", rootURL, request.ApiVersion),
+			Client: request.NewRequestClient(),
 		}
 
 		info, err := client.GetMyInfo(cmd.Context())
