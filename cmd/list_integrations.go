@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"sort"
 
 	"github.com/amp-labs/cli/clerk"
@@ -23,7 +25,9 @@ var listIntegrationsCmd = &cobra.Command{ //nolint:gochecknoglobals
 
 		apiKey := flags.GetAPIKey()
 
-		ints, err := request.NewAPIClient(projectId, &apiKey).ListIntegrations(cmd.Context())
+		client := request.NewAPIClient(projectId, &apiKey)
+
+		integs, err := client.ListIntegrations(cmd.Context())
 		if err != nil {
 			if errors.Is(err, clerk.ErrNoSessions) {
 				logger.FatalErr("Authenticated session has expired, please log in using amp login", err)
@@ -32,14 +36,33 @@ var listIntegrationsCmd = &cobra.Command{ //nolint:gochecknoglobals
 			}
 		}
 
-		sort.Slice(ints, func(i, j int) bool {
-			return ints[i].CreateTime.Before(ints[j].CreateTime)
+		sort.Slice(integs, func(i, j int) bool {
+			return integs[i].Name < integs[j].Name
 		})
 
-		for _, inst := range ints {
-			logger.Info(inst.Id + " " + inst.Name)
+		for _, integ := range integs {
+			num := numInstallations(cmd.Context(), client, integ.Id)
+
+			logger.Info(integ.Id + " " + integ.Name + " (" + num + ")")
 		}
 	},
+}
+
+func numInstallations(ctx context.Context, client *request.APIClient, id string) string {
+	insts, err := client.ListInstallations(ctx, id)
+	if err != nil {
+		logger.FatalErr("Unable to list installations", err)
+	}
+
+	num := len(insts)
+
+	if num == 0 {
+		return "no installations"
+	} else if num == 1 {
+		return "1 installation"
+	} else {
+		return fmt.Sprintf("%d installations", num)
+	}
 }
 
 func init() {

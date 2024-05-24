@@ -25,8 +25,9 @@ var listInstallationsCmd = &cobra.Command{ //nolint:gochecknoglobals
 
 		apiKey := flags.GetAPIKey()
 
-		insts, err := request.NewAPIClient(projectId, &apiKey).
-			ListInstallations(cmd.Context(), integrationId)
+		client := request.NewAPIClient(projectId, &apiKey)
+
+		insts, err := client.ListInstallations(cmd.Context(), integrationId)
 		if err != nil {
 			if errors.Is(err, clerk.ErrNoSessions) {
 				logger.FatalErr("Authenticated session has expired, please log in using amp login", err)
