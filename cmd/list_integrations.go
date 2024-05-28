@@ -56,11 +56,12 @@ func numInstallations(ctx context.Context, client *request.APIClient, id string)
 
 	num := len(insts)
 
-	if num == 0 {
+	switch num {
+	case 0:
 		return "no installations"
-	} else if num == 1 {
+	case 1:
 		return "1 installation"
-	} else {
+	default:
 		return fmt.Sprintf("%d installations", num)
 	}
 }
