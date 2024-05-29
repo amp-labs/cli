@@ -11,8 +11,10 @@ import (
 	"net/http"
 	"net/http/httputil"
 
+	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/utils"
+	"github.com/amp-labs/cli/vars"
 )
 
 const clientName = "amp-cli"
@@ -87,10 +89,16 @@ func NewRequestClient() *Client {
 
 	headers := []Header{
 		{Key: "X-Amp-Client", Value: clientName},
-		{Key: "X-Amp-Client-Version", Value: versionInfo.Version},
 		{Key: "X-Amp-Client-Commit", Value: versionInfo.CommitID},
 		{Key: "X-Amp-Client-Branch", Value: versionInfo.Branch},
 		{Key: "X-Amp-Client-Build-Date", Value: versionInfo.BuildDate},
+	}
+
+	if versionInfo.Version != "" {
+		headers = append(headers, Header{
+			Key:   "X-Amp-Client-Version",
+			Value: versionInfo.Version,
+		})
 	}
 
 	if versionInfo.Stage != utils.Prod {
@@ -206,11 +214,21 @@ func (c *Client) makeRequestAndParseJSONResult(req *http.Request, result any) (*
 	return res, nil
 }
 
+func addDebugHeader(req *http.Request) {
+	if vars.Stage != "prod" {
+		if flags.GetDebugMode() {
+			req.Header.Add("X-Amp-Debug-Mode", "true")
+		}
+	}
+}
+
 func makeJSONGetRequest(ctx context.Context, url string, headers []Header) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
+
+	addDebugHeader(req)
 
 	return addAcceptJSONHeaders(req, headers)
 }
@@ -242,6 +260,8 @@ func makeJSONPostRequest(ctx context.Context, url string, headers []Header, body
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 
+	addDebugHeader(req)
+
 	headers = append(headers, Header{Key: "Content-Type", Value: "application/json"})
 	req.ContentLength = int64(len(jBody))
 
@@ -259,6 +279,8 @@ func makeJSONPutRequest(ctx context.Context, url string, headers []Header, body 
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 
+	addDebugHeader(req)
+
 	headers = append(headers, Header{Key: "Content-Type", Value: "application/json"})
 	req.ContentLength = int64(len(jBody))
 
@@ -270,6 +292,8 @@ func makeDeleteRequest(ctx context.Context, url string, headers []Header) (*http
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
+
+	addDebugHeader(req)
 
 	req.ContentLength = 0
 

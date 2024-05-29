@@ -45,16 +45,16 @@ type BatchUpsertIntegrationsParams struct {
 	SourceZipURL string `json:"sourceZipUrl"`
 }
 
-type Integration struct {
+type IntegrationName struct {
 	Name string `json:"name"`
 }
 
 func (c *APIClient) BatchUpsertIntegrations(
 	ctx context.Context, reqParams BatchUpsertIntegrationsParams,
-) ([]Integration, error) {
+) ([]IntegrationName, error) {
 	intURL := fmt.Sprintf("%s/projects/%s/integrations:batch", c.Root, c.ProjectId)
 
-	var integrations []Integration
+	var integrations []IntegrationName
 
 	auth, err := c.getAuthHeader(ctx)
 	if err != nil {
@@ -134,6 +134,42 @@ func (c *APIClient) DeleteIntegration(ctx context.Context, integrationId string)
 	logger.Debugf("Deleted integration: %v", integrationId)
 
 	return nil
+}
+
+func (c *APIClient) ListIntegrations(ctx context.Context) ([]*Integration, error) {
+	listURL := fmt.Sprintf("%s/projects/%s/integrations", c.Root, c.ProjectId)
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var installations []*Integration
+
+	_, err = c.Client.Get(ctx, listURL, &installations, auth) //nolint:bodyclose
+	if err != nil {
+		return nil, err
+	}
+
+	return installations, nil
+}
+
+func (c *APIClient) ListInstallations(ctx context.Context, integrationId string) ([]*Installation, error) {
+	listURL := fmt.Sprintf("%s/projects/%s/integrations/%s/installations", c.Root, c.ProjectId, integrationId)
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var installations []*Installation
+
+	_, err = c.Client.Get(ctx, listURL, &installations, auth) //nolint:bodyclose
+	if err != nil {
+		return nil, err
+	}
+
+	return installations, nil
 }
 
 func (c *APIClient) DeleteInstallation(ctx context.Context, integrationId string, installationId string) error {
