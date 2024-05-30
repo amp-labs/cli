@@ -173,7 +173,7 @@ func (c *APIClient) ListInstallations(ctx context.Context, integrationId string)
 }
 
 func (c *APIClient) ListProjects(ctx context.Context) ([]*Project, error) {
-	listURL := fmt.Sprintf("%s/projects", c.Root)
+	listURL := c.Root + "/projects"
 
 	auth, err := c.getAuthHeader(ctx)
 	if err != nil {
