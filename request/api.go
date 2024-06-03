@@ -172,6 +172,24 @@ func (c *APIClient) ListInstallations(ctx context.Context, integrationId string)
 	return installations, nil
 }
 
+func (c *APIClient) ListProjects(ctx context.Context) ([]*Project, error) {
+	listURL := c.Root + "/projects"
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var projects []*Project
+
+	_, err = c.Client.Get(ctx, listURL, &projects, auth) //nolint:bodyclose
+	if err != nil {
+		return nil, err
+	}
+
+	return projects, nil
+}
+
 func (c *APIClient) DeleteInstallation(ctx context.Context, integrationId string, installationId string) error {
 	delURL := fmt.Sprintf(
 		"%s/projects/%s/integrations/%s/installations/%s", c.Root, c.ProjectId, integrationId, installationId,

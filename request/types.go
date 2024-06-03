@@ -89,3 +89,11 @@ type Revision struct {
 	Content       openapi.Integration `json:"content"`
 	SpecVersion   string              `json:"specVersion"`
 }
+
+type Project struct {
+	Id         string    `json:"id"`
+	AppName    string    `json:"appName"`
+	Name       string    `json:"name"`
+	CreateTime time.Time `json:"createTime"`
+	OrgId      string    `json:"orgId"`
+}
