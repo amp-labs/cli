@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra" //nolint:gosec
 	"github.com/amp-labs/cli/clerk"
 	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/request"
 	"github.com/amp-labs/cli/utils"
 	"github.com/amp-labs/cli/vars"
+	"github.com/spf13/cobra" //nolint:gosec
 )
 
 var myInfoCmd = &cobra.Command{ //nolint:gochecknoglobals
