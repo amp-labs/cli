@@ -30,7 +30,7 @@ const WaitBeforeExitSeconds = 3
 func (h *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	// This path is followed after the user logs in. The CLI Auth Client redirects to here.
 	switch {
-	case request.URL.Path == "/done" && request.Method == "GET":
+	case request.URL.Path == "/done" && request.Method == http.MethodGet:
 		bts, _ := base64.StdEncoding.DecodeString(request.URL.Query().Get("p"))
 
 		rsp, loginEmail, err := processLogin(request.Context(), bts, true)
@@ -54,7 +54,7 @@ func (h *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		}()
 
 		return
-	case request.URL.Path == "/" && request.Method == "GET":
+	case request.URL.Path == "/" && request.Method == http.MethodGet:
 		loginURL, ok := os.LookupEnv("AMP_LOGIN_URL_OVERRIDE")
 		if ok {
 			writer.Header().Set("Location", loginURL)
