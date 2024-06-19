@@ -1,16 +1,17 @@
 package cmd
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra" //nolint:gosec
 	"github.com/amp-labs/cli/clerk"
+	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/request"
+	"github.com/amp-labs/cli/utils"
 	"github.com/amp-labs/cli/vars"
-	"github.com/spf13/cobra" //nolint:gosec
 )
 
 var myInfoCmd = &cobra.Command{ //nolint:gochecknoglobals
@@ -37,12 +38,10 @@ var myInfoCmd = &cobra.Command{ //nolint:gochecknoglobals
 			}
 		}
 
-		js, err := json.MarshalIndent(info, "", "  ")
-		if err != nil {
-			logger.FatalErr("Failed to marshal user info", err)
+		format := flags.GetOutputFormat()
+		if err := utils.WriteStruct(os.Stdout, format, info); err != nil {
+			logger.FatalErr("Unable to write user info", err)
 		}
-
-		fmt.Println(string(js))
 	},
 }
 

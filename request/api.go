@@ -208,6 +208,60 @@ func (c *APIClient) ListDestinations(ctx context.Context) ([]*Destination, error
 	return destinations, nil
 }
 
+func (c *APIClient) CreateDestination(ctx context.Context, dest *Destination) (*Destination, error) {
+	createURL := fmt.Sprintf("%s/projects/%s/destinations", c.Root, c.ProjectId)
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var out Destination
+
+	_, err = c.Client.Post(ctx, createURL, dest, &out, auth) //nolint:bodyclose
+	if err != nil {
+		return nil, err
+	}
+
+	return &out, nil
+}
+
+func (c *APIClient) GetDestination(ctx context.Context, id string) (*Destination, error) {
+	getURL := fmt.Sprintf("%s/projects/%s/destinations/%s", c.Root, c.ProjectId, id)
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var out Destination
+
+	_, err = c.Client.Get(ctx, getURL, &out, auth) //nolint:bodyclose
+	if err != nil {
+		return nil, err
+	}
+
+	return &out, nil
+}
+
+func (c *APIClient) PatchDestination(ctx context.Context, id string, patch *PatchDestination) (*Destination, error) {
+	patchURL := fmt.Sprintf("%s/projects/%s/destinations/%s", c.Root, c.ProjectId, id)
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var out Destination
+
+	_, err = c.Client.Patch(ctx, patchURL, patch, &out, auth) //nolint:bodyclose
+	if err != nil {
+		return nil, err
+	}
+
+	return &out, nil
+}
+
 func (c *APIClient) DeleteInstallation(ctx context.Context, integrationId string, installationId string) error {
 	delURL := fmt.Sprintf(
 		"%s/projects/%s/integrations/%s/installations/%s", c.Root, c.ProjectId, integrationId, installationId,

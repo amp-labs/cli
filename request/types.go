@@ -108,6 +108,11 @@ type Destination struct {
 	UpdateTime time.Time        `json:"updateTime"`
 }
 
+type PatchDestination struct {
+	Destination map[string]any `json:"destination"`
+	UpdateMask  []string       `json:"updateMask"`
+}
+
 type WebhookMetadata struct {
 	URL            string            `json:"url"`
 	Headers        map[string]string `json:"headers,omitempty"`
