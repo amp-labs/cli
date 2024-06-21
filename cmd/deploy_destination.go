@@ -14,9 +14,10 @@ import (
 )
 
 var deployDestinationCmd = &cobra.Command{ //nolint:gochecknoglobals
-	Use:   "deploy:destination -i <input file path> [-o <output file path>] [-f <format>]",
-	Short: "Deploy a destination",
-	Long:  "Deploy a destination",
+	Use:    "deploy:destination -i <input file path> [-o <output file path>] [-f <format>]",
+	Short:  "Deploy a destination",
+	Long:   "Deploy a destination",
+	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		apiKey := flags.GetAPIKey()
 
