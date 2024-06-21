@@ -164,6 +164,22 @@ func (c *Client) Post(ctx context.Context,
 	return c.makeRequestAndParseJSONResult(req, result)
 }
 
+// Patch makes a Patch request to the desired URL, and unmarshalls the
+// response body into `result`.
+func (c *Client) Patch(ctx context.Context,
+	url string, reqBody any, result any, headers ...Header,
+) (*http.Response, error) {
+	allHeaders := c.DefaultHeaders
+	allHeaders = append(allHeaders, headers...)
+
+	req, err := makeJSONPatchRequest(ctx, url, allHeaders, reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.makeRequestAndParseJSONResult(req, result)
+}
+
 // Delete makes a Delete request to the desired URL for plain text requests.
 func (c *Client) Delete(ctx context.Context,
 	url string, headers ...Header,
@@ -179,9 +195,12 @@ func (c *Client) Delete(ctx context.Context,
 	return c.makeRequest(req)
 }
 
-var ErrNon200Status = errors.New("error response from API")
+var (
+	ErrNon200Status = errors.New("error response from API")
+	ErrNotFound     = errors.New("HTTP Status 404")
+)
 
-func (c *Client) makeRequestAndParseJSONResult(req *http.Request, result any) (*http.Response, error) {
+func (c *Client) makeRequestAndParseJSONResult(req *http.Request, result any) (*http.Response, error) { //nolint:cyclop
 	dump, _ := httputil.DumpRequest(req, false)
 	logger.Debugf("\n>>> API REQUEST:\n%v>>> END OF API REQUEST\n", string(dump))
 
@@ -198,13 +217,21 @@ func (c *Client) makeRequestAndParseJSONResult(req *http.Request, result any) (*
 				if mt == "application/problem+json" {
 					prob := &ProblemError{}
 					if err := json.Unmarshal(payload, prob); err == nil {
-						return res, fmt.Errorf("%w: %w", ErrNon200Status, prob)
+						if prob.Status == http.StatusNotFound {
+							return res, fmt.Errorf("%w: %w\n%w", ErrNon200Status, ErrNotFound, prob)
+						} else {
+							return res, fmt.Errorf("%w:\n%w", ErrNon200Status, prob)
+						}
 					}
 				}
 			}
 		}
 
-		return res, fmt.Errorf("%w: HTTP Status %s", ErrNon200Status, res.Status)
+		if res.StatusCode == http.StatusNotFound {
+			return res, fmt.Errorf("%w: %w", ErrNon200Status, ErrNotFound)
+		} else {
+			return res, fmt.Errorf("%w: HTTP Status %s", ErrNon200Status, res.Status)
+		}
 	}
 
 	if err := json.Unmarshal(payload, result); err != nil {
@@ -247,6 +274,25 @@ func (c *Client) makeRequest(req *http.Request) (*http.Response, error) {
 	}
 
 	return res, nil
+}
+
+func makeJSONPatchRequest(ctx context.Context, url string, headers []Header, body any) (*http.Request, error) {
+	jBody, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("request body is not valid JSON, body is %v:\n%w", body, err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, url, bytes.NewBuffer(jBody))
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+
+	addDebugHeader(req)
+
+	headers = append(headers, Header{Key: "Content-Type", Value: "application/json"})
+	req.ContentLength = int64(len(jBody))
+
+	return addAcceptJSONHeaders(req, headers)
 }
 
 func makeJSONPostRequest(ctx context.Context, url string, headers []Header, body any) (*http.Request, error) {

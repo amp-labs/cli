@@ -97,3 +97,25 @@ type Project struct {
 	CreateTime time.Time `json:"createTime"`
 	OrgId      string    `json:"orgId"`
 }
+
+type Destination struct {
+	Id         string           `json:"id"`
+	ProjectId  string           `json:"projectId"`
+	Name       string           `json:"name"`
+	Type       string           `json:"type"`
+	Metadata   *WebhookMetadata `json:"metadata"`
+	CreateTime time.Time        `json:"createTime"`
+	UpdateTime time.Time        `json:"updateTime"`
+}
+
+type PatchDestination struct {
+	Destination map[string]any `json:"destination"`
+	UpdateMask  []string       `json:"updateMask"`
+}
+
+type WebhookMetadata struct {
+	URL            string            `json:"url"`
+	Headers        map[string]string `json:"headers,omitempty"`
+	SvixAppId      string            `json:"svixAppId,omitempty"`
+	SvixEndpointId string            `json:"svixEndpointId,omitempty"`
+}
