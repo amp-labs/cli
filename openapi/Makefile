@@ -3,6 +3,9 @@
 MANIFEST_YAML = https://raw.githubusercontent.com/amp-labs/openapi/main/manifest/manifest.yaml
 PROBLEM_YAML = https://raw.githubusercontent.com/amp-labs/openapi/main/problem/problem.yaml
 
+.PHONY: gen
+gen: gen/manifest gen/problem
+
 .PHONY: gen/manifest
 gen/manifest:
 	oapi-codegen --config=oapi.config.yaml --o=manifest.gen.go $(MANIFEST_YAML)
