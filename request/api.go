@@ -190,6 +190,24 @@ func (c *APIClient) ListConnections(ctx context.Context) ([]*Connection, error) 
 	return connections, nil
 }
 
+func (c *APIClient) ListProviderApps(ctx context.Context) ([]*ProviderApp, error) {
+	listURL := fmt.Sprintf("%s/projects/%s/provider-apps", c.Root, c.ProjectId)
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var providerApps []*ProviderApp
+
+	_, err = c.Client.Get(ctx, listURL, &providerApps, auth) //nolint:bodyclose
+	if err != nil {
+		return nil, err
+	}
+
+	return providerApps, nil
+}
+
 func (c *APIClient) ListProjects(ctx context.Context) ([]*Project, error) {
 	listURL := c.Root + "/projects"
 
