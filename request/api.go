@@ -172,6 +172,24 @@ func (c *APIClient) ListInstallations(ctx context.Context, integrationId string)
 	return installations, nil
 }
 
+func (c *APIClient) ListConnections(ctx context.Context) ([]*Connection, error) {
+	listURL := fmt.Sprintf("%s/projects/%s/connections", c.Root, c.ProjectId)
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var connections []*Connection
+
+	_, err = c.Client.Get(ctx, listURL, &connections, auth) //nolint:bodyclose
+	if err != nil {
+		return nil, err
+	}
+
+	return connections, nil
+}
+
 func (c *APIClient) ListProjects(ctx context.Context) ([]*Project, error) {
 	listURL := c.Root + "/projects"
 
