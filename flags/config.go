@@ -62,7 +62,7 @@ func GetProjectOrFail() string {
 	p := viper.GetString("project")
 	if p == "" {
 		// This is using fmt.Println instead of logger.Fatal because the logger package
-		// depends on the flags package, so we can't import it here to avoid a circular dependency.
+		// depends on the flags package, so we don't import it here to avoid a circular dependency.
 		fmt.Println("Must provide a project name or ID in the --project flag")
 		os.Exit(1)
 	}
