@@ -1,6 +1,8 @@
 package flags
 
 import (
+	"fmt"
+	"os"
 	"strings"
 
 	"github.com/amp-labs/cli/utils"
@@ -13,10 +15,10 @@ type FlagConfig struct {
 }
 
 func Init(rootCmd *cobra.Command) error {
-	rootCmd.PersistentFlags().BoolP("debug", "d", false, "Enable debug logging mode")
-	rootCmd.PersistentFlags().StringP("project", "p", "", "Ampersand project ID")
+	rootCmd.PersistentFlags().BoolP("debug", "d", false, "Enable debug logging mode, defaults to false.")
+	rootCmd.PersistentFlags().StringP("project", "p", "", "Ampersand project name or ID")
 	rootCmd.PersistentFlags().StringP("key", "k", "", "Ampersand API key")
-	rootCmd.PersistentFlags().StringP("format", "f", "json", "Output format")
+	rootCmd.PersistentFlags().StringP("format", "f", "json", "Output format, defaults to json. Options: json, yaml")
 
 	if err := viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug")); err != nil {
 		return err
@@ -56,8 +58,16 @@ func GetDebugMode() bool {
 	return viper.GetBool("debug")
 }
 
-func GetProjectId() string {
-	return viper.GetString("project")
+func GetProjectOrFail() string {
+	p := viper.GetString("project")
+	if p == "" {
+		// This is using fmt.Println instead of logger.Fatal because the logger package
+		// depends on the flags package, so we can't import it here to avoid a circular dependency.
+		fmt.Println("Must provide a project name or ID in the --project flag")
+		os.Exit(1)
+	}
+
+	return p
 }
 
 func GetAPIKey() string {

@@ -15,7 +15,6 @@ import (
 	"github.com/amp-labs/cli/request"
 	"github.com/amp-labs/cli/storage"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
@@ -25,12 +24,8 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Long:    "Deploy changes to integrations, you can either provide a path to the folder that contains amp.yaml or a path to the file itself", //nolint:lll
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		projectId := flags.GetProjectId()
-		if projectId == "" {
-			logger.Fatal("Must provide a project ID in the --project flag")
-		}
-
-		apiKey := viper.GetString("key")
+		projectId := flags.GetProjectOrFail()
+		apiKey := flags.GetAPIKey()
 
 		zippedData, err := files.Zip(args[0])
 		if err != nil {

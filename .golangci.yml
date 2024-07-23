@@ -1,5 +1,7 @@
 run:
   timeout: 5m
+  skip-dirs:
+    - openapi
 output:
   formats: github-actions
 linters:

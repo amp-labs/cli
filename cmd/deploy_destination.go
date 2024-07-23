@@ -19,13 +19,8 @@ var deployDestinationCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Long:   "Deploy a destination",
 	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
+		projectId := flags.GetProjectOrFail()
 		apiKey := flags.GetAPIKey()
-
-		projectId := flags.GetProjectId()
-		if projectId == "" {
-			logger.Fatal("Must provide a project ID in the --project flag")
-		}
-
 		input := viper.GetString("input")
 		if input == "" {
 			logger.Fatal("Must provide an input file path")
