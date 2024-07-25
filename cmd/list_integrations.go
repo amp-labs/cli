@@ -18,11 +18,7 @@ var listIntegrationsCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Short: "List integrations",
 	Long:  "List integrations",
 	Run: func(cmd *cobra.Command, args []string) {
-		projectId := flags.GetProjectId()
-		if projectId == "" {
-			logger.Fatal("Must provide a project ID in the --project flag")
-		}
-
+		projectId := flags.GetProjectOrFail()
 		apiKey := flags.GetAPIKey()
 
 		client := request.NewAPIClient(projectId, &apiKey)

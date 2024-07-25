@@ -17,13 +17,8 @@ var listDestinationsCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Short: "List destinations",
 	Long:  "List destinations",
 	Run: func(cmd *cobra.Command, args []string) {
+		projectId := flags.GetProjectOrFail()
 		apiKey := flags.GetAPIKey()
-
-		projectId := flags.GetProjectId()
-		if projectId == "" {
-			logger.Fatal("Must provide a project ID in the --project flag")
-		}
-
 		client := request.NewAPIClient(projectId, &apiKey)
 
 		destinations, err := client.ListDestinations(cmd.Context())

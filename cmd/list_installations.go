@@ -18,11 +18,7 @@ var listInstallationsCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Args:  cobra.ExactArgs(1), //nolint:gomnd,mnd
 	Run: func(cmd *cobra.Command, args []string) {
 		integrationId := args[0]
-		projectId := flags.GetProjectId()
-		if projectId == "" {
-			logger.Fatal("Must provide a project ID in the --project flag")
-		}
-
+		projectId := flags.GetProjectOrFail()
 		apiKey := flags.GetAPIKey()
 
 		client := request.NewAPIClient(projectId, &apiKey)

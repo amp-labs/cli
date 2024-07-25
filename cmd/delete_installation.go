@@ -20,11 +20,7 @@ var deleteInstallationCmd = &cobra.Command{ //nolint:gochecknoglobals
 
 		integrationId := args[0]
 		installationId := args[1]
-		projectId := flags.GetProjectId()
-		if projectId == "" {
-			logger.Fatal("Must provide a project ID in the --project flag")
-		}
-
+		projectId := flags.GetProjectOrFail()
 		apiKey := flags.GetAPIKey()
 
 		err := request.NewAPIClient(projectId, &apiKey).
