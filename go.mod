@@ -5,6 +5,7 @@ go 1.22
 require (
 	github.com/adrg/xdg v0.4.0
 	github.com/alexkappa/mustache v1.0.0
+	github.com/buildkite/shellwords v0.0.0-20180315110454-59467a9b8e10
 	github.com/clerkinc/clerk-sdk-go v1.49.0
 	github.com/imdario/mergo v0.3.15
 	github.com/oapi-codegen/runtime v1.1.1
@@ -23,7 +24,6 @@ require (
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
-	github.com/buildkite/shellwords v0.0.0-20180315110454-59467a9b8e10 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
