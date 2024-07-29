@@ -147,5 +147,9 @@ func init() {
 		logger.FatalErr("unable to bind flag", err)
 	}
 
+	if err := flags.InitAndBindFormatFlag(deployDestinationCmd); err != nil {
+		logger.FatalErr("unable to bind flag", err)
+	}
+
 	rootCmd.AddCommand(deployDestinationCmd)
 }

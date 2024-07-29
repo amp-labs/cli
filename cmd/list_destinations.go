@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"errors"
 	"sort"
 
@@ -35,15 +34,11 @@ var listDestinationsCmd = &cobra.Command{ //nolint:gochecknoglobals
 		})
 
 		for _, dest := range destinations {
-			logger.Info(dest.Id + " " + dest.Name + " (" + dest.Type + ")")
-			if dest.Metadata != nil {
-				bts, err := json.MarshalIndent(dest.Metadata, "  ", "  ")
-				if err != nil {
-					logger.FatalErr("Failed to marshal destination metadata", err)
-				}
-
-				logger.Info("  " + string(bts))
+			output := dest.Name
+			if dest.Metadata.URL != "" {
+				output += " (" + dest.Metadata.URL + ")"
 			}
+			logger.Info(output)
 		}
 	},
 }

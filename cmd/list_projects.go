@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 
 	"github.com/amp-labs/cli/clerk"
@@ -34,7 +35,7 @@ var listProjectsCmd = &cobra.Command{ //nolint:gochecknoglobals
 		})
 
 		for _, proj := range projects {
-			logger.Info(proj.Id + " " + proj.Name + " (" + proj.AppName + ")")
+			logger.Info(fmt.Sprintf("Project ID: %s, Project Name: %s", proj.Id, proj.Name))
 		}
 	},
 }

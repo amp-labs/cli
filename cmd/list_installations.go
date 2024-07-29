@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 
 	"github.com/amp-labs/cli/clerk"
@@ -37,7 +38,8 @@ var listInstallationsCmd = &cobra.Command{ //nolint:gochecknoglobals
 		})
 
 		for _, inst := range insts {
-			logger.Info(inst.Id + " " + inst.CreatedBy + " (" + inst.HealthStatus + ")")
+			logger.Info(fmt.Sprintf("Installation ID: %s, Group Ref: %s (Last Status: %s)",
+				inst.Id, inst.Group.GroupRef, inst.HealthStatus))
 		}
 	},
 }

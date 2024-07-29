@@ -20,9 +20,10 @@ func ParseManifest(yamlData []byte) (*openapi.Manifest, error) {
 	return manifest, nil
 }
 
+// nolint: goerr113
 func validationError(tracker *pathTracker, msg string, args ...any) error {
-	err1 := fmt.Errorf(msg, args...)                                                //nolint:err113
-	err2 := fmt.Errorf("The validation error happened at the %s", tracker.String()) //nolint:err113,stylecheck
+	err1 := fmt.Errorf(msg, args...)
+	err2 := fmt.Errorf("The validation error happened at the %s", tracker.String()) //nolint:stylecheck
 
 	return errors.Join(ErrBadManifest, err1, err2)
 }

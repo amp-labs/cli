@@ -10,7 +10,7 @@ import (
 var rootCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Use:   "amp",
 	Short: "Ampersand CLI",
-	Long:  "The Ampersand CLI allows you to deploy integration config files.",
+	Long:  "The Ampersand CLI allows you to interact with the Ampersand platform.",
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -26,9 +26,11 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
+	// Disable the autcompletion command from being shown in `amp --help`
+	// nolint: lll
+	// See https://github.com/spf13/cobra/blob/main/site/content/completions/_index.md#adapting-the-default-completion-command
+	rootCmd.CompletionOptions.HiddenDefaultCmd = true
+
 	err := flags.Init(rootCmd)
 	if err != nil {
 		logger.FatalErr("unable to initialize flags", err)

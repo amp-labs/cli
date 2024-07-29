@@ -15,9 +15,10 @@ import (
 )
 
 var myInfoCmd = &cobra.Command{ //nolint:gochecknoglobals
-	Use:   "my-info",
-	Short: "Get info about the current user",
-	Long:  "Get info about the current user",
+	Use:    "my-info",
+	Short:  "Get info about the current user",
+	Long:   "Get info about the current user",
+	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		rootURL, ok := os.LookupEnv("AMP_API_URL")
 		if !ok {
@@ -46,5 +47,9 @@ var myInfoCmd = &cobra.Command{ //nolint:gochecknoglobals
 }
 
 func init() {
+	if err := flags.InitAndBindFormatFlag(myInfoCmd); err != nil {
+		logger.FatalErr("unable to initialize flags", err)
+	}
+
 	rootCmd.AddCommand(myInfoCmd)
 }

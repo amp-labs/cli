@@ -38,8 +38,7 @@ var listIntegrationsCmd = &cobra.Command{ //nolint:gochecknoglobals
 
 		for _, integ := range integs {
 			num := numInstallations(cmd.Context(), client, integ.Id)
-
-			logger.Info(integ.Id + " " + integ.Name + " (" + num + ")")
+			logger.Info(fmt.Sprintf("Integration ID: %s, Integration Name: %s (%s)", integ.Id, integ.Name, num))
 		}
 	},
 }
