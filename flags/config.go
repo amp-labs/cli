@@ -14,11 +14,11 @@ type FlagConfig struct {
 	DebugMode bool
 }
 
+// Init initializes global flags for the CLI.
 func Init(rootCmd *cobra.Command) error {
 	rootCmd.PersistentFlags().BoolP("debug", "d", false, "Enable debug logging mode, defaults to false.")
 	rootCmd.PersistentFlags().StringP("project", "p", "", "Ampersand project name or ID")
 	rootCmd.PersistentFlags().StringP("key", "k", "", "Ampersand API key")
-	rootCmd.PersistentFlags().StringP("format", "f", "json", "Output format, defaults to json. Options: json, yaml")
 
 	if err := viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug")); err != nil {
 		return err
@@ -36,7 +36,14 @@ func Init(rootCmd *cobra.Command) error {
 		panic(err)
 	}
 
-	if err := viper.BindPFlag("format", rootCmd.PersistentFlags().Lookup("format")); err != nil {
+	return nil
+}
+
+// InitAndBindFormatFlag initializes and binds the format flag to the provided command.
+func InitAndBindFormatFlag(cmd *cobra.Command) error {
+	cmd.Flags().StringP("format", "f", "json", "Output format, defaults to json. Options: json, yaml")
+
+	if err := viper.BindPFlag("format", cmd.Flags().Lookup("format")); err != nil {
 		return err
 	}
 

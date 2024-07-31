@@ -97,8 +97,8 @@ const ReadHeaderTimeoutSeconds = 3
 // loginCmd represents the login command.
 var loginCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Use:   "login",
-	Short: "Log in to an Ampersand account",
-	Long:  "Log in to an Ampersand account.",
+	Short: "Log into an Ampersand account",
+	Long:  "Log into an Ampersand account.",
 	Run: func(cmd *cobra.Command, args []string) {
 		needLogin := false
 		path := clerk.GetJwtPath()
