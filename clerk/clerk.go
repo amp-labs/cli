@@ -2,6 +2,7 @@ package clerk
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,21 +21,8 @@ import (
 	"github.com/clerkinc/clerk-sdk-go/clerk"
 )
 
-// HTML is shown to the user after they log in.
-var HTML = `<!doctype html>` + "\n" + //nolint:gochecknoglobals
-	`<html>
-        <head>
-                <meta charset="utf-8"/>
-                <title>Login</title>
-                <!--[if lt IE 9]>
-                <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
-                <![endif]-->
-        </head>
-        <body>
-            <h3>Successfully logged in as {{email}}</h3>
-            <div>Please close this tab or page and return to the CLI</div>
-        </body>
-</html>`
+//go:embed successLogin.html
+var HTML string //nolint:gochecknoglobals
 
 const (
 	ClientSessionPathDev  = "%s/v1/client?_clerk_js_version=4.50.1&__dev_session=%s"
