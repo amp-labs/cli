@@ -17,6 +17,7 @@ import (
 	"github.com/adrg/xdg"
 	"github.com/alexkappa/mustache"
 	"github.com/amp-labs/cli/logger"
+	"github.com/amp-labs/cli/utils"
 	"github.com/amp-labs/cli/vars"
 	"github.com/clerkinc/clerk-sdk-go/clerk"
 )
@@ -95,7 +96,7 @@ func GetClerkRootURL() string {
 }
 
 func GetSessionURL(data *LoginData) string {
-	if vars.Stage == "prod" {
+	if utils.GetStage() == "prod" {
 		return fmt.Sprintf(ClientSessionPathProd, GetClerkRootURL())
 	}
 
@@ -103,11 +104,13 @@ func GetSessionURL(data *LoginData) string {
 }
 
 func GetJwtFile() string {
-	if vars.Stage == "prod" {
+	stage := utils.GetStage()
+
+	if stage == "prod" {
 		return "amp/jwt.json"
 	}
 
-	return fmt.Sprintf("amp/jwt-%s.json", vars.Stage)
+	return fmt.Sprintf("amp/jwt-%s.json", stage)
 }
 
 // GetJwtPath returns the path to the jwt.json file where the JWT token is stored.
