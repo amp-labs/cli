@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/amp-labs/cli/vars"
 	"sigs.k8s.io/yaml"
 )
 
@@ -101,6 +102,15 @@ func WriteStruct(writer io.Writer, format Format, data any) error {
 	default:
 		return ErrUnknownFormat
 	}
+}
+
+func GetStage() string {
+	stage, ok := os.LookupEnv("AMP_STAGE_OVERRIDE")
+	if ok {
+		return stage
+	}
+
+	return vars.Stage
 }
 
 func WriteStructToFile(filePath string, format Format, data any) error {
