@@ -14,7 +14,6 @@ import (
 	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/utils"
-	"github.com/amp-labs/cli/vars"
 )
 
 const clientName = "amp-cli"
@@ -242,7 +241,7 @@ func (c *Client) makeRequestAndParseJSONResult(req *http.Request, result any) (*
 }
 
 func addDebugHeader(req *http.Request) {
-	if vars.Stage != "prod" {
+	if utils.GetStage() != "prod" {
 		if flags.GetDebugMode() {
 			req.Header.Add("X-Amp-Debug-Mode", "true")
 		}
