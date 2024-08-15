@@ -8,6 +8,7 @@ import (
 
 	"github.com/amp-labs/cli/clerk"
 	"github.com/amp-labs/cli/logger"
+	"github.com/amp-labs/cli/openapi"
 	"github.com/amp-labs/cli/vars"
 )
 
@@ -188,6 +189,24 @@ func (c *APIClient) ListConnections(ctx context.Context) ([]*Connection, error) 
 	}
 
 	return connections, nil
+}
+
+func (c *APIClient) GetCatalog(ctx context.Context) (openapi.CatalogType, error) {
+	catalogURL := c.Root + "/providers"
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var catalog openapi.CatalogType
+
+	_, err = c.Client.Get(ctx, catalogURL, &catalog, auth) //nolint:bodyclose
+	if err != nil {
+		return nil, err
+	}
+
+	return catalog, nil
 }
 
 func (c *APIClient) ListProviderApps(ctx context.Context) ([]*ProviderApp, error) {
