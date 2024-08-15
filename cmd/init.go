@@ -20,7 +20,10 @@ import (
 
 var ErrBadInput = errors.New("bad input")
 
-const NumProvidersShown = 10
+const (
+	NumProvidersShown = 10
+	YamlFileMode      = 0o644
+)
 
 func nonEmpty(fieldName string) func(string) error {
 	return func(s string) error {
@@ -89,7 +92,7 @@ var initCmd = &cobra.Command{ //nolint:gochecknoglobals
 			logger.FatalErr("Unable to marshal manifest", err)
 		}
 
-		if err := os.WriteFile(path, ys, 0o644); err != nil { //nolint:gosec
+		if err := os.WriteFile(path, ys, YamlFileMode); err != nil { //nolint:gosec
 			logger.FatalErr("Unable to write manifest to file", err)
 		}
 
@@ -256,7 +259,8 @@ func getIntegrationField() (*openapi.IntegrationField, error) { //nolint:funlen,
 	return field, nil
 }
 
-func addReadObject(read *openapi.IntegrationRead, provider *openapi.ProviderInfo) error { //nolint:funlen,cyclop,gocognit
+//nolint:funlen,cyclop,gocognit
+func addReadObject(read *openapi.IntegrationRead, provider *openapi.ProviderInfo) error {
 	obj := &openapi.IntegrationObject{}
 
 	objName, err := promptString(provider.DisplayName + " object name")
