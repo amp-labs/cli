@@ -1,1 +1,1 @@
-## Contributing to Ampersand CLI
+## Guidelines to contributing to Ampersand CLI
