@@ -36,10 +36,24 @@ func nonEmpty(fieldName string) func(string) error {
 }
 
 var initCmd = &cobra.Command{ //nolint:gochecknoglobals
-	Use:   "init",
-	Short: "create a new Ampersand project",
-	Long:  "Create a new Ampersand project.",
+	Use:    "init",
+	Short:  "initialize an Ampersand manifest file",
+	Long:   "Initialize an Ampersand manifest file.",
+	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
+		st, err := os.Stat("amp.yaml")
+		if err != nil {
+			if os.IsNotExist(err) {
+				st = nil
+			} else {
+				logger.FatalErr("Unable to check for existing manifest", err)
+			}
+		}
+
+		if st != nil {
+			logger.Fatal("amp.yaml already exists, please remove it before running this command")
+		}
+
 		name, err := promptString("Name your integration", nonEmpty("Integration name"))
 		if err != nil {
 			logger.FatalErr("Unable to prompt for integration name", err)
@@ -57,12 +71,6 @@ var initCmd = &cobra.Command{ //nolint:gochecknoglobals
 		integ.DisplayName = &disp
 		integ.Provider = provider.Name
 
-		if provider.Support.Proxy {
-			if err := setupProxy(&integ, provider); err != nil {
-				logger.FatalErr("Unable to setup proxy", err)
-			}
-		}
-
 		if provider.Support.Read {
 			if err := setupRead(&integ, provider); err != nil {
 				logger.FatalErr("Unable to setup read", err)
@@ -75,11 +83,15 @@ var initCmd = &cobra.Command{ //nolint:gochecknoglobals
 			}
 		}
 
-		path, err := promptString("Save YAML to file path", nonEmpty("File path"))
-		if err != nil {
-			logger.FatalErr("Unable to prompt for file path", err)
+		if provider.Support.Proxy {
+			if err := setupProxy(&integ, provider); err != nil {
+				logger.FatalErr("Unable to setup proxy", err)
+			}
 		}
 
+		// TODO: Add an endpoint to the API to fetch the latest spec version.
+		// If the spec version from the server is newer, we want to block
+		// the user from running this command until they upgrade.
 		manifest := &openapi.Manifest{
 			SpecVersion: "1.0.0",
 			Integrations: []openapi.Integration{
@@ -92,11 +104,11 @@ var initCmd = &cobra.Command{ //nolint:gochecknoglobals
 			logger.FatalErr("Unable to marshal manifest", err)
 		}
 
-		if err := os.WriteFile(path, ys, YamlFileMode); err != nil { //nolint:gosec
+		if err := os.WriteFile("amp.yaml", ys, YamlFileMode); err != nil { //nolint:gosec
 			logger.FatalErr("Unable to write manifest to file", err)
 		}
 
-		fmt.Println("Integration manifest written to", path)
+		fmt.Println("Integration manifest written to amp.yaml")
 	},
 }
 
