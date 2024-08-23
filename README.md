@@ -71,6 +71,14 @@ Whenever you make code changes, and want to test it locally, run
 task build
 ```
 
+#### Check version 
+
+To check which version `lamp` is pointing to (`dev` / `local`/ `staging` / `prod`), run 
+
+```
+lamp version
+```
+
 Now you can run `lamp` commands from anywhere on your computer and it'll use your latest code!
 
 ## Trouble shooting
