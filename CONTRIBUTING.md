@@ -1,76 +1,13 @@
-## Local Development
+## Contributing to Ampersand CLI
 
-### First Time Set Up
+Before contributing to Ampersand CLI, please ensure you have followed the setup instructions in the [README.md](README.md) file. This includes setting up your local development environment, building the CLI, and installing the necessary linting tools.
 
-1. Download Taskfile by following the instructions at: <https://taskfile.dev/installation/>
+When contributing, please adhere to the following guidelines:
 
-2. Run the following command from the root of the repo to build the CLI, this will create an executable file called `amp` in the bin folder.
+* Ensure your code is formatted according to the project's coding standards. Ensure you have run `task lint` or `task lint` before committing to take care of any linting issues. 
+* Write unit tests for your code to ensure it works as expected.
+* Document your changes in the commit message, including the issue number or a brief description of the change.
+* Submit your changes as a pull request to the main branch.
+* Engage with the project maintainers and other contributors through issues and pull requests.
 
-```
-task build
-```
-
-Create a symlink in `/usr/local/bin` that points to this executable. Run this command from the root of the repo. This command names the symlinked executable `lamp`, which stands for `local amp`, in order the differentiate between the local and production versions of the amp CLI, so that you can have both running on your computer. But you can feel free to name it anything you want.
-
-```
-sudo ln -s $PWD/bin/amp /usr/local/bin/lamp
-```
-
-You can test if this worked by running the following:
-
-```
-which lamp
-```
-
-It should print `/usr/local/bin/lamp`
-
-Now you can run the following from anywhere on your computer:
-
-```
-lamp
-```
-
-This should print a list of available commands in the CLI.
-
-Now you can run `lamp` commands from anywhere on your computer, and it'll use your local version!
-
-If this doesn't work, then you'll need to add `/usr/local/bin` to your PATH variable.
-
-You should also install the following linting tools by following the linked instructions:
-
-- <https://golangci-lint.run/usage/install/#local-installation>
-- <https://github.com/daixiang0/gci?tab=readme-ov-file#installation>
-- <https://github.com/bombsimon/wsl?tab=readme-ov-file#installation>
-
-These will allow you to run `task lint` (to lint your code) and `task fix` (to fix linting errors automatically).
-
-### Steps for setup on Windows Operating System
-
-1. Download Taskfile by following the instructions at: <https://taskfile.dev/installation/>.
-
-2. Run the following command from the root of the repo to build the CLI, this will create an executable file called `amp` in the bin folder.
-    `task build`
-
-3. Open command prompt as administrator. You can choose a directory such as C:\Windows or C:\Windows\System32 for system-wide availability, or you can create a new directory and add it to the "Path" variable.
-
-4. Run the following commands.
-    `echo @echo off > lamp.bat`
-    `echo "C:\Users\YourUsername\Documents\cli\bin\amp.exe" %* >> lamp.bat`
-
-    Replace "C:\Users\YourUsername\Documents\cli\bin\amp.exe" with the actual path to the `amp.exe` file. Make sure to keep the double quotes around the file path if it contains spaces.
-
-5. You can now run the command `lamp` from anywhere in the command line, and it will execute the `amp.exe` file.
-
-### Ongoing Development
-
-Whenever you make code changes, and want to test it locally, run
-
-```
-task build
-```
-
-Now you can run `lamp` commands from anywhere on your computer and it'll use your latest code!
-
-## Trouble shooitng
-
-If you encounter issues with `lamp login` try `lamp logout` and login again.
+By following these guidelines, you can help ensure that your contributions are of high quality and align with the project's goals.
