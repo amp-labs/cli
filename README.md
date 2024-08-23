@@ -1,4 +1,14 @@
+<br/>
+<div align="center">
+    <a href="https://www.buildwithfern.com/?utm_source=github&utm_medium=readme&utm_campaign=docs-starter-openapi&utm_content=logo">
+    <img src="https://res.cloudinary.com/dycvts6vp/image/upload/v1723671980/ampersand-logo-black_fwzpfw.svg#gh-dark-mode-only" height="50" align="center" alt="Ampersand logo" >
+    </a>
+<br/>
+</div>
+
 ## Ampersand CLI
+
+This is the main repo for `amp` CLI mentioned in the docs: https://docs.withampersand.com/cli/overview
 
 ### Local development
 
@@ -51,15 +61,15 @@ These will allow you to run `task lint` (to lint your code) and `task fix` (to f
 1. Download Taskfile by following the instructions at: <https://taskfile.dev/installation/>.
 
 2. Run the following command from the root of the repo to build the CLI, this will create an executable file called `amp` in the bin folder.
-    `task build`
+   `task build`
 
 3. Open command prompt as administrator. You can choose a directory such as C:\Windows or C:\Windows\System32 for system-wide availability, or you can create a new directory and add it to the "Path" variable.
 
 4. Run the following commands.
-    `echo @echo off > lamp.bat`
-    `echo "C:\Users\YourUsername\Documents\cli\bin\amp.exe" %* >> lamp.bat`
+   `echo @echo off > lamp.bat`
+   `echo "C:\Users\YourUsername\Documents\cli\bin\amp.exe" %* >> lamp.bat`
 
-    Replace "C:\Users\YourUsername\Documents\cli\bin\amp.exe" with the actual path to the `amp.exe` file. Make sure to keep the double quotes around the file path if it contains spaces.
+   Replace "C:\Users\YourUsername\Documents\cli\bin\amp.exe" with the actual path to the `amp.exe` file. Make sure to keep the double quotes around the file path if it contains spaces.
 
 5. You can now run the command `lamp` from anywhere in the command line, and it will execute the `amp.exe` file.
 
@@ -71,9 +81,9 @@ Whenever you make code changes, and want to test it locally, run
 task build
 ```
 
-#### Check version 
+#### Check version
 
-To check which version `lamp` is pointing to (`dev` / `local`/ `staging` / `prod`), run 
+To check which version `lamp` is pointing to (`dev` / `local`/ `staging` / `prod`), run
 
 ```
 lamp version
