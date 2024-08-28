@@ -9,6 +9,12 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+// Defines values for DeliveryMode.
+const (
+	Auto      DeliveryMode = "auto"
+	OnRequest DeliveryMode = "onRequest"
+)
+
 // Defines values for OptionalFieldsAutoOption.
 const (
 	All OptionalFieldsAutoOption = "all"
@@ -27,6 +33,18 @@ type DefaultPeriod struct {
 	// FullHistory If true, backfill all history. Required if days is not set.
 	FullHistory *bool `json:"fullHistory,omitempty" validate:"required_without=Days"`
 }
+
+// Delivery defines model for Delivery.
+type Delivery struct {
+	// Mode The data delivery mode for this object. If not specified, defaults to automatic.
+	Mode *DeliveryMode `json:"mode,omitempty"`
+
+	// PageSize The number of records to receive per data delivery.
+	PageSize *int `json:"pageSize,omitempty"`
+}
+
+// DeliveryMode The data delivery mode for this object. If not specified, defaults to automatic.
+type DeliveryMode string
 
 // HydratedIntegration defines model for HydratedIntegration.
 type HydratedIntegration struct {
@@ -115,6 +133,7 @@ type IntegrationFieldMapping struct {
 // IntegrationObject defines model for IntegrationObject.
 type IntegrationObject struct {
 	Backfill           *Backfill                 `json:"backfill,omitempty"`
+	Delivery           *Delivery                 `json:"delivery,omitempty"`
 	Destination        string                    `json:"destination"`
 	ObjectName         string                    `json:"objectName"`
 	OptionalFields     *[]IntegrationField       `json:"optionalFields,omitempty"`
@@ -158,7 +177,6 @@ type OptionalFieldsAutoOption string
 func (t HydratedIntegrationField) AsHydratedIntegrationFieldExistent() (HydratedIntegrationFieldExistent, error) {
 	var body HydratedIntegrationFieldExistent
 	err := json.Unmarshal(t.union, &body)
-
 	return body, err
 }
 
@@ -166,7 +184,6 @@ func (t HydratedIntegrationField) AsHydratedIntegrationFieldExistent() (Hydrated
 func (t *HydratedIntegrationField) FromHydratedIntegrationFieldExistent(v HydratedIntegrationFieldExistent) error {
 	b, err := json.Marshal(v)
 	t.union = b
-
 	return err
 }
 
@@ -179,7 +196,6 @@ func (t *HydratedIntegrationField) MergeHydratedIntegrationFieldExistent(v Hydra
 
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
-
 	return err
 }
 
@@ -187,7 +203,6 @@ func (t *HydratedIntegrationField) MergeHydratedIntegrationFieldExistent(v Hydra
 func (t HydratedIntegrationField) AsIntegrationFieldMapping() (IntegrationFieldMapping, error) {
 	var body IntegrationFieldMapping
 	err := json.Unmarshal(t.union, &body)
-
 	return body, err
 }
 
@@ -195,7 +210,6 @@ func (t HydratedIntegrationField) AsIntegrationFieldMapping() (IntegrationFieldM
 func (t *HydratedIntegrationField) FromIntegrationFieldMapping(v IntegrationFieldMapping) error {
 	b, err := json.Marshal(v)
 	t.union = b
-
 	return err
 }
 
@@ -208,7 +222,6 @@ func (t *HydratedIntegrationField) MergeIntegrationFieldMapping(v IntegrationFie
 
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
-
 	return err
 }
 
@@ -226,7 +239,6 @@ func (t *HydratedIntegrationField) UnmarshalJSON(b []byte) error {
 func (t IntegrationField) AsIntegrationFieldExistent() (IntegrationFieldExistent, error) {
 	var body IntegrationFieldExistent
 	err := json.Unmarshal(t.union, &body)
-
 	return body, err
 }
 
@@ -234,7 +246,6 @@ func (t IntegrationField) AsIntegrationFieldExistent() (IntegrationFieldExistent
 func (t *IntegrationField) FromIntegrationFieldExistent(v IntegrationFieldExistent) error {
 	b, err := json.Marshal(v)
 	t.union = b
-
 	return err
 }
 
@@ -247,7 +258,6 @@ func (t *IntegrationField) MergeIntegrationFieldExistent(v IntegrationFieldExist
 
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
-
 	return err
 }
 
@@ -255,7 +265,6 @@ func (t *IntegrationField) MergeIntegrationFieldExistent(v IntegrationFieldExist
 func (t IntegrationField) AsIntegrationFieldMapping() (IntegrationFieldMapping, error) {
 	var body IntegrationFieldMapping
 	err := json.Unmarshal(t.union, &body)
-
 	return body, err
 }
 
@@ -263,7 +272,6 @@ func (t IntegrationField) AsIntegrationFieldMapping() (IntegrationFieldMapping, 
 func (t *IntegrationField) FromIntegrationFieldMapping(v IntegrationFieldMapping) error {
 	b, err := json.Marshal(v)
 	t.union = b
-
 	return err
 }
 
@@ -276,7 +284,6 @@ func (t *IntegrationField) MergeIntegrationFieldMapping(v IntegrationFieldMappin
 
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
-
 	return err
 }
 
