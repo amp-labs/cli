@@ -11,7 +11,9 @@ import (
 
 // Print out some basic info about the running binary. Useful for debugging.
 var versionCommand = &cobra.Command{ //nolint:gochecknoglobals
-	Use: "version",
+	Use:   "version",
+	Short: "Print this CLI's version",
+	Long:  "Print this CLI's version and build information",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Ampersand CLI") //nolint:forbidigo
 
