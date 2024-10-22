@@ -389,7 +389,7 @@ func addReadObject(read *openapi.IntegrationRead, provider *openapi.ProviderInfo
 	}
 
 	if wantOptionalAuto {
-		tmp := openapi.OptionalFieldsAutoOptionAll
+		tmp := openapi.All
 		obj.OptionalFieldsAuto = &tmp
 	}
 
