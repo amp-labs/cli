@@ -21,7 +21,7 @@ var rootCmd = &cobra.Command{ //nolint:gochecknoglobals
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		logger.FatalErr("exiting because of unhandled error", err)
+		return
 	}
 }
 
