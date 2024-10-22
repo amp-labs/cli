@@ -17,7 +17,12 @@ const (
 
 // Defines values for OptionalFieldsAutoOption.
 const (
-	All OptionalFieldsAutoOption = "all"
+	OptionalFieldsAutoOptionAll OptionalFieldsAutoOption = "all"
+)
+
+// Defines values for SelectedFieldsAutoOption.
+const (
+	SelectedFieldsAutoOptionAll SelectedFieldsAutoOption = "all"
 )
 
 // Backfill defines model for Backfill.
@@ -140,6 +145,7 @@ type IntegrationObject struct {
 	OptionalFieldsAuto *OptionalFieldsAutoOption `json:"optionalFieldsAuto,omitempty"`
 	RequiredFields     *[]IntegrationField       `json:"requiredFields,omitempty"`
 	Schedule           string                    `json:"schedule"`
+	SelectedFieldsAuto *SelectedFieldsAutoOption `json:"selectedFieldsAuto,omitempty"`
 }
 
 // IntegrationProxy defines model for IntegrationProxy.
@@ -172,6 +178,9 @@ type Manifest struct {
 
 // OptionalFieldsAutoOption defines model for OptionalFieldsAutoOption.
 type OptionalFieldsAutoOption string
+
+// SelectedFieldsAutoOption defines model for SelectedFieldsAutoOption.
+type SelectedFieldsAutoOption string
 
 // AsHydratedIntegrationFieldExistent returns the union data inside the HydratedIntegrationField as a HydratedIntegrationFieldExistent
 func (t HydratedIntegrationField) AsHydratedIntegrationFieldExistent() (HydratedIntegrationFieldExistent, error) {
