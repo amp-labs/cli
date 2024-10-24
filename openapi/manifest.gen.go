@@ -120,6 +120,9 @@ type IntegrationField struct {
 // IntegrationFieldExistent defines model for IntegrationFieldExistent.
 type IntegrationFieldExistent struct {
 	FieldName string `json:"fieldName"`
+
+	// MapToField The field name to map to in the destination.
+	MapToField *string `json:"mapToField,omitempty"`
 }
 
 // IntegrationFieldMapping defines model for IntegrationFieldMapping.
@@ -159,7 +162,9 @@ type IntegrationWrite struct {
 
 // IntegrationWriteObject defines model for IntegrationWriteObject.
 type IntegrationWriteObject struct {
-	ObjectName string `json:"objectName"`
+	// InheritMappingFromRead If true, the write object will inherit the mapping from the read object. If false, the write object will have no mapping.
+	InheritMappingFromRead *bool  `json:"inheritMappingFromRead,omitempty"`
+	ObjectName             string `json:"objectName"`
 }
 
 // Manifest This is the schema of the manifest file that is used to define the integrations of the project.
