@@ -121,8 +121,8 @@ type IntegrationField struct {
 type IntegrationFieldExistent struct {
 	FieldName string `json:"fieldName"`
 
-	// MapToField The field name to map to in the destination.
-	MapToField *string `json:"mapToField,omitempty"`
+	// MapToName The field name to map to in the destination.
+	MapToName *string `json:"mapToName,omitempty"`
 }
 
 // IntegrationFieldMapping defines model for IntegrationFieldMapping.
