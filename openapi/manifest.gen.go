@@ -135,9 +135,15 @@ type IntegrationFieldMapping struct {
 
 // IntegrationObject defines model for IntegrationObject.
 type IntegrationObject struct {
-	Backfill           *Backfill                 `json:"backfill,omitempty"`
-	Delivery           *Delivery                 `json:"delivery,omitempty"`
-	Destination        string                    `json:"destination"`
+	Backfill    *Backfill `json:"backfill,omitempty"`
+	Delivery    *Delivery `json:"delivery,omitempty"`
+	Destination string    `json:"destination"`
+
+	// MapToDisplayName A display name to map to in the destination.
+	MapToDisplayName *string `json:"mapToDisplayName,omitempty"`
+
+	// MapToName An object name to map to in the destination.
+	MapToName          *string                   `json:"mapToName,omitempty"`
 	ObjectName         string                    `json:"objectName"`
 	OptionalFields     *[]IntegrationField       `json:"optionalFields,omitempty"`
 	OptionalFieldsAuto *OptionalFieldsAutoOption `json:"optionalFieldsAuto,omitempty"`
