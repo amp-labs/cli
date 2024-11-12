@@ -140,10 +140,10 @@ type IntegrationObject struct {
 	Destination string    `json:"destination"`
 
 	// MapToDisplayName A display name to map to in the destination.
-	MapToDisplayName *string `json:"mapToDisplayName,omitempty"`
+	MapToDisplayName string `json:"mapToDisplayName,omitempty"`
 
 	// MapToName An object name to map to in the destination.
-	MapToName          *string                   `json:"mapToName,omitempty"`
+	MapToName          string                    `json:"mapToName,omitempty"`
 	ObjectName         string                    `json:"objectName"`
 	OptionalFields     *[]IntegrationField       `json:"optionalFields,omitempty"`
 	OptionalFieldsAuto *OptionalFieldsAutoOption `json:"optionalFieldsAuto,omitempty"`
