@@ -65,15 +65,24 @@ type HydratedIntegrationField struct {
 type HydratedIntegrationFieldExistent struct {
 	DisplayName string `json:"displayName"`
 	FieldName   string `json:"fieldName"`
+
+	// MapToName The field name to map to in the destination.
+	MapToName string `json:"mapToName,omitempty"`
 }
 
 // HydratedIntegrationObject defines model for HydratedIntegrationObject.
 type HydratedIntegrationObject struct {
 	// AllFields This is a list of all fields on the object for a particular SaaS instance. This is used to populate the UI during configuration.
-	AllFields          *[]HydratedIntegrationField `json:"allFields,omitempty"`
-	Backfill           *Backfill                   `json:"backfill,omitempty"`
-	Destination        string                      `json:"destination"`
-	DisplayName        string                      `json:"displayName"`
+	AllFields   *[]HydratedIntegrationField `json:"allFields,omitempty"`
+	Backfill    *Backfill                   `json:"backfill,omitempty"`
+	Destination string                      `json:"destination"`
+	DisplayName string                      `json:"displayName"`
+
+	// MapToDisplayName A display name to map to in the destination.
+	MapToDisplayName string `json:"mapToDisplayName,omitempty"`
+
+	// MapToName An object name to map to in the destination.
+	MapToName          string                      `json:"mapToName,omitempty"`
 	ObjectName         string                      `json:"objectName"`
 	OptionalFields     *[]HydratedIntegrationField `json:"optionalFields,omitempty"`
 	OptionalFieldsAuto *OptionalFieldsAutoOption   `json:"optionalFieldsAuto,omitempty"`
@@ -140,10 +149,10 @@ type IntegrationObject struct {
 	Destination string    `json:"destination"`
 
 	// MapToDisplayName A display name to map to in the destination.
-	MapToDisplayName *string `json:"mapToDisplayName,omitempty"`
+	MapToDisplayName string `json:"mapToDisplayName,omitempty"`
 
 	// MapToName An object name to map to in the destination.
-	MapToName          *string                   `json:"mapToName,omitempty"`
+	MapToName          string                    `json:"mapToName,omitempty"`
 	ObjectName         string                    `json:"objectName"`
 	OptionalFields     *[]IntegrationField       `json:"optionalFields,omitempty"`
 	OptionalFieldsAuto *OptionalFieldsAutoOption `json:"optionalFieldsAuto,omitempty"`
