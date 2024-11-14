@@ -66,6 +66,9 @@ type HydratedIntegrationFieldExistent struct {
 	DisplayName string `json:"displayName"`
 	FieldName   string `json:"fieldName"`
 
+	// MapToDisplayName The display name to map to in the destination.
+	MapToDisplayName string `json:"mapToDisplayName,omitempty"`
+
 	// MapToName The field name to map to in the destination.
 	MapToName string `json:"mapToName,omitempty"`
 }
