@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"runtime"
 	"time"
+
+	"github.com/amp-labs/cli/logger"
 
 	"github.com/amp-labs/cli/clerk"
 	"github.com/amp-labs/cli/vars"
@@ -36,7 +36,7 @@ func (h *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		rsp, loginEmail, err := processLogin(request.Context(), bts, true)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			log.Printf("error: %v", err)
+			logger.FatalErr("error:", err)
 
 			return
 		}
@@ -100,44 +100,8 @@ var loginCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Short: "Log into an Ampersand account",
 	Long:  "Log into an Ampersand account.",
 	Run: func(cmd *cobra.Command, args []string) {
-		needLogin := false
-		path := clerk.GetJwtPath()
-		fileInfo, err := os.Stat(path)
-		if err != nil {
-			if os.IsNotExist(err) {
-				needLogin = true
-			} else {
-				log.Fatalln(err)
-			}
-		}
-
-		if needLogin {
-			doLogin()
-		} else {
-			if fileInfo.IsDir() {
-				log.Fatalln("jwt path isn't a regular file:", path)
-			}
-
-			contents, err := os.ReadFile(path)
-			if err != nil {
-				log.Fatalln(err)
-			}
-
-			_, loginEmail, err := processLogin(cmd.Context(), contents, false)
-			if err != nil {
-				if errors.Is(err, clerk.ErrNoSessions) {
-					doLogin()
-
-					os.Exit(0)
-				} else {
-					log.Fatalln(err)
-				}
-			}
-
-			fmt.Printf("You're already logged in as %s\n", loginEmail) //nolint:forbidigo
-
-			os.Exit(0)
-		}
+		DoLogout(false)
+		doLogin()
 	},
 }
 
@@ -156,8 +120,7 @@ func doLogin() {
 		ReadHeaderTimeout: ReadHeaderTimeoutSeconds * time.Second,
 	}
 
-	// nosemgrep: go.lang.security.audit.net.use-tls.use-tls
-	log.Fatalln(server.ListenAndServe())
+	logger.FatalErr("error logging in:", server.ListenAndServe())
 }
 
 // openBrowser tries to open the URL in a browser. Should work on most standard platforms.
@@ -176,7 +139,7 @@ func openBrowser(url string) {
 	}
 
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())
 	}
 }
 

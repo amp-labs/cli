@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/amp-labs/cli/clerk"
+	"github.com/amp-labs/cli/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -15,24 +15,34 @@ var logoutCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Short: "Log out of an ampersand account",
 	Long:  "Log out of an ampersand account.",
 	Run: func(cmd *cobra.Command, args []string) {
-		path := clerk.GetJwtPath()
-		_, err := os.Stat(path)
-		if err != nil {
-			if os.IsNotExist(err) {
-				fmt.Println("You're already logged out") //nolint:forbidigo
-
-				return
-			} else {
-				log.Fatalln(err)
-			}
-		}
-
-		if err := os.Remove(path); err != nil {
-			log.Fatalln(err)
-		}
-
-		fmt.Println("logout successful") //nolint:forbidigo
+		DoLogout(true)
 	},
+}
+
+func DoLogout(showLogs bool) {
+	path := clerk.GetJwtPath()
+
+	_, err := os.Stat(path)
+
+	if err != nil {
+		if os.IsNotExist(err) {
+			if showLogs {
+				fmt.Println("You're already logged out") //nolint:forbidigo
+			}
+
+			return
+		} else {
+			logger.Fatal(err.Error())
+		}
+	}
+
+	if err := os.Remove(path); err != nil {
+		logger.Fatal(err.Error())
+	}
+
+	if showLogs {
+		fmt.Println("Successfully logged out!") //nolint:forbidigo
+	}
 }
 
 func init() {
