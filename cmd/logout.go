@@ -23,7 +23,6 @@ func DoLogout(showLogs bool) {
 	path := clerk.GetJwtPath()
 
 	_, err := os.Stat(path)
-
 	if err != nil {
 		if os.IsNotExist(err) {
 			if showLogs {

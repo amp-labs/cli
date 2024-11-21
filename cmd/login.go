@@ -11,9 +11,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/amp-labs/cli/logger"
-
 	"github.com/amp-labs/cli/clerk"
+	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/vars"
 	"github.com/spf13/cobra"
 	"github.com/tidwall/pretty"
