@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/amp-labs/cli/clerk"
 	"github.com/amp-labs/cli/logger"
@@ -23,7 +22,7 @@ var tokenCmd = &cobra.Command{ //nolint:gochecknoglobals
 			if errors.Is(err, clerk.ErrNoSessions) {
 				logger.FatalErr("Authenticated session has expired, please log in using amp login", err)
 			} else {
-				log.Fatalln(err)
+				logger.FatalErr("Error generating request token", err)
 			}
 		}
 

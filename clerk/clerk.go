@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -117,7 +116,7 @@ func GetJwtFile() string {
 func GetJwtPath() string {
 	path, err := xdg.ConfigFile(GetJwtFile())
 	if err != nil {
-		log.Fatalln(err)
+		logger.Fatal(err.Error())
 	}
 
 	return path
@@ -126,7 +125,7 @@ func GetJwtPath() string {
 func GetClerkDomain() string {
 	u, err := url.Parse(GetClerkRootURL())
 	if err != nil {
-		log.Fatalln(err)
+		logger.Fatal(err.Error())
 	}
 
 	return u.Hostname()
