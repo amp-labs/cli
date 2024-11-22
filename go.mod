@@ -8,6 +8,7 @@ require (
 	github.com/buildkite/shellwords v0.0.0-20180315110454-59467a9b8e10
 	github.com/clerkinc/clerk-sdk-go v1.49.0
 	github.com/imdario/mergo v0.3.15
+	github.com/manifoldco/promptui v0.9.0
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
@@ -30,7 +31,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
-	github.com/manifoldco/promptui v0.9.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
