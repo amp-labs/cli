@@ -81,10 +81,6 @@ func validateRead(read *openapi.IntegrationRead, path *pathTracker) error {
 		if obj.Destination == "" {
 			return validationError(path.PushArr(idx).PushObj("destination"), "The field 'destination' is required")
 		}
-
-		if obj.Schedule == "" {
-			return validationError(path.PushArr(idx).PushObj("schedule"), "The field 'schedule' is required")
-		}
 	}
 
 	return nil
