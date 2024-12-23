@@ -183,9 +183,9 @@ type IntegrationWrite struct {
 
 // IntegrationWriteObject defines model for IntegrationWriteObject.
 type IntegrationWriteObject struct {
-	// InheritMappingFromRead If true, the write object will inherit the mapping from the read object. If false, the write object will have no mapping.
-	InheritMappingFromRead *bool  `json:"inheritMappingFromRead,omitempty"`
-	ObjectName             string `json:"objectName"`
+	// InheritMapping If true, the write object will inherit the mapping from the read object. If false, the write object will have no mapping.
+	InheritMapping *bool  `json:"inheritMapping,omitempty"`
+	ObjectName     string `json:"objectName"`
 }
 
 // Manifest This is the schema of the manifest file that is used to define the integrations of the project.
