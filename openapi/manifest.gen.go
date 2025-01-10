@@ -15,6 +15,32 @@ const (
 	OnRequest DeliveryMode = "onRequest"
 )
 
+// Defines values for FieldMetadataValueType.
+const (
+	FieldMetadataValueTypeBoolean      FieldMetadataValueType = "boolean"
+	FieldMetadataValueTypeDate         FieldMetadataValueType = "date"
+	FieldMetadataValueTypeDatetime     FieldMetadataValueType = "datetime"
+	FieldMetadataValueTypeFloat        FieldMetadataValueType = "float"
+	FieldMetadataValueTypeInt          FieldMetadataValueType = "int"
+	FieldMetadataValueTypeMultiSelect  FieldMetadataValueType = "multiSelect"
+	FieldMetadataValueTypeOther        FieldMetadataValueType = "other"
+	FieldMetadataValueTypeSingleSelect FieldMetadataValueType = "singleSelect"
+	FieldMetadataValueTypeString       FieldMetadataValueType = "string"
+)
+
+// Defines values for HydratedIntegrationFieldExistentValueType.
+const (
+	HydratedIntegrationFieldExistentValueTypeBoolean      HydratedIntegrationFieldExistentValueType = "boolean"
+	HydratedIntegrationFieldExistentValueTypeDate         HydratedIntegrationFieldExistentValueType = "date"
+	HydratedIntegrationFieldExistentValueTypeDatetime     HydratedIntegrationFieldExistentValueType = "datetime"
+	HydratedIntegrationFieldExistentValueTypeFloat        HydratedIntegrationFieldExistentValueType = "float"
+	HydratedIntegrationFieldExistentValueTypeInt          HydratedIntegrationFieldExistentValueType = "int"
+	HydratedIntegrationFieldExistentValueTypeMultiSelect  HydratedIntegrationFieldExistentValueType = "multiSelect"
+	HydratedIntegrationFieldExistentValueTypeOther        HydratedIntegrationFieldExistentValueType = "other"
+	HydratedIntegrationFieldExistentValueTypeSingleSelect HydratedIntegrationFieldExistentValueType = "singleSelect"
+	HydratedIntegrationFieldExistentValueTypeString       HydratedIntegrationFieldExistentValueType = "string"
+)
+
 // Defines values for OptionalFieldsAutoOption.
 const (
 	All OptionalFieldsAutoOption = "all"
@@ -46,6 +72,30 @@ type Delivery struct {
 // DeliveryMode The data delivery mode for this object. If not specified, defaults to automatic.
 type DeliveryMode string
 
+// FieldMetadata defines model for FieldMetadata.
+type FieldMetadata struct {
+	// DisplayName The display name of the field from the provider API.
+	DisplayName string `json:"displayName"`
+
+	// FieldName The name of the field from the provider API.
+	FieldName string `json:"fieldName"`
+
+	// ProviderType Raw field type from the provider API.
+	ProviderType string `json:"providerType,omitempty"`
+
+	// ReadOnly Whether the field is read-only.
+	ReadOnly bool `json:"readOnly,omitempty"`
+
+	// ValueType A normalized field type
+	ValueType FieldMetadataValueType `json:"valueType,omitempty"`
+
+	// Values If the valueType is singleSelect or multiSelect, this is a list of possible values
+	Values *[]ValueOption `json:"values,omitempty"`
+}
+
+// FieldMetadataValueType A normalized field type
+type FieldMetadataValueType string
+
 // HydratedIntegration defines model for HydratedIntegration.
 type HydratedIntegration struct {
 	DisplayName *string                   `json:"displayName,omitempty"`
@@ -63,15 +113,33 @@ type HydratedIntegrationField struct {
 
 // HydratedIntegrationFieldExistent defines model for HydratedIntegrationFieldExistent.
 type HydratedIntegrationFieldExistent struct {
+	// DisplayName The display name of the field from the provider API.
 	DisplayName string `json:"displayName"`
-	FieldName   string `json:"fieldName"`
 
-	// MapToDisplayName The display name to map to in the destination.
+	// FieldName The name of the field from the provider API.
+	FieldName string `json:"fieldName"`
+
+	// MapToDisplayName The display name to map to.
 	MapToDisplayName string `json:"mapToDisplayName,omitempty"`
 
-	// MapToName The field name to map to in the destination.
+	// MapToName The field name to map to.
 	MapToName string `json:"mapToName,omitempty"`
+
+	// ProviderType Raw field type from the provider API.
+	ProviderType string `json:"providerType,omitempty"`
+
+	// ReadOnly Whether the field is read-only.
+	ReadOnly bool `json:"readOnly,omitempty"`
+
+	// ValueType A normalized field type
+	ValueType HydratedIntegrationFieldExistentValueType `json:"valueType,omitempty"`
+
+	// Values If the valueType is singleSelect or multiSelect, this is a list of possible values
+	Values *[]ValueOption `json:"values,omitempty"`
 }
+
+// HydratedIntegrationFieldExistentValueType A normalized field type
+type HydratedIntegrationFieldExistentValueType string
 
 // HydratedIntegrationObject defines model for HydratedIntegrationObject.
 type HydratedIntegrationObject struct {
@@ -81,10 +149,10 @@ type HydratedIntegrationObject struct {
 	Destination string                      `json:"destination"`
 	DisplayName string                      `json:"displayName"`
 
-	// MapToDisplayName A display name to map to in the destination.
+	// MapToDisplayName A display name to map to.
 	MapToDisplayName string `json:"mapToDisplayName,omitempty"`
 
-	// MapToName An object name to map to in the destination.
+	// MapToName An object name to map to.
 	MapToName          string                      `json:"mapToName,omitempty"`
 	ObjectName         string                      `json:"objectName"`
 	OptionalFields     *[]HydratedIntegrationField `json:"optionalFields,omitempty"`
@@ -133,10 +201,10 @@ type IntegrationField struct {
 type IntegrationFieldExistent struct {
 	FieldName string `json:"fieldName"`
 
-	// MapToDisplayName The display name to map to in the destination.
+	// MapToDisplayName The display name to map to.
 	MapToDisplayName string `json:"mapToDisplayName,omitempty"`
 
-	// MapToName The field name to map to in the destination.
+	// MapToName The field name to map to.
 	MapToName string `json:"mapToName,omitempty"`
 }
 
@@ -154,10 +222,10 @@ type IntegrationObject struct {
 	Delivery    *Delivery `json:"delivery,omitempty"`
 	Destination string    `json:"destination"`
 
-	// MapToDisplayName A display name to map to in the destination.
+	// MapToDisplayName A display name to map to.
 	MapToDisplayName string `json:"mapToDisplayName,omitempty"`
 
-	// MapToName An object name to map to in the destination.
+	// MapToName An object name to map to.
 	MapToName          string                    `json:"mapToName,omitempty"`
 	ObjectName         string                    `json:"objectName"`
 	OptionalFields     *[]IntegrationField       `json:"optionalFields,omitempty"`
@@ -198,6 +266,15 @@ type Manifest struct {
 
 // OptionalFieldsAutoOption defines model for OptionalFieldsAutoOption.
 type OptionalFieldsAutoOption string
+
+// ValueOption Represents a field value
+type ValueOption struct {
+	// DisplayValue The human-readable display value
+	DisplayValue *string `json:"displayValue,omitempty"`
+
+	// Value The internal value used by the system
+	Value *string `json:"value,omitempty"`
+}
 
 // AsHydratedIntegrationFieldExistent returns the union data inside the HydratedIntegrationField as a HydratedIntegrationFieldExistent
 func (t HydratedIntegrationField) AsHydratedIntegrationFieldExistent() (HydratedIntegrationFieldExistent, error) {
