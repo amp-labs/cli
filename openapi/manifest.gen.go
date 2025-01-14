@@ -17,28 +17,15 @@ const (
 
 // Defines values for FieldMetadataValueType.
 const (
-	FieldMetadataValueTypeBoolean      FieldMetadataValueType = "boolean"
-	FieldMetadataValueTypeDate         FieldMetadataValueType = "date"
-	FieldMetadataValueTypeDatetime     FieldMetadataValueType = "datetime"
-	FieldMetadataValueTypeFloat        FieldMetadataValueType = "float"
-	FieldMetadataValueTypeInt          FieldMetadataValueType = "int"
-	FieldMetadataValueTypeMultiSelect  FieldMetadataValueType = "multiSelect"
-	FieldMetadataValueTypeOther        FieldMetadataValueType = "other"
-	FieldMetadataValueTypeSingleSelect FieldMetadataValueType = "singleSelect"
-	FieldMetadataValueTypeString       FieldMetadataValueType = "string"
-)
-
-// Defines values for HydratedIntegrationFieldExistentValueType.
-const (
-	HydratedIntegrationFieldExistentValueTypeBoolean      HydratedIntegrationFieldExistentValueType = "boolean"
-	HydratedIntegrationFieldExistentValueTypeDate         HydratedIntegrationFieldExistentValueType = "date"
-	HydratedIntegrationFieldExistentValueTypeDatetime     HydratedIntegrationFieldExistentValueType = "datetime"
-	HydratedIntegrationFieldExistentValueTypeFloat        HydratedIntegrationFieldExistentValueType = "float"
-	HydratedIntegrationFieldExistentValueTypeInt          HydratedIntegrationFieldExistentValueType = "int"
-	HydratedIntegrationFieldExistentValueTypeMultiSelect  HydratedIntegrationFieldExistentValueType = "multiSelect"
-	HydratedIntegrationFieldExistentValueTypeOther        HydratedIntegrationFieldExistentValueType = "other"
-	HydratedIntegrationFieldExistentValueTypeSingleSelect HydratedIntegrationFieldExistentValueType = "singleSelect"
-	HydratedIntegrationFieldExistentValueTypeString       HydratedIntegrationFieldExistentValueType = "string"
+	Boolean      FieldMetadataValueType = "boolean"
+	Date         FieldMetadataValueType = "date"
+	Datetime     FieldMetadataValueType = "datetime"
+	Float        FieldMetadataValueType = "float"
+	Int          FieldMetadataValueType = "int"
+	MultiSelect  FieldMetadataValueType = "multiSelect"
+	Other        FieldMetadataValueType = "other"
+	SingleSelect FieldMetadataValueType = "singleSelect"
+	String       FieldMetadataValueType = "string"
 )
 
 // Defines values for OptionalFieldsAutoOption.
@@ -122,41 +109,26 @@ type HydratedIntegrationField struct {
 
 // HydratedIntegrationFieldExistent defines model for HydratedIntegrationFieldExistent.
 type HydratedIntegrationFieldExistent struct {
-	// DisplayName The display name of the field from the provider API.
 	DisplayName string `json:"displayName"`
+	FieldName   string `json:"fieldName"`
 
-	// FieldName The name of the field from the provider API.
-	FieldName string `json:"fieldName"`
-
-	// MapToDisplayName The display name to map to.
+	// MapToDisplayName The display name to map to in the destination.
 	MapToDisplayName string `json:"mapToDisplayName,omitempty"`
 
-	// MapToName The field name to map to.
+	// MapToName The field name to map to in the destination.
 	MapToName string `json:"mapToName,omitempty"`
-
-	// ProviderType Raw field type from the provider API.
-	ProviderType string `json:"providerType,omitempty"`
-
-	// ReadOnly Whether the field is read-only.
-	ReadOnly bool `json:"readOnly,omitempty"`
-
-	// ValueType A normalized field type
-	ValueType HydratedIntegrationFieldExistentValueType `json:"valueType,omitempty"`
-
-	// Values If the valueType is singleSelect or multiSelect, this is a list of possible values
-	Values []FieldValue `json:"values,omitempty"`
 }
-
-// HydratedIntegrationFieldExistentValueType A normalized field type
-type HydratedIntegrationFieldExistentValueType string
 
 // HydratedIntegrationObject defines model for HydratedIntegrationObject.
 type HydratedIntegrationObject struct {
-	// AllFields This is a list of all fields on the object for a particular SaaS instance. This is used to populate the UI during configuration.
-	AllFields   *[]HydratedIntegrationField `json:"allFields,omitempty"`
-	Backfill    *Backfill                   `json:"backfill,omitempty"`
-	Destination string                      `json:"destination"`
-	DisplayName string                      `json:"displayName"`
+	// AllFields This is a list of all fields on the object for a particular SaaS instance, including their display names.
+	AllFields *[]HydratedIntegrationField `json:"allFields,omitempty"`
+
+	// AllFieldsMetadata This is a map of all fields on the object including their metadata (such as display name and type), the keys of the map are the field names.
+	AllFieldsMetadata *map[string]FieldMetadata `json:"allFieldsMetadata,omitempty"`
+	Backfill          *Backfill                 `json:"backfill,omitempty"`
+	Destination       string                    `json:"destination"`
+	DisplayName       string                    `json:"displayName"`
 
 	// MapToDisplayName A display name to map to.
 	MapToDisplayName string `json:"mapToDisplayName,omitempty"`
