@@ -161,6 +161,9 @@ type HydratedIntegrationWrite struct {
 type HydratedIntegrationWriteObject struct {
 	DisplayName string `json:"displayName"`
 	ObjectName  string `json:"objectName"`
+
+	// ValueDefaults Configuration to set default write values for object fields.
+	ValueDefaults *ValueDefaults `json:"valueDefaults,omitempty"`
 }
 
 // Integration defines model for Integration.
@@ -235,6 +238,9 @@ type IntegrationWriteObject struct {
 	// InheritMapping If true, the write object will inherit the mapping from the read object. If false, the write object will have no mapping.
 	InheritMapping *bool  `json:"inheritMapping,omitempty"`
 	ObjectName     string `json:"objectName"`
+
+	// ValueDefaults Configuration to set default write values for object fields.
+	ValueDefaults *ValueDefaults `json:"valueDefaults,omitempty"`
 }
 
 // Manifest This is the schema of the manifest file that is used to define the integrations of the project.
@@ -247,6 +253,12 @@ type Manifest struct {
 
 // OptionalFieldsAutoOption defines model for OptionalFieldsAutoOption.
 type OptionalFieldsAutoOption string
+
+// ValueDefaults Configuration to set default write values for object fields.
+type ValueDefaults struct {
+	// AllowAnyFields If true, users can set default values for any field.
+	AllowAnyFields *bool `json:"allowAnyFields,omitempty"`
+}
 
 // AsHydratedIntegrationFieldExistent returns the union data inside the HydratedIntegrationField as a HydratedIntegrationFieldExistent
 func (t HydratedIntegrationField) AsHydratedIntegrationFieldExistent() (HydratedIntegrationFieldExistent, error) {
