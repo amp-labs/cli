@@ -33,9 +33,24 @@ const (
 	All OptionalFieldsAutoOption = "all"
 )
 
+// AssociationChangeEvent defines model for AssociationChangeEvent.
+type AssociationChangeEvent struct {
+	// Enabled If true, the integration will subscribe to association change events.
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// IncludeFullRecords If true, the integration will include full records in the event payload.
+	IncludeFullRecords *bool `json:"includeFullRecords,omitempty"`
+}
+
 // Backfill defines model for Backfill.
 type Backfill struct {
 	DefaultPeriod DefaultPeriod `json:"defaultPeriod"`
+}
+
+// CreateEvent defines model for CreateEvent.
+type CreateEvent struct {
+	// Enabled If true, the integration will subscribe to create events.
+	Enabled *bool `json:"enabled,omitempty"`
 }
 
 // DefaultPeriod defines model for DefaultPeriod.
@@ -45,6 +60,12 @@ type DefaultPeriod struct {
 
 	// FullHistory If true, backfill all history. Required if days is not set.
 	FullHistory *bool `json:"fullHistory,omitempty" validate:"required_without=Days"`
+}
+
+// DeleteEvent defines model for DeleteEvent.
+type DeleteEvent struct {
+	// Enabled If true, the integration will subscribe to delete events.
+	Enabled *bool `json:"enabled,omitempty"`
 }
 
 // Delivery defines model for Delivery.
@@ -168,12 +189,13 @@ type HydratedIntegrationWriteObject struct {
 
 // Integration defines model for Integration.
 type Integration struct {
-	DisplayName *string           `json:"displayName,omitempty"`
-	Name        string            `json:"name"`
-	Provider    string            `json:"provider"`
-	Proxy       *IntegrationProxy `json:"proxy,omitempty"`
-	Read        *IntegrationRead  `json:"read,omitempty"`
-	Write       *IntegrationWrite `json:"write,omitempty"`
+	DisplayName *string               `json:"displayName,omitempty"`
+	Name        string                `json:"name"`
+	Provider    string                `json:"provider"`
+	Proxy       *IntegrationProxy     `json:"proxy,omitempty"`
+	Read        *IntegrationRead      `json:"read,omitempty"`
+	Subscribe   *IntegrationSubscribe `json:"subscribe,omitempty"`
+	Write       *IntegrationWrite     `json:"write,omitempty"`
 }
 
 // IntegrationField defines model for IntegrationField.
@@ -228,6 +250,22 @@ type IntegrationRead struct {
 	Objects *[]IntegrationObject `json:"objects,omitempty"`
 }
 
+// IntegrationSubscribe defines model for IntegrationSubscribe.
+type IntegrationSubscribe struct {
+	Objects *[]IntegrationSubscribeObject `json:"objects,omitempty"`
+}
+
+// IntegrationSubscribeObject defines model for IntegrationSubscribeObject.
+type IntegrationSubscribeObject struct {
+	AssociationChangeEvent *AssociationChangeEvent `json:"associationChangeEvent,omitempty"`
+	CreateEvent            *CreateEvent            `json:"createEvent,omitempty"`
+	DeleteEvent            *DeleteEvent            `json:"deleteEvent,omitempty"`
+	Destination            string                  `json:"destination"`
+	ObjectName             string                  `json:"objectName"`
+	OtherEvents            *OtherEvents            `json:"otherEvents,omitempty"`
+	UpdateEvent            *UpdateEvent            `json:"updateEvent,omitempty"`
+}
+
 // IntegrationWrite defines model for IntegrationWrite.
 type IntegrationWrite struct {
 	Objects *[]IntegrationWriteObject `json:"objects,omitempty"`
@@ -253,6 +291,16 @@ type Manifest struct {
 
 // OptionalFieldsAutoOption defines model for OptionalFieldsAutoOption.
 type OptionalFieldsAutoOption string
+
+// OtherEvents defines model for OtherEvents.
+type OtherEvents = []string
+
+// UpdateEvent defines model for UpdateEvent.
+type UpdateEvent struct {
+	// Enabled If true, the integration will subscribe to update events.
+	Enabled             *bool     `json:"enabled,omitempty"`
+	RequiredWatchFields *[]string `json:"requiredWatchFields,omitempty"`
+}
 
 // ValueDefaults Configuration to set default write values for object fields.
 type ValueDefaults struct {
