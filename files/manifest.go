@@ -113,26 +113,6 @@ func validateSubscribeAssocChange(ace *openapi.AssociationChangeEvent, path *pat
 			"The field 'enabled' is required")
 	}
 
-	switch *ace.Enabled {
-	case openapi.AssociationChangeEventEnabledAlways:
-		return nil
-	default:
-		return validationError(path.PushObj("enabled"),
-			"Invalid value for 'enabled': %s", *ace.Enabled)
-	}
-}
-
-func validateSubscribeOtherEvents(oe *openapi.OtherEvents, path *pathTracker) error {
-	if len(*oe) == 0 {
-		return validationError(path, "The 'otherEvents' field must contain at least one event")
-	}
-
-	for idx, event := range *oe {
-		if len(event) == 0 {
-			return validationError(path.PushArr(idx), "Event name can't be blank")
-		}
-	}
-
 	return nil
 }
 
@@ -142,13 +122,7 @@ func validateSubscribeCreateEvent(event *openapi.CreateEvent, path *pathTracker)
 			"The field 'enabled' is required")
 	}
 
-	switch *event.Enabled {
-	case openapi.CreateEventEnabledAlways:
-		return nil
-	default:
-		return validationError(path.PushObj("enabled"),
-			"Invalid value for 'enabled': %s", *event.Enabled)
-	}
+	return nil
 }
 
 func validateSubscribeUpdateEvent(event *openapi.UpdateEvent, path *pathTracker) error {
@@ -157,13 +131,7 @@ func validateSubscribeUpdateEvent(event *openapi.UpdateEvent, path *pathTracker)
 			"The field 'enabled' is required")
 	}
 
-	switch *event.Enabled {
-	case openapi.UpdateEventEnabledAlways:
-		return nil
-	default:
-		return validationError(path.PushObj("enabled"),
-			"Invalid value for 'enabled': %s", *event.Enabled)
-	}
+	return nil
 }
 
 func validateSubscribeDeleteEvent(event *openapi.DeleteEvent, path *pathTracker) error {
@@ -172,13 +140,7 @@ func validateSubscribeDeleteEvent(event *openapi.DeleteEvent, path *pathTracker)
 			"The field 'enabled' is required")
 	}
 
-	switch *event.Enabled {
-	case openapi.DeleteEventEnabledAlways:
-		return nil
-	default:
-		return validationError(path.PushObj("enabled"),
-			"Invalid value for 'enabled': %s", *event.Enabled)
-	}
+	return nil
 }
 
 //nolint:gocognit,cyclop,funlen
@@ -204,25 +166,9 @@ func validateSubscribe(sub *openapi.IntegrationSubscribe, path *pathTracker) err
 				"The field 'destination' is required")
 		}
 
-		if obj.AssociationChangeEvent == nil &&
-			obj.OtherEvents == nil &&
-			obj.CreateEvent == nil &&
-			obj.UpdateEvent == nil &&
-			obj.DeleteEvent == nil {
-			return validationError(path.PushArr(idx),
-				"At least one of associationChangeEvent, otherEvents, createEvent, updateEvent, or deleteEvent is required")
-		}
-
 		if obj.AssociationChangeEvent != nil {
 			if err := validateSubscribeAssocChange(obj.AssociationChangeEvent,
 				path.PushArr(idx).PushObj("associationChangeEvent")); err != nil {
-				return err
-			}
-		}
-
-		if obj.OtherEvents != nil {
-			if err := validateSubscribeOtherEvents(obj.OtherEvents,
-				path.PushArr(idx).PushObj("otherEvents")); err != nil {
 				return err
 			}
 		}
