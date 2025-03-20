@@ -107,6 +107,151 @@ func validateWrite(write *openapi.IntegrationWrite, path *pathTracker) error {
 	return nil
 }
 
+func validateSubscribeAssocChange(ace *openapi.AssociationChangeEvent, path *pathTracker) error {
+	if ace.Enabled == nil {
+		return validationError(path.PushObj("enabled"),
+			"The field 'enabled' is required")
+	}
+
+	switch *ace.Enabled {
+	case openapi.AssociationChangeEventEnabledAlways:
+		return nil
+	default:
+		return validationError(path.PushObj("enabled"),
+			"Invalid value for 'enabled': %s", *ace.Enabled)
+	}
+}
+
+func validateSubscribeOtherEvents(oe *openapi.OtherEvents, path *pathTracker) error {
+	if len(*oe) == 0 {
+		return validationError(path, "The 'otherEvents' field must contain at least one event")
+	}
+
+	for idx, event := range *oe {
+		if len(event) == 0 {
+			return validationError(path.PushArr(idx), "Event name can't be blank")
+		}
+	}
+
+	return nil
+}
+
+func validateSubscribeCreateEvent(event *openapi.CreateEvent, path *pathTracker) error {
+	if event.Enabled == nil {
+		return validationError(path.PushObj("enabled"),
+			"The field 'enabled' is required")
+	}
+
+	switch *event.Enabled {
+	case openapi.CreateEventEnabledAlways:
+		return nil
+	default:
+		return validationError(path.PushObj("enabled"),
+			"Invalid value for 'enabled': %s", *event.Enabled)
+	}
+}
+
+func validateSubscribeUpdateEvent(event *openapi.UpdateEvent, path *pathTracker) error {
+	if event.Enabled == nil {
+		return validationError(path.PushObj("enabled"),
+			"The field 'enabled' is required")
+	}
+
+	switch *event.Enabled {
+	case openapi.UpdateEventEnabledAlways:
+		return nil
+	default:
+		return validationError(path.PushObj("enabled"),
+			"Invalid value for 'enabled': %s", *event.Enabled)
+	}
+}
+
+func validateSubscribeDeleteEvent(event *openapi.DeleteEvent, path *pathTracker) error {
+	if event.Enabled == nil {
+		return validationError(path.PushObj("enabled"),
+			"The field 'enabled' is required")
+	}
+
+	switch *event.Enabled {
+	case openapi.DeleteEventEnabledAlways:
+		return nil
+	default:
+		return validationError(path.PushObj("enabled"),
+			"Invalid value for 'enabled': %s", *event.Enabled)
+	}
+}
+
+//nolint:gocognit,cyclop,funlen
+func validateSubscribe(sub *openapi.IntegrationSubscribe, path *pathTracker) error {
+	path = path.PushObj("objects")
+
+	if sub.Objects == nil {
+		return validationError(path, "The 'objects' field is required")
+	}
+
+	if len(*sub.Objects) == 0 {
+		return validationError(path, "The 'objects' field must contain at least one object")
+	}
+
+	for idx, obj := range *sub.Objects {
+		if obj.ObjectName == "" {
+			return validationError(path.PushArr(idx).PushObj("objectName"),
+				"The field 'objectName' is required")
+		}
+
+		if obj.Destination == "" {
+			return validationError(path.PushArr(idx).PushObj("destination"),
+				"The field 'destination' is required")
+		}
+
+		if obj.AssociationChangeEvent == nil &&
+			obj.OtherEvents == nil &&
+			obj.CreateEvent == nil &&
+			obj.UpdateEvent == nil &&
+			obj.DeleteEvent == nil {
+			return validationError(path.PushArr(idx),
+				"At least one of associationChangeEvent, otherEvents, createEvent, updateEvent, or deleteEvent is required")
+		}
+
+		if obj.AssociationChangeEvent != nil {
+			if err := validateSubscribeAssocChange(obj.AssociationChangeEvent,
+				path.PushArr(idx).PushObj("associationChangeEvent")); err != nil {
+				return err
+			}
+		}
+
+		if obj.OtherEvents != nil {
+			if err := validateSubscribeOtherEvents(obj.OtherEvents,
+				path.PushArr(idx).PushObj("otherEvents")); err != nil {
+				return err
+			}
+		}
+
+		if obj.CreateEvent != nil {
+			if err := validateSubscribeCreateEvent(obj.CreateEvent,
+				path.PushArr(idx).PushObj("createEvent")); err != nil {
+				return err
+			}
+		}
+
+		if obj.UpdateEvent != nil {
+			if err := validateSubscribeUpdateEvent(obj.UpdateEvent,
+				path.PushArr(idx).PushObj("updateEvent")); err != nil {
+				return err
+			}
+		}
+
+		if obj.DeleteEvent != nil {
+			if err := validateSubscribeDeleteEvent(obj.DeleteEvent,
+				path.PushArr(idx).PushObj("deleteEvent")); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func validateIntegration(integration openapi.Integration, path *pathTracker) error { //nolint:cyclop
 	if integration.Name == "" {
 		return validationError(path.PushObj("name"), "The field 'name' is required")
@@ -116,8 +261,8 @@ func validateIntegration(integration openapi.Integration, path *pathTracker) err
 		return validationError(path.PushObj("provider"), "The field 'provider' is required")
 	}
 
-	if integration.Proxy == nil && integration.Read == nil && integration.Write == nil {
-		return validationError(path, "At least one of proxy, read, or write is required")
+	if integration.Proxy == nil && integration.Read == nil && integration.Write == nil && integration.Subscribe == nil {
+		return validationError(path, "At least one of proxy, read, write, or subscribe is required")
 	}
 
 	if integration.Proxy != nil {
@@ -134,6 +279,12 @@ func validateIntegration(integration openapi.Integration, path *pathTracker) err
 
 	if integration.Write != nil {
 		if err := validateWrite(integration.Write, path.PushObj("write")); err != nil {
+			return err
+		}
+	}
+
+	if integration.Subscribe != nil {
+		if err := validateSubscribe(integration.Subscribe, path.PushObj("subscribe")); err != nil {
 			return err
 		}
 	}
