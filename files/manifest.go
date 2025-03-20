@@ -181,7 +181,7 @@ func validateSubscribeDeleteEvent(event *openapi.DeleteEvent, path *pathTracker)
 	}
 }
 
-//nolint:gocognit
+//nolint:gocognit,cyclop
 func validateSubscribe(sub *openapi.IntegrationSubscribe, path *pathTracker) error {
 	path = path.PushObj("objects")
 
