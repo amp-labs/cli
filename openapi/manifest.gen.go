@@ -290,9 +290,12 @@ type IntegrationSubscribeObject struct {
 	CreateEvent            *CreateEvent            `json:"createEvent,omitempty"`
 	DeleteEvent            *DeleteEvent            `json:"deleteEvent,omitempty"`
 	Destination            string                  `json:"destination"`
-	ObjectName             string                  `json:"objectName"`
-	OtherEvents            *OtherEvents            `json:"otherEvents,omitempty"`
-	UpdateEvent            *UpdateEvent            `json:"updateEvent,omitempty"`
+
+	// InheritFieldsAndMapping If true, the integration will inherit the fields and mapping from the read object.
+	InheritFieldsAndMapping *bool        `json:"inheritFieldsAndMapping,omitempty"`
+	ObjectName              string       `json:"objectName"`
+	OtherEvents             *OtherEvents `json:"otherEvents,omitempty"`
+	UpdateEvent             *UpdateEvent `json:"updateEvent,omitempty"`
 }
 
 // IntegrationWrite defines model for IntegrationWrite.
