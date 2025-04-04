@@ -45,12 +45,17 @@ const (
 
 // Defines values for OptionalFieldsAutoOption.
 const (
-	All OptionalFieldsAutoOption = "all"
+	OptionalFieldsAutoOptionAll OptionalFieldsAutoOption = "all"
 )
 
 // Defines values for UpdateEventEnabled.
 const (
 	UpdateEventEnabledAlways UpdateEventEnabled = "always"
+)
+
+// Defines values for UpdateEventWatchFieldsAuto.
+const (
+	UpdateEventWatchFieldsAutoAll UpdateEventWatchFieldsAuto = "all"
 )
 
 // AssociationChangeEvent defines model for AssociationChangeEvent.
@@ -292,7 +297,7 @@ type IntegrationSubscribeObject struct {
 	Destination            string                  `json:"destination"`
 
 	// InheritFieldsAndMapping If true, the integration will inherit the fields and mapping from the read object.
-	InheritFieldsAndMapping *bool        `json:"inheritFieldsAndMapping,omitempty"`
+	InheritFieldsAndMapping bool         `json:"inheritFieldsAndMapping,omitempty"`
 	ObjectName              string       `json:"objectName"`
 	OtherEvents             *OtherEvents `json:"otherEvents,omitempty"`
 	UpdateEvent             *UpdateEvent `json:"updateEvent,omitempty"`
@@ -332,10 +337,16 @@ type UpdateEvent struct {
 	// Enabled If always, the integration will subscribe to update events.
 	Enabled             *UpdateEventEnabled `json:"enabled,omitempty"`
 	RequiredWatchFields *[]string           `json:"requiredWatchFields,omitempty"`
+
+	// WatchFieldsAuto If all, the integration will watch all fields for updates.
+	WatchFieldsAuto *UpdateEventWatchFieldsAuto `json:"watchFieldsAuto,omitempty"`
 }
 
 // UpdateEventEnabled If always, the integration will subscribe to update events.
 type UpdateEventEnabled string
+
+// UpdateEventWatchFieldsAuto If all, the integration will watch all fields for updates.
+type UpdateEventWatchFieldsAuto string
 
 // ValueDefaults Configuration to set default write values for object fields.
 type ValueDefaults struct {
