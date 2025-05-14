@@ -1,0 +1,22 @@
+{
+    "eventId": "hubspot-deal-301",
+    "subscriptionId": 1234567,
+    "portalId": 123456,
+    "occurredAt": "{{NOW}}",
+    "objectId": 301,
+    "properties": {
+        "dealname": "New Enterprise Deal",
+        "dealstage": "presentationscheduled",
+        "amount": "50000",
+        "closedate": "{{NOW}}",
+        "pipeline": "default"
+    },
+    "propertyVersions": {
+        "dealname": 0,
+        "dealstage": 0,
+        "amount": 0,
+        "closedate": 0,
+        "pipeline": 0
+    },
+    "eventType": "deal.creation"
+}
