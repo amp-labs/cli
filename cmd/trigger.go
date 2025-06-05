@@ -18,10 +18,10 @@ import (
 )
 
 var (
-	fixtureFile     string
-	rawJSON         string
-	interactive     bool
-	listenPort      string
+	fixtureFile    string
+	rawJSON        string
+	interactive    bool
+	listenPort     string
 	triggerCommand = &cobra.Command{
 		Use:   "trigger [provider.event]",
 		Short: "Trigger a webhook event",
@@ -34,8 +34,9 @@ Examples:
   amp trigger hubspot.contact.created --interactive
   amp trigger stripe.payment_intent.created --fixture ./my-custom-event.json
   amp trigger custom.event --raw '{"key": "value"}'`,
-		Args: cobra.ExactArgs(1),
-		RunE: runTrigger,
+		Hidden: true,
+		Args:   cobra.ExactArgs(1),
+		RunE:   runTrigger,
 	}
 )
 
@@ -50,6 +51,7 @@ func init() {
 func runTrigger(cmd *cobra.Command, args []string) error {
 	eventName := args[0]
 	provider, event := webhook.ParseEvent(eventName)
+
 	if event == "" {
 		return fmt.Errorf("invalid event format '%s', expected 'provider.event'", eventName)
 	}
@@ -62,7 +64,7 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 	case rawJSON != "":
 		// Use raw JSON provided via command line
 		payload = []byte(rawJSON)
-		
+
 		// Validate it's valid JSON
 		var jsonObj interface{}
 		if err := json.Unmarshal(payload, &jsonObj); err != nil {
@@ -92,6 +94,7 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 
 	// Send the webhook
 	fmt.Printf("🚀 Triggering webhook: %s\n", eventName)
+
 	return sendWebhook(payload)
 }
 
@@ -108,6 +111,7 @@ func openInEditor(data []byte) ([]byte, error) {
 	if _, err := tmpFile.Write(data); err != nil {
 		return nil, err
 	}
+
 	if err := tmpFile.Close(); err != nil {
 		return nil, err
 	}
@@ -127,6 +131,7 @@ func openInEditor(data []byte) ([]byte, error) {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+
 	if err := cmd.Run(); err != nil {
 		return nil, err
 	}
@@ -143,22 +148,26 @@ func sendWebhook(payload []byte) error {
 	}
 
 	url := fmt.Sprintf("http://127.0.0.1:%s", port)
+
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
-	
+
 	req.Header.Set("Content-Type", "application/json")
 
 	// Send the request
 	client := &http.Client{Timeout: 5 * time.Second}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to send webhook: %w", err)
 	}
+
 	defer resp.Body.Close()
 
 	fmt.Printf("✅ Sent webhook → %d %s\n", resp.StatusCode, resp.Status)
+
 	return nil
 }
 
@@ -173,13 +182,14 @@ func getListenerPort() (string, error) {
 		logger.Debugf("error getting user cache dir: %v", err)
 		return "4242", nil // Default fallback port
 	}
-	
+
 	portFile := filepath.Join(dir, "ampersand", "webhook-port")
+
 	data, err := os.ReadFile(portFile)
 	if err != nil {
 		logger.Debug("could not find webhook port file, using default port 4242")
 		return "4242", nil // Default fallback port
 	}
-	
+
 	return strings.TrimSpace(string(data)), nil
-} 
+}

@@ -45,12 +45,14 @@ func ParseEvent(event string) (provider, eventName string) {
 	if len(parts) < 2 {
 		return event, ""
 	}
+
 	return parts[0], parts[1]
 }
 
 // PrettyPrintJSON formats and prints JSON data to stdout with colors
 func PrettyPrintJSON(data []byte) error {
 	var prettyJSON bytes.Buffer
+
 	err := json.Indent(&prettyJSON, data, "", "  ")
 	if err != nil {
 		return err
@@ -58,5 +60,6 @@ func PrettyPrintJSON(data []byte) error {
 
 	fmt.Printf("\n→ Received webhook event:\n%s\n", prettyJSON.String())
 	fmt.Println("------------------------------------------")
+
 	return nil
-} 
+}
