@@ -45,12 +45,17 @@ const (
 
 // Defines values for OptionalFieldsAutoOption.
 const (
-	All OptionalFieldsAutoOption = "all"
+	OptionalFieldsAutoOptionAll OptionalFieldsAutoOption = "all"
 )
 
 // Defines values for UpdateEventEnabled.
 const (
 	UpdateEventEnabledAlways UpdateEventEnabled = "always"
+)
+
+// Defines values for UpdateEventWatchFieldsAuto.
+const (
+	UpdateEventWatchFieldsAutoAll UpdateEventWatchFieldsAuto = "all"
 )
 
 // AssociationChangeEvent defines model for AssociationChangeEvent.
@@ -72,11 +77,11 @@ type Backfill struct {
 
 // CreateEvent defines model for CreateEvent.
 type CreateEvent struct {
-	// Enabled If always, the integration will subscribe to create events.
+	// Enabled If always, the integration will subscribe to create events by default.
 	Enabled *CreateEventEnabled `json:"enabled,omitempty"`
 }
 
-// CreateEventEnabled If always, the integration will subscribe to create events.
+// CreateEventEnabled If always, the integration will subscribe to create events by default.
 type CreateEventEnabled string
 
 // DefaultPeriod defines model for DefaultPeriod.
@@ -90,11 +95,11 @@ type DefaultPeriod struct {
 
 // DeleteEvent defines model for DeleteEvent.
 type DeleteEvent struct {
-	// Enabled If always, the integration will subscribe to delete events.
+	// Enabled If always, the integration will subscribe to delete events by default.
 	Enabled *DeleteEventEnabled `json:"enabled,omitempty"`
 }
 
-// DeleteEventEnabled If always, the integration will subscribe to delete events.
+// DeleteEventEnabled If always, the integration will subscribe to delete events by default.
 type DeleteEventEnabled string
 
 // Delivery defines model for Delivery.
@@ -171,7 +176,8 @@ type HydratedIntegrationFieldExistent struct {
 
 // HydratedIntegrationObject defines model for HydratedIntegrationObject.
 type HydratedIntegrationObject struct {
-	// AllFields This is a list of all fields on the object for a particular SaaS instance, including their display names.
+	// AllFields This is a list of all fields on the object for a particular SaaS instance, including their display names. Prefer using allFieldsMetadata instead.
+	// Deprecated:
 	AllFields *[]HydratedIntegrationField `json:"allFields,omitempty"`
 
 	// AllFieldsMetadata This is a map of all fields on the object including their metadata (such as display name and type), the keys of the map are the field names.
@@ -179,6 +185,9 @@ type HydratedIntegrationObject struct {
 	Backfill          *Backfill                 `json:"backfill,omitempty"`
 	Destination       string                    `json:"destination"`
 	DisplayName       string                    `json:"displayName"`
+
+	// Error Error message if there was an issue hydrating this object.
+	Error string `json:"error,omitempty"`
 
 	// MapToDisplayName A display name to map to.
 	MapToDisplayName string `json:"mapToDisplayName,omitempty"`
@@ -292,7 +301,7 @@ type IntegrationSubscribeObject struct {
 	Destination            string                  `json:"destination"`
 
 	// InheritFieldsAndMapping If true, the integration will inherit the fields and mapping from the read object.
-	InheritFieldsAndMapping *bool        `json:"inheritFieldsAndMapping,omitempty"`
+	InheritFieldsAndMapping bool         `json:"inheritFieldsAndMapping,omitempty"`
 	ObjectName              string       `json:"objectName"`
 	OtherEvents             *OtherEvents `json:"otherEvents,omitempty"`
 	UpdateEvent             *UpdateEvent `json:"updateEvent,omitempty"`
@@ -329,13 +338,19 @@ type OtherEvents = []string
 
 // UpdateEvent defines model for UpdateEvent.
 type UpdateEvent struct {
-	// Enabled If always, the integration will subscribe to update events.
+	// Enabled If always, the integration will subscribe to update events by default.
 	Enabled             *UpdateEventEnabled `json:"enabled,omitempty"`
 	RequiredWatchFields *[]string           `json:"requiredWatchFields,omitempty"`
+
+	// WatchFieldsAuto If all, the integration will watch all fields for updates.
+	WatchFieldsAuto *UpdateEventWatchFieldsAuto `json:"watchFieldsAuto,omitempty"`
 }
 
-// UpdateEventEnabled If always, the integration will subscribe to update events.
+// UpdateEventEnabled If always, the integration will subscribe to update events by default.
 type UpdateEventEnabled string
+
+// UpdateEventWatchFieldsAuto If all, the integration will watch all fields for updates.
+type UpdateEventWatchFieldsAuto string
 
 // ValueDefaults Configuration to set default write values for object fields.
 type ValueDefaults struct {
