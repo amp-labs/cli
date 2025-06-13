@@ -1,0 +1,22 @@
+{
+    "eventId": "hubspot-contact-201",
+    "subscriptionId": 1234567,
+    "portalId": 123456,
+    "occurredAt": "{{NOW}}",
+    "objectId": 201,
+    "properties": {
+        "firstname": "Chloe",
+        "lastname": "Smith",
+        "email": "chloe@example.com",
+        "phone": "+1-555-555-5555",
+        "company": "Example Corp"
+    },
+    "propertyVersions": {
+        "firstname": 0,
+        "lastname": 0,
+        "email": 0,
+        "phone": 0,
+        "company": 0
+    },
+    "eventType": "contact.creation"
+}
