@@ -1,17 +1,24 @@
 name: Linter
-run-name: ${{ github.actor }} is running the linter
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  pull_request: {}
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
         with:
-          go-version: ">=1.21.0"
-          cache: false
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        continue-on-error: false
+          go-version: "1.24.3"
+
+      - name: Generate go code
+        run: go generate ./...
+
+      - name: Lint Go code
+        uses: golangci/golangci-lint-action@v6
         with:
-          version: latest
+          skip-cache: true
+          version: v1.64.3
