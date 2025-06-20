@@ -1,0 +1,18 @@
+{
+    "id": "evt_1OGbwdCZ6qsJgKboXHmcT7k8",
+    "object": "event",
+    "api_version": "2022-11-15",
+    "created": "{{NOW}}",
+    "data": {
+        "object": {
+            "id": "cus_O3hGjTKICiuGRp",
+            "object": "customer",
+            "email": "test@example.com",
+            "name": "Test Customer",
+            "created": "{{NOW}}",
+            "metadata": {}
+        }
+    },
+    "livemode": false,
+    "type": "customer.created"
+}

@@ -1,0 +1,24 @@
+{
+    "id": "evt_1OGbwdCZ6qsJgKbogIQWTxsm",
+    "object": "event",
+    "api_version": "2022-11-15",
+    "created": "{{NOW}}",
+    "data": {
+        "object": {
+            "id": "pi_3NpDeuCZ6qsJgKbo0WZRi1g2",
+            "object": "payment_intent",
+            "amount": 2000,
+            "amount_details": {
+                "tip": {
+                    "amount": null
+                }
+            },
+            "currency": "usd",
+            "description": "Test payment",
+            "metadata": {},
+            "status": "succeeded"
+        }
+    },
+    "livemode": false,
+    "type": "payment_intent.created"
+}

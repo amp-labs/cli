@@ -50,7 +50,7 @@ If this doesn't work, then you'll need to add `/usr/local/bin` to your PATH vari
 
 You should also install the following linting tools by following the linked instructions:
 
-- <https://golangci-lint.run/usage/install/#local-installation>
+- <https://golangci-lint.run/welcome/install/>
 - <https://github.com/daixiang0/gci?tab=readme-ov-file#installation>
 - <https://github.com/bombsimon/wsl?tab=readme-ov-file#installation>
 
