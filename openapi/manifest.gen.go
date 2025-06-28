@@ -228,6 +228,7 @@ type HydratedIntegrationWriteObject struct {
 // Integration defines model for Integration.
 type Integration struct {
 	DisplayName *string               `json:"displayName,omitempty"`
+	Module      *string               `json:"module,omitempty"`
 	Name        string                `json:"name"`
 	Provider    string                `json:"provider"`
 	Proxy       *IntegrationProxy     `json:"proxy,omitempty"`
