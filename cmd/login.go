@@ -120,9 +120,12 @@ func doLogin() {
 		} else {
 			link := getLoginURL()
 
-			logger.Info("No browser detected, please open %s in your browser to log in.", link)
+			linkMsg := fmt.Sprintf("No browser detected, please open %s in your browser to log in.", link)
+			localhostMsg := fmt.Sprintf("NOTE: the login page will redirect to http://localhost:%d/...", ServerPort)
+
+			logger.Info(linkMsg)
 			logger.Info()
-			logger.Info("NOTE: the login page will redirect to http://localhost:%d/...", ServerPort)
+			logger.Info(localhostMsg)
 			logger.Info("If this URL isn't accessible (e.g. you're using a remote server),")
 			logger.Info("the credentials won't be saved. It's best to run this command")
 			logger.Info("on a machine with a browser, but you can also overcome this using")
