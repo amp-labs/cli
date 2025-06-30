@@ -31,9 +31,8 @@ func getLoginURL() string {
 	loginURL, ok := os.LookupEnv("AMP_LOGIN_URL_OVERRIDE")
 	if ok {
 		return loginURL
-	} else {
-		return vars.LoginURL
 	}
+	return vars.LoginURL
 }
 
 func (h *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
