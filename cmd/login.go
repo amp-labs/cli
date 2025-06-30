@@ -148,7 +148,7 @@ func isTerminal(fd uintptr) bool {
 	return term.IsTerminal(int(fd))
 }
 
-func canOpenBrowser() bool {
+func canOpenBrowser() bool { //nolint:cyclop
 	switch runtime.GOOS {
 	case "linux":
 		if os.Getenv("DISPLAY") == "" && os.Getenv("WAYLAND_DISPLAY") == "" {
@@ -171,7 +171,7 @@ func canOpenBrowser() bool {
 
 			return false
 		}
-	case "windows":
+	case "windows": //nolint:goconst
 		// There's no great way to detect headless here, so assume yes unless redirected
 		if !isTerminal(os.Stdout.Fd()) {
 			return false
