@@ -68,7 +68,7 @@ var initCmd = &cobra.Command{ //nolint:gochecknoglobals
 
 		var integ openapi.Integration
 		integ.Name = name
-		integ.DisplayName = &disp
+		integ.DisplayName = disp
 		integ.Provider = provider.Name
 
 		if provider.Support.Read {
