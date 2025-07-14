@@ -148,44 +148,56 @@ func isTerminal(fd uintptr) bool {
 	return term.IsTerminal(int(fd))
 }
 
-func canOpenBrowser() bool { //nolint:cyclop
+func canOpenBrowser() bool {
 	switch runtime.GOOS {
 	case "linux":
-		if os.Getenv("DISPLAY") == "" && os.Getenv("WAYLAND_DISPLAY") == "" {
-			return false
-		}
-
-		if _, err := exec.LookPath("xdg-open"); err != nil {
-			logger.Info("'xdg-open' command not found, cannot open browser automatically.")
-
-			return false
-		}
+		return canOpenBrowserLinux()
 	case "darwin":
-		// Usually safe to assume macOS has GUI, but check if stdout is a terminal
-		if !isTerminal(os.Stdout.Fd()) {
-			return false
-		}
-
-		if _, err := exec.LookPath("open"); err != nil {
-			logger.Info("'open' command not found, cannot open browser automatically.")
-
-			return false
-		}
-	case "windows": //nolint:goconst
-		// There's no great way to detect headless here, so assume yes unless redirected
-		if !isTerminal(os.Stdout.Fd()) {
-			return false
-		}
-
-		if _, err := exec.LookPath("rundll32"); err != nil {
-			logger.Info("'rundll32' command not found, cannot open browser automatically.")
-
-			return false
-		}
+		return canOpenBrowserDarwin()
+	case "windows":
+		return canOpenBrowserWindows()
 	default:
 		return false
 	}
+}
 
+func canOpenBrowserLinux() bool {
+	if os.Getenv("DISPLAY") == "" && os.Getenv("WAYLAND_DISPLAY") == "" {
+		return false
+	}
+
+	if _, err := exec.LookPath("xdg-open"); err != nil {
+		logger.Info("'xdg-open' command not found, cannot open browser automatically.")
+		return false
+	}
+
+	return true
+}
+
+func canOpenBrowserDarwin() bool {
+	// Usually safe to assume macOS has GUI, but check if stdout is a terminal
+	if !isTerminal(os.Stdout.Fd()) {
+		return false
+	}
+
+	if _, err := exec.LookPath("open"); err != nil {
+		logger.Info("'open' command not found, cannot open browser automatically.")
+		return false
+	}
+
+	return true
+}
+
+func canOpenBrowserWindows() bool {
+	// There's no great way to detect headless here, so assume yes unless redirected
+	if !isTerminal(os.Stdout.Fd()) {
+		return false
+	}
+
+	if _, err := exec.LookPath("rundll32"); err != nil {
+		logger.Info("'rundll32' command not found, cannot open browser automatically.")
+		return false
+	}
 	return true
 }
 
