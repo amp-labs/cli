@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -448,30 +449,45 @@ type destinationStats struct {
 // to the provided ngrok public URL. For each destination, it checks if an update is needed,
 // prompts for user confirmation (unless skipped), and performs the update via the API.
 // Returns statistics about the update operation (updated, skipped, unchanged counts).
-func updateDestinations(ctx context.Context, client *request.APIClient, dests []Destination, publicURL string) destinationStats {
+func updateDestinations(ctx context.Context, client *request.APIClient,
+	dests []Destination, publicURL string,
+) destinationStats {
 	// Initialize statistics tracking
 	stats := destinationStats{}
 
 	// Process each destination individually
 	for _, dest := range dests {
+		// Create the merged URL that would result from updating this destination
+		mergedURL, err := mergeURLs(publicURL, dest.URL)
+		if err != nil {
+			// Log URL merge failures but continue with other destinations
+			logger.Infof("failed to merge URLs for destination %s: %v", dest.String(), err)
+			stats.skipped++
+
+			continue
+		}
+
 		// Skip destinations that already have the correct URL
-		if dest.URL == publicURL {
+		if dest.URL == mergedURL {
 			stats.unchanged++
+
 			continue
 		}
 
 		// Ask user for confirmation (unless --yes flag is used)
-		shouldUpdate, err := promptUpdateDestination(dest.String(), publicURL)
+		shouldUpdate, err := promptUpdateDestination(dest.String(), mergedURL)
 		if err != nil {
 			// Log prompt failures but continue with other destinations
 			logger.Infof("failed to prompt for destination update: %v", err)
 			stats.skipped++
+
 			continue
 		}
 
 		// Respect user's decision to skip this destination
 		if !shouldUpdate {
 			stats.skipped++
+
 			continue
 		}
 
@@ -480,6 +496,7 @@ func updateDestinations(ctx context.Context, client *request.APIClient, dests []
 			// Log API update failures but continue with other destinations
 			logger.Infof("failed to update destination %s: %v", dest.String(), err)
 			stats.skipped++
+
 			continue
 		}
 
@@ -492,18 +509,25 @@ func updateDestinations(ctx context.Context, client *request.APIClient, dests []
 
 // updateDestination performs the actual API call to update a single destination's URL.
 // It uses the PATCH endpoint to modify only the metadata.url field of the destination,
-// preserving all other destination configuration.
+// preserving all other destination configuration. The URL is constructed by merging
+// the ngrok URL's protocol, host, and port with the existing URL's path and query parameters.
 // Returns an error if the API call fails.
 func updateDestination(ctx context.Context, client *request.APIClient, dest Destination, publicURL string) error {
+	// Merge the ngrok URL with the existing destination URL to preserve path and query params
+	mergedURL, err := mergeURLs(publicURL, dest.URL)
+	if err != nil {
+		return fmt.Errorf("failed to merge URLs: %w", err)
+	}
+
 	// Log the update operation for user visibility
-	logger.Infof("Changing webhook destination %s to %s", dest.Name, publicURL)
+	logger.Infof("Changing webhook destination %s to %s", dest.Name, mergedURL)
 
 	// Make API call to update the destination's URL
 	// Using PATCH with update mask to only modify the URL field
-	_, err := client.PatchDestination(ctx, dest.Id, &request.PatchDestination{
+	_, err = client.PatchDestination(ctx, dest.Id, &request.PatchDestination{
 		Destination: map[string]any{
 			"metadata": map[string]any{
-				"url": publicURL,
+				"url": mergedURL,
 			},
 		},
 		UpdateMask: []string{"metadata.url"}, // Only update the URL field
@@ -518,6 +542,35 @@ func updateDestination(ctx context.Context, client *request.APIClient, dest Dest
 func logDestinationStats(stats destinationStats, total int) {
 	logger.Infof("Total destinations: %d, unchanged: %d, skipped: %d, updated: %d",
 		total, stats.unchanged, stats.skipped, stats.updated)
+}
+
+// mergeURLs combines a new base URL (from ngrok) with the path and query parameters
+// from an existing destination URL. This preserves the existing URL's path and query
+// components while updating the protocol, host, and port to match the ngrok tunnel.
+// Returns the merged URL string or an error if URL parsing fails.
+func mergeURLs(ngrokURL, existingURL string) (string, error) {
+	// Parse the ngrok URL to get the new base (protocol, host, port)
+	baseURL, err := url.Parse(ngrokURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse ngrok URL '%s': %w", ngrokURL, err)
+	}
+
+	// Parse the existing destination URL to get path and query components
+	existingParsed, err := url.Parse(existingURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse existing URL '%s': %w", existingURL, err)
+	}
+
+	// Create merged URL: use ngrok's scheme, host, and port with existing path and query
+	mergedURL := &url.URL{
+		Scheme:   baseURL.Scheme,
+		Host:     baseURL.Host,
+		Path:     existingParsed.Path,
+		RawQuery: existingParsed.RawQuery,
+		Fragment: existingParsed.Fragment,
+	}
+
+	return mergedURL.String(), nil
 }
 
 // getCanonicalDestinations resolves user-provided destination identifiers (names or IDs)
