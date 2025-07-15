@@ -658,7 +658,7 @@ func resolveDestination(input string, ampNameMap, ampIdMap map[string]Destinatio
 	}
 
 	// Try to match by name (exact match)
-	if dest, ok := ampNameMap[input]; ok {
+	if dest, ok := ampNameMap[strings.ToLower(input)]; ok {
 		return validateWebhookDestination(dest, input)
 	}
 
