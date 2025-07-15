@@ -121,6 +121,10 @@ func init() {
 // validateProtocol validates that the ngrok protocol flag is set to a valid value.
 // Returns an error if the protocol is not "http" or "https".
 func validateProtocol() error {
+	if ngrokProtocol == "" {
+		return fmt.Errorf("protocol cannot be empty")
+	}
+
 	if ngrokProtocol != "http" && ngrokProtocol != "https" {
 		return fmt.Errorf("invalid protocol '%s': must be 'http' or 'https'", ngrokProtocol)
 	}
@@ -138,6 +142,10 @@ func getPublicNgrokURLWithRetry(ctx context.Context) (string, error) {
 		initialDelay     = 500 * time.Millisecond
 		maxDelay         = 2 * time.Second
 	)
+
+	if ngrokServer == "" {
+		return "", fmt.Errorf("ngrok server cannot be empty")
+	}
 
 	deadline := time.Now().Add(maxRetryDuration)
 	delay := initialDelay
@@ -177,8 +185,14 @@ func getPublicNgrokURLWithRetry(ctx context.Context) (string, error) {
 func getPublicNgrokURL(ctx context.Context) (string, error) {
 	// Create HTTP request to ngrok's API endpoint
 	// The ngrok agent exposes a REST API, typically on port 4040 by default
-	apiURL := fmt.Sprintf("%s://%s/api/tunnels", ngrokProtocol, ngrokServer)
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+	var apiURL strings.Builder
+
+	apiURL.WriteString(ngrokProtocol)
+	apiURL.WriteString("://")
+	apiURL.WriteString(ngrokServer)
+	apiURL.WriteString("/api/tunnels")
+
+	req, err := http.NewRequestWithContext(ctx, "GET", apiURL.String(), nil)
 	if err != nil {
 		// Wrap the error with context about what operation failed
 		return "", fmt.Errorf("failed to create ngrok API request: %w", err)
@@ -206,7 +220,12 @@ func getPublicNgrokURL(ctx context.Context) (string, error) {
 
 	// Parse the JSON response containing tunnel information
 	var ngrokResp ngrokResponse
-	if err := json.NewDecoder(resp.Body).Decode(&ngrokResp); err != nil {
+	decoder := json.NewDecoder(resp.Body)
+	if decoder == nil {
+		return "", fmt.Errorf("failed to create JSON decoder")
+	}
+
+	if err := decoder.Decode(&ngrokResp); err != nil {
 		// JSON parsing errors indicate malformed response from ngrok
 		return "", fmt.Errorf("failed to parse ngrok response: %w", err)
 	}
@@ -262,15 +281,19 @@ func chooseNgrokTunnel(ngrokResp *ngrokResponse) (string, error) {
 func waitForNgrok(ctx context.Context) error {
 	// Configuration constants for ngrok availability checking
 	const (
-		maxDuration   = 5 * time.Minute // Maximum time to wait for ngrok
-		retryInterval = 2 * time.Second // Time between connection attempts
+		maxDuration    = 5 * time.Minute // Maximum time to wait for ngrok
+		retryInterval  = 2 * time.Second // Time between connection attempts
+		connectTimeout = time.Second     // Timeout for individual connection attempts
 	)
 
 	// Use configured ngrok server address
 	address := ngrokServer
+	if address == "" {
+		return fmt.Errorf("ngrok server address cannot be empty")
+	}
 
 	// Perform initial connectivity check to see if ngrok is already running
-	conn, err := net.DialTimeout("tcp", address, time.Second)
+	conn, err := net.DialTimeout("tcp", address, connectTimeout)
 	if err == nil {
 		// ngrok is already available, close connection and return immediately
 		_ = conn.Close()
@@ -307,7 +330,7 @@ func waitForNgrok(ctx context.Context) error {
 			}
 
 			// Attempt to connect to ngrok API endpoint
-			conn, err := net.DialTimeout("tcp", address, time.Second)
+			conn, err = net.DialTimeout("tcp", address, connectTimeout)
 			if err == nil {
 				// Success! ngrok is now available
 				_ = conn.Close()
@@ -441,7 +464,7 @@ func updateDestinations(ctx context.Context, client *request.APIClient, dests []
 		shouldUpdate, err := promptUpdateDestination(dest.String(), publicURL)
 		if err != nil {
 			// Log prompt failures but continue with other destinations
-			logger.Info(fmt.Sprintf("failed to prompt for destination update: %v", err))
+			logger.Infof("failed to prompt for destination update: %v", err)
 			stats.skipped++
 			continue
 		}
@@ -455,7 +478,7 @@ func updateDestinations(ctx context.Context, client *request.APIClient, dests []
 		// Attempt to update the destination via API
 		if err := updateDestination(ctx, client, dest, publicURL); err != nil {
 			// Log API update failures but continue with other destinations
-			logger.Info(fmt.Sprintf("failed to update destination %s: %v", dest.String(), err))
+			logger.Infof("failed to update destination %s: %v", dest.String(), err)
 			stats.skipped++
 			continue
 		}
@@ -596,8 +619,15 @@ func promptUpdateDestination(dest, url string) (bool, error) {
 	}
 
 	// Present interactive confirmation prompt to user
+	var labelBuilder strings.Builder
+	labelBuilder.WriteString("Change destination '")
+	labelBuilder.WriteString(dest)
+	labelBuilder.WriteString("' to '")
+	labelBuilder.WriteString(url)
+	labelBuilder.WriteString("'")
+
 	prompter := promptui.Prompt{
-		Label:     "Change destination '" + dest + "' to '" + url + "'",
+		Label:     labelBuilder.String(),
 		IsConfirm: true, // Makes this a yes/no prompt
 		Stdin:     os.Stdin,
 		Stdout:    os.Stdout,
