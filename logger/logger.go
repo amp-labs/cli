@@ -18,7 +18,7 @@ func Infof(msg string, a ...any) {
 
 func Debug(msg string) {
 	if flags.GetDebugMode() {
-		fmt.Fprint(os.Stdout, time.Now().Format(time.RFC3339)+" DEBUG: "+msg+"\n")
+		fmt.Fprintf(os.Stdout, "%s DEBUG: %s\n", time.Now().Format(time.RFC3339), msg)
 	}
 }
 
