@@ -19,26 +19,48 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	maxRetryDuration = 10 * time.Second
+	initialDelay     = 500 * time.Millisecond
+	maxDelay         = 2 * time.Second
+	maxWaitDuration  = 5 * time.Minute
+	retryInterval    = 2 * time.Second
+	connectTimeout   = time.Second
+)
+
 var (
+	// Static errors for linter compliance
+	errProtocolEmpty         = errors.New("protocol cannot be empty")
+	errInvalidProtocol       = errors.New("invalid protocol: must be 'http' or 'https'")
+	errNgrokServerEmpty      = errors.New("ngrok server cannot be empty")
+	errNoTunnelsFound        = errors.New("no ngrok tunnels found")
+	errJSONDecoderCreate     = errors.New("failed to create JSON decoder")
+	errNgrokAddressEmpty     = errors.New("ngrok server address cannot be empty")
+	errNoDestinations        = errors.New("no valid destinations provided")
+	errNotWebhook            = errors.New("destination is not a webhook")
+	errInvalidDestination    = errors.New("invalid destination")
+	errNgrokUnexpectedStatus = errors.New("ngrok API returned unexpected status code")
+	errDeadlineExceeded      = errors.New("timeout waiting for ngrok")
+
 	// destinations stores the list of destination names or IDs provided via command-line flags.
 	// These can be either destination names (human-readable) or UUIDs (unique identifiers).
-	destinations []string
+	destinations []string //nolint:gochecknoglobals
 
 	// skipConfirm determines whether to skip user confirmation prompts when updating destinations.
 	// When true, the command will automatically proceed with all updates without asking for confirmation.
-	skipConfirm bool
+	skipConfirm bool //nolint:gochecknoglobals
 
 	// ngrokServer specifies the ngrok server URL for API calls.
 	// Defaults to localhost:4040 but can be configured via command-line flag.
-	ngrokServer string
+	ngrokServer string //nolint:gochecknoglobals
 
 	// ngrokProtocol specifies the protocol to use when connecting to the ngrok server.
 	// Defaults to "http" but can be configured via command-line flag to "http" or "https".
-	ngrokProtocol string
+	ngrokProtocol string //nolint:gochecknoglobals
 
 	// ngrokCommand defines the Cobra command structure for the ngrok subcommand.
 	// This command is hidden from the main help output as it's primarily for development use.
-	ngrokCommand = &cobra.Command{
+	ngrokCommand = &cobra.Command{ //nolint:gochecknoglobals
 		Use:    "ngrok",
 		Short:  "Automatic ngrok URL configuration for Ampersand destinations",
 		Long:   "Configure Ampersand destinations to use ngrok tunnels for local development.",
@@ -80,7 +102,7 @@ func (d Destination) String() string {
 type ngrokTunnel struct {
 	// PublicURL is the externally accessible URL that ngrok provides
 	// (e.g., "https://abc123.ngrok.io")
-	PublicURL string `json:"public_url"`
+	PublicURL string `json:"public_url"` //nolint:tagliatelle
 }
 
 // ngrokResponse represents the JSON response from ngrok's local API endpoint.
@@ -123,11 +145,11 @@ func init() {
 // Returns an error if the protocol is not "http" or "https".
 func validateProtocol() error {
 	if ngrokProtocol == "" {
-		return fmt.Errorf("protocol cannot be empty")
+		return errProtocolEmpty
 	}
 
 	if ngrokProtocol != "http" && ngrokProtocol != "https" {
-		return fmt.Errorf("invalid protocol '%s': must be 'http' or 'https'", ngrokProtocol)
+		return fmt.Errorf("%w: '%s'", errInvalidProtocol, ngrokProtocol)
 	}
 
 	return nil
@@ -138,14 +160,8 @@ func validateProtocol() error {
 // Uses exponential backoff to reduce API load during initialization.
 // Returns the selected tunnel's public URL or an error if retries are exhausted.
 func getPublicNgrokURLWithRetry(ctx context.Context) (string, error) {
-	const (
-		maxRetryDuration = 10 * time.Second
-		initialDelay     = 500 * time.Millisecond
-		maxDelay         = 2 * time.Second
-	)
-
 	if ngrokServer == "" {
-		return "", fmt.Errorf("ngrok server cannot be empty")
+		return "", errNgrokServerEmpty
 	}
 
 	deadline := time.Now().Add(maxRetryDuration)
@@ -157,7 +173,6 @@ func getPublicNgrokURLWithRetry(ctx context.Context) (string, error) {
 		if err == nil {
 			return publicURL, nil
 		}
-
 		// Check if we've exceeded the retry deadline
 		if time.Now().After(deadline) {
 			return "", fmt.Errorf("failed to get ngrok URL after %v: %w",
@@ -171,7 +186,6 @@ func getPublicNgrokURLWithRetry(ctx context.Context) (string, error) {
 		case <-time.After(delay):
 			// Continue to next retry attempt
 		}
-
 		// Exponential backoff with cap
 		delay *= 2
 		if delay > maxDelay {
@@ -193,7 +207,7 @@ func getPublicNgrokURL(ctx context.Context) (string, error) {
 	apiURL.WriteString(ngrokServer)
 	apiURL.WriteString("/api/tunnels")
 
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL.String(), nil)
 	if err != nil {
 		// Wrap the error with context about what operation failed
 		return "", fmt.Errorf("failed to create ngrok API request: %w", err)
@@ -216,14 +230,14 @@ func getPublicNgrokURL(ctx context.Context) (string, error) {
 	// Check if the ngrok API responded successfully
 	if resp.StatusCode != http.StatusOK {
 		// Non-200 status codes indicate ngrok API issues
-		return "", fmt.Errorf("ngrok API returned status %d", resp.StatusCode)
+		return "", fmt.Errorf("%w %d", errNgrokUnexpectedStatus, resp.StatusCode)
 	}
 
 	// Parse the JSON response containing tunnel information
 	var ngrokResp ngrokResponse
 	decoder := json.NewDecoder(resp.Body)
 	if decoder == nil {
-		return "", fmt.Errorf("failed to create JSON decoder")
+		return "", errJSONDecoderCreate
 	}
 
 	if err := decoder.Decode(&ngrokResp); err != nil {
@@ -243,7 +257,7 @@ func chooseNgrokTunnel(ngrokResp *ngrokResponse) (string, error) {
 	// Validate that at least one tunnel is available
 	if len(ngrokResp.Tunnels) == 0 {
 		// This means ngrok is running but no tunnels are active
-		return "", fmt.Errorf("no ngrok tunnels found")
+		return "", errNoTunnelsFound
 	}
 
 	// If only one tunnel exists, use it automatically (no need to prompt)
@@ -280,17 +294,10 @@ func chooseNgrokTunnel(ngrokResp *ngrokResponse) (string, error) {
 // it retries with a timeout and visual progress indicator (dots).
 // Returns nil when ngrok is accessible, or an error if the timeout is exceeded.
 func waitForNgrok(ctx context.Context) error {
-	// Configuration constants for ngrok availability checking
-	const (
-		maxDuration    = 5 * time.Minute // Maximum time to wait for ngrok
-		retryInterval  = 2 * time.Second // Time between connection attempts
-		connectTimeout = time.Second     // Timeout for individual connection attempts
-	)
-
 	// Use configured ngrok server address
 	address := ngrokServer
 	if address == "" {
-		return fmt.Errorf("ngrok server address cannot be empty")
+		return errNgrokAddressEmpty
 	}
 
 	// Perform initial connectivity check to see if ngrok is already running
@@ -298,12 +305,14 @@ func waitForNgrok(ctx context.Context) error {
 	if err == nil {
 		// ngrok is already available, close connection and return immediately
 		_ = conn.Close()
+
 		return nil
 	}
 
 	// Set up retry loop with timeout and progress indication
-	deadline := time.Now().Add(maxDuration)
+	deadline := time.Now().Add(maxWaitDuration)
 	ticker := time.NewTicker(retryInterval)
+
 	defer ticker.Stop()
 
 	// Track if we need to add a newline after progress dots
@@ -327,7 +336,8 @@ func waitForNgrok(ctx context.Context) error {
 			// Check if we've exceeded the maximum wait time
 			if time.Now().After(deadline) {
 				// Return timeout error with specific details for debugging
-				return fmt.Errorf("timeout waiting for ngrok on %s after %v", address, maxDuration)
+				return fmt.Errorf("%s on %s after %v",
+					errDeadlineExceeded, address, maxWaitDuration)
 			}
 
 			// Attempt to connect to ngrok API endpoint
@@ -335,6 +345,7 @@ func waitForNgrok(ctx context.Context) error {
 			if err == nil {
 				// Success! ngrok is now available
 				_ = conn.Close()
+
 				return nil
 			}
 
@@ -398,7 +409,7 @@ func setupNgrokExecution(ctx context.Context) (*request.APIClient, []Destination
 	// Validate that we have at least one destination to work with
 	if len(dests) == 0 {
 		// This indicates user provided invalid destination identifiers
-		return nil, nil, fmt.Errorf("no valid destinations provided")
+		return nil, nil, errNoDestinations
 	}
 
 	return client, dests, nil
@@ -454,7 +465,6 @@ func updateDestinations(ctx context.Context, client *request.APIClient,
 ) destinationStats {
 	// Initialize statistics tracking
 	stats := destinationStats{}
-
 	// Process each destination individually
 	for _, dest := range dests {
 		// Create the merged URL that would result from updating this destination
@@ -463,7 +473,6 @@ func updateDestinations(ctx context.Context, client *request.APIClient,
 			// Log URL merge failures but continue with other destinations
 			logger.Infof("failed to merge URLs for destination %s: %v", dest.String(), err)
 			stats.skipped++
-
 			continue
 		}
 
@@ -480,7 +489,6 @@ func updateDestinations(ctx context.Context, client *request.APIClient,
 			// Log prompt failures but continue with other destinations
 			logger.Infof("failed to prompt for destination update: %v", err)
 			stats.skipped++
-
 			continue
 		}
 
@@ -578,87 +586,95 @@ func mergeURLs(ngrokURL, existingURL string) (string, error) {
 // by both destination name and UUID, and only includes webhook-type destinations.
 // Returns a slice of resolved destinations or an error if any identifier is invalid.
 func getCanonicalDestinations(ctx context.Context, client *request.APIClient) ([]Destination, error) {
-	// Filter out empty destination strings from command-line input
-	inputs := make([]string, 0, len(destinations))
-	for _, dest := range destinations {
-		if dest == "" {
-			continue // Skip empty strings
-		}
-
-		inputs = append(inputs, dest)
-	}
-
-	// Validate that we have at least one destination to process
+	inputs := filterEmptyDestinations()
 	if len(inputs) == 0 {
-		// This means user didn't provide any destination flags or all were empty
-		return nil, fmt.Errorf("no valid destinations provided")
+		return nil, errNoDestinations
 	}
 
-	// Fetch all destinations from the Ampersand API
 	ampDests, err := client.ListDestinations(ctx)
 	if err != nil {
-		// API call failed - could be network, auth, or server issues
 		return nil, fmt.Errorf("failed to list destinations: %w", err)
 	}
 
-	// Create lookup maps for efficient destination resolution
-	// Support both name-based and ID-based lookups
+	ampNameMap, ampIdMap := buildDestinationMaps(ampDests)
+
+	return resolveInputsToDestinations(inputs, ampNameMap, ampIdMap)
+}
+
+// filterEmptyDestinations removes empty strings from the destinations slice.
+func filterEmptyDestinations() []string {
+	inputs := make([]string, 0, len(destinations))
+
+	for _, dest := range destinations {
+		if dest != "" {
+			inputs = append(inputs, dest)
+		}
+	}
+
+	return inputs
+}
+
+// buildDestinationMaps creates lookup maps for efficient destination resolution.
+func buildDestinationMaps(ampDests []*request.Destination) (map[string]Destination, map[string]Destination) {
 	ampNameMap := make(map[string]Destination)
 	ampIdMap := make(map[string]Destination)
 
-	// Build lookup maps from API response
-	for _, d := range ampDests {
-		// Add to ID-based lookup (case-insensitive for UUIDs)
-		ampIdMap[strings.ToLower(d.Id)] = Destination{
-			Id:   d.Id,
-			Name: d.Name,
-			URL:  d.Metadata.URL,
-			Type: d.Type,
+	for _, destination := range ampDests {
+		dest := Destination{
+			Id:   destination.Id,
+			Name: destination.Name,
+			URL:  destination.Metadata.URL,
+			Type: destination.Type,
 		}
 
-		// Add to name-based lookup if destination has a name
-		if d.Name != "" {
-			ampNameMap[d.Name] = Destination{
-				Id:   d.Id,
-				Name: d.Name,
-				URL:  d.Metadata.URL,
-				Type: d.Type,
-			}
+		ampIdMap[strings.ToLower(destination.Id)] = dest
+
+		if destination.Name != "" {
+			ampNameMap[destination.Name] = dest
 		}
 	}
 
-	// Resolve each input to a canonical destination object
+	return ampNameMap, ampIdMap
+}
+
+// resolveInputsToDestinations resolves user inputs to canonical destination objects.
+func resolveInputsToDestinations(inputs []string, ampNameMap, ampIdMap map[string]Destination) ([]Destination, error) {
 	canonical := make([]Destination, 0, len(inputs))
 
 	for _, input := range inputs {
-		// Try to match by ID first (case-insensitive)
-		if dest, ok := ampIdMap[strings.ToLower(input)]; ok {
-			if dest.Type != "webhook" {
-				// If the destination is not a webhook, skip it
-				return nil, fmt.Errorf("destination %s is not a webhook", input)
-			}
-
-			canonical = append(canonical, dest)
-			continue
+		dest, err := resolveDestination(input, ampNameMap, ampIdMap)
+		if err != nil {
+			return nil, err
 		}
 
-		// Try to match by name (exact match)
-		if dest, ok := ampNameMap[input]; ok {
-			if dest.Type != "webhook" {
-				// If the destination is not a webhook, skip it
-				return nil, fmt.Errorf("destination %s is not a webhook", input)
-			}
-
-			canonical = append(canonical, dest)
-			continue
-		}
-
-		// Input doesn't match any known destination name or ID
-		// Provide specific error to help user identify the issue
-		return nil, fmt.Errorf("invalid destination: %s", input)
+		canonical = append(canonical, dest)
 	}
 
 	return canonical, nil
+}
+
+// resolveDestination resolves a single input to a destination.
+func resolveDestination(input string, ampNameMap, ampIdMap map[string]Destination) (Destination, error) {
+	// Try to match by ID first (case-insensitive)
+	if dest, ok := ampIdMap[strings.ToLower(input)]; ok {
+		return validateWebhookDestination(dest, input)
+	}
+
+	// Try to match by name (exact match)
+	if dest, ok := ampNameMap[input]; ok {
+		return validateWebhookDestination(dest, input)
+	}
+
+	return Destination{}, fmt.Errorf("%w: %s", errInvalidDestination, input)
+}
+
+// validateWebhookDestination validates that a destination is a webhook.
+func validateWebhookDestination(dest Destination, input string) (Destination, error) {
+	if dest.Type != "webhook" {
+		return Destination{}, fmt.Errorf("%w: %s", errNotWebhook, input)
+	}
+
+	return dest, nil
 }
 
 // promptUpdateDestination asks the user for confirmation before updating a destination's URL.
@@ -673,6 +689,7 @@ func promptUpdateDestination(dest, url string) (bool, error) {
 
 	// Present interactive confirmation prompt to user
 	var labelBuilder strings.Builder
+
 	labelBuilder.WriteString("Change destination '")
 	labelBuilder.WriteString(dest)
 	labelBuilder.WriteString("' to '")
