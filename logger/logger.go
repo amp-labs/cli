@@ -9,7 +9,7 @@ import (
 )
 
 func Info(a ...any) {
-	fmt.Fprint(os.Stdout, fmt.Sprintln(a...))
+	fmt.Fprintln(os.Stdout, a...)
 }
 
 func Infof(msg string, a ...any) {
