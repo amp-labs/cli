@@ -27,6 +27,14 @@ var (
 	// When true, the command will automatically proceed with all updates without asking for confirmation.
 	skipConfirm bool
 
+	// ngrokServer specifies the ngrok server URL for API calls.
+	// Defaults to localhost:4040 but can be configured via command-line flag.
+	ngrokServer string
+
+	// ngrokProtocol specifies the protocol to use when connecting to the ngrok server.
+	// Defaults to "http" but can be configured via command-line flag to "http" or "https".
+	ngrokProtocol string
+
 	// ngrokCommand defines the Cobra command structure for the ngrok subcommand.
 	// This command is hidden from the main help output as it's primarily for development use.
 	ngrokCommand = &cobra.Command{
@@ -96,8 +104,28 @@ func init() {
 		"yes", "y", false,
 		"Skip confirmation prompts")
 
+	// Set up the ngrok server flag for configurable ngrok API endpoint
+	ngrokCommand.Flags().StringVarP(&ngrokServer,
+		"ngrok-server", "s", "localhost:4040",
+		"Ngrok server URL")
+
+	// Set up the ngrok protocol flag for configurable protocol (http or https)
+	ngrokCommand.Flags().StringVarP(&ngrokProtocol,
+		"protocol", "P", "http",
+		"Protocol to use for ngrok server (http or https)")
+
 	// Register this command as a subcommand of the root CLI command
 	rootCmd.AddCommand(ngrokCommand)
+}
+
+// validateProtocol validates that the ngrok protocol flag is set to a valid value.
+// Returns an error if the protocol is not "http" or "https".
+func validateProtocol() error {
+	if ngrokProtocol != "http" && ngrokProtocol != "https" {
+		return fmt.Errorf("invalid protocol '%s': must be 'http' or 'https'", ngrokProtocol)
+	}
+
+	return nil
 }
 
 // getPublicNgrokURLWithRetry retrieves the public URL of an active ngrok tunnel with retry logic.
@@ -147,9 +175,10 @@ func getPublicNgrokURLWithRetry(ctx context.Context) (string, error) {
 // the ngrok local API endpoint. If multiple tunnels exist, it prompts the user to choose one.
 // Returns the selected tunnel's public URL or an error if ngrok is not accessible.
 func getPublicNgrokURL(ctx context.Context) (string, error) {
-	// Create HTTP request to ngrok's local API endpoint
-	// The ngrok agent exposes a REST API on port 4040 by default
-	req, err := http.NewRequestWithContext(ctx, "GET", "http://localhost:4040/api/tunnels", nil)
+	// Create HTTP request to ngrok's API endpoint
+	// The ngrok agent exposes a REST API, typically on port 4040 by default
+	apiURL := fmt.Sprintf("%s://%s/api/tunnels", ngrokProtocol, ngrokServer)
+	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
 	if err != nil {
 		// Wrap the error with context about what operation failed
 		return "", fmt.Errorf("failed to create ngrok API request: %w", err)
@@ -226,17 +255,19 @@ func chooseNgrokTunnel(ngrokResp *ngrokResponse) (string, error) {
 	return urls[idx], nil
 }
 
-// waitForNgrok waits for the ngrok service to become available on localhost:4040.
+// waitForNgrok waits for the ngrok service to become available on the configured server.
 // It performs an initial connectivity check, and if ngrok is not immediately available,
 // it retries with a timeout and visual progress indicator (dots).
 // Returns nil when ngrok is accessible, or an error if the timeout is exceeded.
 func waitForNgrok(ctx context.Context) error {
 	// Configuration constants for ngrok availability checking
 	const (
-		maxDuration   = 5 * time.Minute  // Maximum time to wait for ngrok
-		retryInterval = 2 * time.Second  // Time between connection attempts
-		address       = "localhost:4040" // Standard ngrok API address
+		maxDuration   = 5 * time.Minute // Maximum time to wait for ngrok
+		retryInterval = 2 * time.Second // Time between connection attempts
 	)
+
+	// Use configured ngrok server address
+	address := ngrokServer
 
 	// Perform initial connectivity check to see if ngrok is already running
 	conn, err := net.DialTimeout("tcp", address, time.Second)
@@ -295,6 +326,11 @@ func waitForNgrok(ctx context.Context) error {
 // It orchestrates the entire process: setup, ngrok tunnel discovery, and destination updates.
 // This function is called by the Cobra framework when the ngrok command is invoked.
 func runNgrok(cmd *cobra.Command, _ []string) error {
+	// Validate protocol flag before proceeding
+	if err := validateProtocol(); err != nil {
+		return err
+	}
+
 	// Phase 1: Initialize API client and resolve destination identifiers
 	client, dests, err := setupNgrokExecution(cmd.Context())
 	if err != nil {
