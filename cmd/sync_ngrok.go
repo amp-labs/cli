@@ -342,7 +342,7 @@ func waitForNgrok(ctx context.Context) error {
 			// Check if we've exceeded the maximum wait time
 			if time.Now().After(deadline) {
 				// Return timeout error with specific details for debugging
-				return fmt.Errorf("%s on %s after %v",
+				return fmt.Errorf("%w on %s after %v",
 					errDeadlineExceeded, address, maxWaitDuration)
 			}
 
