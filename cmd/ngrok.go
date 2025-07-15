@@ -236,9 +236,6 @@ func getPublicNgrokURL(ctx context.Context) (string, error) {
 	// Parse the JSON response containing tunnel information
 	var ngrokResp ngrokResponse
 	decoder := json.NewDecoder(resp.Body)
-	if decoder == nil {
-		return "", errJSONDecoderCreate
-	}
 
 	if err := decoder.Decode(&ngrokResp); err != nil {
 		// JSON parsing errors indicate malformed response from ngrok
