@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -35,8 +36,9 @@ var versionCommand = &cobra.Command{ //nolint:gochecknoglobals
 			fmt.Println("build date: " + versionInfo.BuildDate) //nolint:forbidigo
 		}
 
-		fmt.Println("commit: " + versionInfo.CommitID) //nolint:forbidigo
-		fmt.Println("branch: " + versionInfo.Branch)   //nolint:forbidigo
+		fmt.Println("commit: " + versionInfo.CommitID)  //nolint:forbidigo
+		fmt.Println("branch: " + versionInfo.Branch)    //nolint:forbidigo
+		fmt.Println("go version: " + runtime.Version()) //nolint:forbidigo
 	},
 }
 
