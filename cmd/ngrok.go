@@ -200,13 +200,11 @@ func getPublicNgrokURLWithRetry(ctx context.Context) (string, error) {
 func getPublicNgrokURL(ctx context.Context) (string, error) {
 	// Create HTTP request to ngrok's API endpoint
 	// The ngrok agent exposes a REST API, typically on port 4040 by default
-	var apiURL strings.Builder
-
-	apiURL.WriteString(ngrokProtocol)
-	apiURL.WriteString("://")
-	apiURL.WriteString(ngrokServer)
-	apiURL.WriteString("/api/tunnels")
-
+	apiURL := url.URL{
+		Scheme: ngrokProtocol,
+		Host:   ngrokServer,
+		Path:   "/api/tunnels",
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL.String(), nil)
 	if err != nil {
 		// Wrap the error with context about what operation failed
