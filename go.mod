@@ -3,7 +3,7 @@ module github.com/amp-labs/cli
 go 1.24.3
 
 require (
-	github.com/adrg/xdg v0.4.0
+	github.com/adrg/xdg v0.5.3
 	github.com/alexkappa/mustache v1.0.0
 	github.com/amp-labs/connectors v0.0.0-20250613204826-9739804cf2c3
 	github.com/buildkite/shellwords v0.0.0-20180315110454-59467a9b8e10
