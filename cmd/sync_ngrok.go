@@ -638,7 +638,7 @@ func buildDestinationMaps(ampDests []*request.Destination) (map[string]Destinati
 		ampIdMap[strings.ToLower(destination.Id)] = dest
 
 		if destination.Name != "" {
-			ampNameMap[destination.Name] = dest
+			ampNameMap[strings.ToLower(destination.Name)] = dest
 		}
 	}
 
