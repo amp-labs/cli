@@ -100,10 +100,53 @@ func init() {
 	rootCmd.AddCommand(ngrokCommand)
 }
 
-// getPublicNgrokUrl retrieves the public URL of an active ngrok tunnel by querying
+// getPublicNgrokURLWithRetry retrieves the public URL of an active ngrok tunnel with retry logic.
+// It handles the case where ngrok is running but still initializing (up to 10 seconds).
+// Uses exponential backoff to reduce API load during initialization.
+// Returns the selected tunnel's public URL or an error if retries are exhausted.
+func getPublicNgrokURLWithRetry(ctx context.Context) (string, error) {
+	const (
+		maxRetryDuration = 10 * time.Second
+		initialDelay     = 500 * time.Millisecond
+		maxDelay         = 2 * time.Second
+	)
+
+	deadline := time.Now().Add(maxRetryDuration)
+	delay := initialDelay
+
+	for {
+		// Attempt to get the ngrok URL
+		publicURL, err := getPublicNgrokURL(ctx)
+		if err == nil {
+			return publicURL, nil
+		}
+
+		// Check if we've exceeded the retry deadline
+		if time.Now().After(deadline) {
+			return "", fmt.Errorf("failed to get ngrok URL after %v: %w",
+				maxRetryDuration.String(), err)
+		}
+
+		// Check if context was cancelled
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		case <-time.After(delay):
+			// Continue to next retry attempt
+		}
+
+		// Exponential backoff with cap
+		delay *= 2
+		if delay > maxDelay {
+			delay = maxDelay
+		}
+	}
+}
+
+// getPublicNgrokURL retrieves the public URL of an active ngrok tunnel by querying
 // the ngrok local API endpoint. If multiple tunnels exist, it prompts the user to choose one.
 // Returns the selected tunnel's public URL or an error if ngrok is not accessible.
-func getPublicNgrokUrl(ctx context.Context) (string, error) {
+func getPublicNgrokURL(ctx context.Context) (string, error) {
 	// Create HTTP request to ngrok's local API endpoint
 	// The ngrok agent exposes a REST API on port 4040 by default
 	req, err := http.NewRequestWithContext(ctx, "GET", "http://localhost:4040/api/tunnels", nil)
@@ -314,10 +357,10 @@ func getNgrokTunnelURL(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("ngrok is not running: %w", err)
 	}
 
-	// Step 2: Query ngrok API for active tunnels and get public URL
+	// Step 2: Query ngrok API for active tunnels with retry logic
 	logger.Info("ngrok is running, fetching public URL...")
 
-	publicURL, err := getPublicNgrokUrl(ctx)
+	publicURL, err := getPublicNgrokURLWithRetry(ctx)
 	if err != nil {
 		// Add context about URL retrieval failure
 		return "", fmt.Errorf("failed to get public ngrok URL: %w", err)
