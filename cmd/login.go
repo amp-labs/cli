@@ -47,7 +47,7 @@ func (h *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 
 		go func() {
 			// Tell the user we're done and then forcefully exit the program.
-			fmt.Printf("Successfully logged in as %s\n", loginEmail)
+			fmt.Fprint(os.Stdout, "Successfully logged in as "+loginEmail+"\n")
 			time.Sleep(WaitBeforeExitSeconds * time.Second)
 			os.Exit(0)
 		}()

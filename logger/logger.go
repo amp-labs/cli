@@ -9,7 +9,7 @@ import (
 )
 
 func Info(a ...any) {
-	fmt.Println(a...)
+	fmt.Fprint(os.Stdout, fmt.Sprintln(a...))
 }
 
 func Infof(msg string, a ...any) {
@@ -18,7 +18,7 @@ func Infof(msg string, a ...any) {
 
 func Debug(msg string) {
 	if flags.GetDebugMode() {
-		fmt.Println(time.Now().Format(time.RFC3339), "DEBUG:", msg)
+		fmt.Fprint(os.Stdout, time.Now().Format(time.RFC3339)+" DEBUG: "+msg+"\n")
 	}
 }
 
@@ -37,5 +37,5 @@ func FatalErr(msg string, err error) {
 }
 
 func PrintDebugTip() {
-	fmt.Println("For more information, run again with --debug")
+	fmt.Fprint(os.Stdout, "For more information, run again with --debug\n")
 }

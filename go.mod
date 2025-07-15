@@ -1,8 +1,6 @@
 module github.com/amp-labs/cli
 
-go 1.23.0
-
-toolchain go1.24.2
+go 1.24.3
 
 require (
 	github.com/adrg/xdg v0.4.0

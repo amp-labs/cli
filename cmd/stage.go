@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/amp-labs/cli/vars"
 	"github.com/spf13/cobra"
@@ -12,7 +13,7 @@ var stageCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Short:  "Print the stage this binary has been compiled for",
 	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(vars.Stage)
+		fmt.Fprint(os.Stdout, vars.Stage+"\n")
 	},
 }
 
