@@ -57,7 +57,7 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 	provider, event := webhook.ParseEvent(eventName)
 
 	if event == "" {
-		return fmt.Errorf("%w: '%s'", ErrInvalidEventFormat, eventName)
+		return fmt.Errorf("%w: %q", ErrInvalidEventFormat, eventName)
 	}
 
 	// Determine which payload to use
