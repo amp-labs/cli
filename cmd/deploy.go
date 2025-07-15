@@ -30,7 +30,7 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 		zippedData, err := files.Zip(args[0])
 		if err != nil {
 			if errors.Is(err, files.ErrBadManifest) {
-				fmt.Println(err.Error())
+				fmt.Fprint(os.Stdout, err.Error()+"\n")
 				os.Exit(1)
 			} else {
 				logger.FatalErr("Unable to zip the source", err)

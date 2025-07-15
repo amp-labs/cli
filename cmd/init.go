@@ -108,7 +108,7 @@ var initCmd = &cobra.Command{ //nolint:gochecknoglobals
 			logger.FatalErr("Unable to write manifest to file", err)
 		}
 
-		fmt.Println("Integration manifest written to amp.yaml")
+		fmt.Fprint(os.Stdout, "Integration manifest written to amp.yaml\n")
 	},
 }
 

@@ -1,32 +1,14 @@
 run:
-  timeout: 5m
+  timeout: 10m
 output:
-  formats: github-actions
+  formats:
+    - format: colored-line-number
+      path: stdout
 linters:
   enable-all: true
   disable:
     # Disabled because we use inits all over the place
     - gochecknoinits
-    # Abandoned, replaced by unused
-    - varcheck
-    # Abandoned, replaced by unused
-    - structcheck
-    # Abandoned, replaced by unused
-    - deadcode
-    # Author archived it, and suggests to not use it in real-world applications
-    - interfacer
-    # Abandoned, replaced by revive
-    - nosnakecase
-    # Abandoned, replaced by revive
-    - golint
-    # Abandoned, replaced by exhaustruct
-    - exhaustivestruct
-    # Deprecated by owner
-    - ifshort
-    # Archived by owner, replaced by govet
-    - maligned
-    # Deprecated by owner, replaced with exportloopref
-    - scopelint
     # Highly annoying. We'd need to whitelist all packages we import, which is a lot of work and adds very little value.
     - depguard
     # Annoying and unhelpful. Assumes uninitialized (zero-valued) fields are always a bug, which is plain wrong.
@@ -41,6 +23,24 @@ linters:
     - nolintlint
     # Named returns are helpful if there are multiple return values of the same type, and acts as self-documentation of the function.
     - nonamedreturns
+    # length of function
+    - funlen
+    # complexity of function
+    - cyclop
+    # same as cyclop, complexiy of function
+    - gocognit
+    # we have legitimate use cases for global variables
+    - gochecknoglobals
+    # Doesn't seem to actually work
+    - promlinter
+    # Gives maintainability index, but no specific explanation/guidance
+    - maintidx
+    # We have legitimate use cases for returning an interface
+    - ireturn
+    # deprecated
+    - tenv
+    # Sometimes it's useful to return nil, nil
+    - nilnil
 linters-settings:
   # See https://golangci-lint.run/usage/linters#revive
   revive:
@@ -49,23 +49,33 @@ linters-settings:
       - name: var-naming
         disabled: false
         arguments:
-          - [ "ID", "API" ]
+          - ["ID", "API"]
   # See https://staticcheck.io/docs/configuration/options/#checks
+  staticcheck:
+    checks: ["all"]
   stylecheck:
     checks: ["all", "-ST1003"]
   varnamelen:
     # The longest distance, in source lines, that is being considered a "small scope" where it is ok to use short variable names.
     # The default is 5, which is quite strict.
-    max-distance: 10
-  forbidigo:
-    forbid:
-      - ^print.*$
-      - ^spew\.(ConfigState\.)?Dump$
-
+    max-distance: 15
+  ireturn:
+    allow:
+      - error
+      - generic
+      - stdlib
+      - empty
+  misspell:
+    locale: US
+    mode: restricted
 issues:
   exclude-rules:
     - text: "don't use ALL_CAPS in Go names"
       linters:
         - revive
   exclude-dirs:
-      - openapi
+    - openapi
+    - scripts
+    - tmp
+    - playground
+    - testrun
