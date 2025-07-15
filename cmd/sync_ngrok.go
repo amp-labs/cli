@@ -34,7 +34,6 @@ var (
 	errInvalidProtocol       = errors.New("invalid protocol: must be 'http' or 'https'")
 	errNgrokServerEmpty      = errors.New("ngrok server cannot be empty")
 	errNoTunnelsFound        = errors.New("no ngrok tunnels found")
-	errJSONDecoderCreate     = errors.New("failed to create JSON decoder")
 	errNgrokAddressEmpty     = errors.New("ngrok server address cannot be empty")
 	errNoDestinations        = errors.New("no valid destinations provided")
 	errNotWebhook            = errors.New("destination is not a webhook")
@@ -60,12 +59,12 @@ var (
 
 	// ngrokCommand defines the Cobra command structure for the ngrok subcommand.
 	// This command is hidden from the main help output as it's primarily for development use.
-	ngrokCommand = &cobra.Command{ //nolint:gochecknoglobals
-		Use:    "ngrok",
-		Short:  "Automatic ngrok URL configuration for Ampersand destinations",
+	syncNgrokCommand = &cobra.Command{ //nolint:gochecknoglobals
+		Use:    "sync-ngrok",
+		Short:  "Sync Ampersand webhook destinations with ngrok tunnels",
 		Long:   "Configure Ampersand destinations to use ngrok tunnels for local development.",
 		Hidden: true, // Hidden because it's a development-only feature
-		RunE:   runNgrok,
+		RunE:   runSyncNgrok,
 	}
 )
 
@@ -97,6 +96,18 @@ func (d Destination) String() string {
 	return d.Id
 }
 
+// NameOrId returns the name of the destination if available,
+// otherwise it falls back to the ID. This is useful for displaying
+// destinations in user prompts or logs where a unique identifier is needed.
+func (d Destination) NameOrId() string {
+	// Return the name if available, otherwise fallback to ID
+	if d.Name != "" {
+		return d.Name
+	}
+
+	return d.Id
+}
+
 // ngrokTunnel represents a single tunnel from ngrok's API response.
 // Contains the public URL that ngrok has assigned to forward traffic to the local service.
 type ngrokTunnel struct {
@@ -118,27 +129,27 @@ type ngrokResponse struct {
 func init() {
 	// Set up the destination flag to accept multiple destination identifiers
 	// Users can specify destinations by name or UUID, multiple times or comma-separated
-	ngrokCommand.Flags().StringSliceVarP(&destinations,
+	syncNgrokCommand.Flags().StringSliceVarP(&destinations,
 		"destination", "D", []string{},
 		"Destination names or IDs (UUIDs)")
 
 	// Set up the confirmation skip flag for automated workflows
-	ngrokCommand.Flags().BoolVarP(&skipConfirm,
+	syncNgrokCommand.Flags().BoolVarP(&skipConfirm,
 		"yes", "y", false,
 		"Skip confirmation prompts")
 
 	// Set up the ngrok server flag for configurable ngrok API endpoint
-	ngrokCommand.Flags().StringVarP(&ngrokServer,
+	syncNgrokCommand.Flags().StringVarP(&ngrokServer,
 		"ngrok-server", "s", "localhost:4040",
 		"Ngrok server URL")
 
 	// Set up the ngrok protocol flag for configurable protocol (http or https)
-	ngrokCommand.Flags().StringVarP(&ngrokProtocol,
+	syncNgrokCommand.Flags().StringVarP(&ngrokProtocol,
 		"protocol", "P", "http",
 		"Protocol to use for ngrok server (http or https)")
 
 	// Register this command as a subcommand of the root CLI command
-	rootCmd.AddCommand(ngrokCommand)
+	rootCmd.AddCommand(syncNgrokCommand)
 }
 
 // validateProtocol validates that the ngrok protocol flag is set to a valid value.
@@ -352,10 +363,10 @@ func waitForNgrok(ctx context.Context) error {
 	}
 }
 
-// runNgrok is the main entry point for the ngrok command execution.
+// runSyncNgrok is the main entry point for the ngrok command execution.
 // It orchestrates the entire process: setup, ngrok tunnel discovery, and destination updates.
 // This function is called by the Cobra framework when the ngrok command is invoked.
-func runNgrok(cmd *cobra.Command, _ []string) error {
+func runSyncNgrok(cmd *cobra.Command, _ []string) error {
 	// Validate protocol flag before proceeding
 	if err := validateProtocol(); err != nil {
 		return err
@@ -466,7 +477,8 @@ func updateDestinations(ctx context.Context, client *request.APIClient,
 		mergedURL, err := mergeURLs(publicURL, dest.URL)
 		if err != nil {
 			// Log URL merge failures but continue with other destinations
-			logger.Infof("failed to merge URLs for destination %s: %v", dest.String(), err)
+			logger.Infof("failed to merge URLs for destination %s: %v",
+				dest.NameOrId(), err)
 			stats.skipped++
 			continue
 		}
@@ -479,10 +491,11 @@ func updateDestinations(ctx context.Context, client *request.APIClient,
 		}
 
 		// Ask user for confirmation (unless --yes flag is used)
-		shouldUpdate, err := promptUpdateDestination(dest.String(), mergedURL)
+		shouldUpdate, err := promptUpdateDestination(dest.Name, mergedURL)
 		if err != nil {
 			// Log prompt failures but continue with other destinations
-			logger.Infof("failed to prompt for destination update: %v", err)
+			logger.Infof("failed to prompt for destination %s update: %v",
+				dest.NameOrId(), err)
 			stats.skipped++
 			continue
 		}
@@ -497,7 +510,7 @@ func updateDestinations(ctx context.Context, client *request.APIClient,
 		// Attempt to update the destination via API
 		if err := updateDestination(ctx, client, dest, publicURL); err != nil {
 			// Log API update failures but continue with other destinations
-			logger.Infof("failed to update destination %s: %v", dest.String(), err)
+			logger.Infof("failed to update destination %s: %v", dest.NameOrId(), err)
 			stats.skipped++
 
 			continue
@@ -523,7 +536,7 @@ func updateDestination(ctx context.Context, client *request.APIClient, dest Dest
 	}
 
 	// Log the update operation for user visibility
-	logger.Infof("Changing webhook destination %s to %s", dest.String(), mergedURL)
+	logger.Infof("Changing webhook destination %s to %s", dest.NameOrId(), mergedURL)
 
 	// Make API call to update the destination's URL
 	// Using PATCH with update mask to only modify the URL field
