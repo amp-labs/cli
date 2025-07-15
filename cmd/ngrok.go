@@ -523,7 +523,7 @@ func updateDestination(ctx context.Context, client *request.APIClient, dest Dest
 	}
 
 	// Log the update operation for user visibility
-	logger.Infof("Changing webhook destination %s to %s", dest.Name, mergedURL)
+	logger.Infof("Changing webhook destination %s to %s", dest.String(), mergedURL)
 
 	// Make API call to update the destination's URL
 	// Using PATCH with update mask to only modify the URL field
