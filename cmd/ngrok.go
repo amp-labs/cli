@@ -170,76 +170,116 @@ func waitForNgrok(ctx context.Context) error {
 }
 
 func runNgrok(cmd *cobra.Command, _ []string) error {
+	client, dests, err := setupNgrokExecution(cmd.Context())
+	if err != nil {
+		return err
+	}
+
+	publicURL, err := getNgrokTunnelURL(cmd.Context())
+	if err != nil {
+		return err
+	}
+
+	stats := updateDestinations(cmd.Context(), client, dests, publicURL)
+
+	logDestinationStats(stats, len(dests))
+
+	return nil
+}
+
+func setupNgrokExecution(ctx context.Context) (*request.APIClient, []Destination, error) {
 	projectId := flags.GetProjectOrFail()
 	apiKey := flags.GetAPIKey()
-
 	client := request.NewAPIClient(projectId, &apiKey)
 
-	dests, err := getCanonicalDestinations(cmd.Context(), client)
+	dests, err := getCanonicalDestinations(ctx, client)
 	if err != nil {
-		return fmt.Errorf("failed to get canonical destinations: %w", err)
+		return nil, nil, fmt.Errorf("failed to get canonical destinations: %w", err)
 	}
 
 	if len(dests) == 0 {
-		return fmt.Errorf("no valid destinations provided")
+		return nil, nil, fmt.Errorf("no valid destinations provided")
 	}
 
+	return client, dests, nil
+}
+
+func getNgrokTunnelURL(ctx context.Context) (string, error) {
 	logger.Info("waiting for ngrok to start...")
 
-	if err := waitForNgrok(cmd.Context()); err != nil {
-		return fmt.Errorf("ngrok is not running: %w", err)
+	if err := waitForNgrok(ctx); err != nil {
+		return "", fmt.Errorf("ngrok is not running: %w", err)
 	}
 
 	logger.Info("ngrok is running, fetching public URL...")
 
-	publicURL, err := getPublicNgrokUrl(cmd.Context())
+	publicURL, err := getPublicNgrokUrl(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get public ngrok URL: %w", err)
+		return "", fmt.Errorf("failed to get public ngrok URL: %w", err)
 	}
 
 	logger.Infof("Public ngrok URL: %s", publicURL)
 
-	skipped := 0
-	unchanged := 0
-	updated := 0
+	return publicURL, nil
+}
+
+type destinationStats struct {
+	skipped   int
+	unchanged int
+	updated   int
+}
+
+func updateDestinations(ctx context.Context, client *request.APIClient, dests []Destination, publicURL string) destinationStats {
+	stats := destinationStats{}
 
 	for _, dest := range dests {
 		if dest.URL == publicURL {
-			unchanged++
+			stats.unchanged++
 			continue
 		}
 
 		shouldUpdate, err := promptUpdateDestination(dest.String(), publicURL)
 		if err != nil {
-			return fmt.Errorf("failed to prompt for destination update: %w", err)
-		}
-
-		if !shouldUpdate {
-			skipped++
+			logger.Info(fmt.Sprintf("failed to prompt for destination update: %v", err))
+			stats.skipped++
 			continue
 		}
 
-		logger.Infof("Changing webhook destination %s to %s", dest.Name, publicURL)
-
-		_, err = client.PatchDestination(cmd.Context(), dest.Id, &request.PatchDestination{
-			Destination: map[string]any{
-				"metadata": map[string]any{
-					"url": publicURL,
-				},
-			},
-			UpdateMask: []string{"metadata.url"},
-		})
-		if err != nil {
-			return fmt.Errorf("failed to update destination %s: %w", dest.String(), err)
+		if !shouldUpdate {
+			stats.skipped++
+			continue
 		}
 
-		updated++
+		if err := updateDestination(ctx, client, dest, publicURL); err != nil {
+			logger.Info(fmt.Sprintf("failed to update destination %s: %v", dest.String(), err))
+			stats.skipped++
+			continue
+		}
+
+		stats.updated++
 	}
 
-	logger.Infof("Total destinations: %d, unchanged: %d, skipped: %d, updated: %d",
-		len(dests), unchanged, skipped, updated)
+	return stats
+}
 
-	return nil
+func updateDestination(ctx context.Context, client *request.APIClient, dest Destination, publicURL string) error {
+	logger.Infof("Changing webhook destination %s to %s", dest.Name, publicURL)
+
+	_, err := client.PatchDestination(ctx, dest.Id, &request.PatchDestination{
+		Destination: map[string]any{
+			"metadata": map[string]any{
+				"url": publicURL,
+			},
+		},
+		UpdateMask: []string{"metadata.url"},
+	})
+
+	return err
+}
+
+func logDestinationStats(stats destinationStats, total int) {
+	logger.Infof("Total destinations: %d, unchanged: %d, skipped: %d, updated: %d",
+		total, stats.unchanged, stats.skipped, stats.updated)
 }
 
 func getCanonicalDestinations(ctx context.Context, client *request.APIClient) ([]Destination, error) {
