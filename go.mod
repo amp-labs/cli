@@ -7,7 +7,7 @@ require (
 	github.com/alexkappa/mustache v1.0.0
 	github.com/amp-labs/connectors v0.0.0-20250613204826-9739804cf2c3
 	github.com/buildkite/shellwords v0.0.0-20180315110454-59467a9b8e10
-	github.com/clerkinc/clerk-sdk-go v1.49.0
+	github.com/clerkinc/clerk-sdk-go v1.49.1
 	github.com/imdario/mergo v0.3.15
 	github.com/manifoldco/promptui v0.9.0
 	github.com/oapi-codegen/runtime v1.1.2
