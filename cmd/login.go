@@ -25,13 +25,17 @@ const (
 
 type handler struct{}
 
-const WaitBeforeExitSeconds = 3
+const (
+	WaitBeforeExitSeconds = 3
+	OSWindows             = "windows"
+)
 
 func getLoginURL() string {
 	loginURL, ok := os.LookupEnv("AMP_LOGIN_URL_OVERRIDE")
 	if ok {
 		return loginURL
 	}
+
 	return vars.LoginURL
 }
 
@@ -154,7 +158,7 @@ func canOpenBrowser() bool {
 		return canOpenBrowserLinux()
 	case "darwin":
 		return canOpenBrowserDarwin()
-	case "windows":
+	case OSWindows:
 		return canOpenBrowserWindows()
 	default:
 		return false
@@ -168,6 +172,7 @@ func canOpenBrowserLinux() bool {
 
 	if _, err := exec.LookPath("xdg-open"); err != nil {
 		logger.Info("'xdg-open' command not found, cannot open browser automatically.")
+
 		return false
 	}
 
@@ -182,6 +187,7 @@ func canOpenBrowserDarwin() bool {
 
 	if _, err := exec.LookPath("open"); err != nil {
 		logger.Info("'open' command not found, cannot open browser automatically.")
+
 		return false
 	}
 
@@ -196,8 +202,10 @@ func canOpenBrowserWindows() bool {
 
 	if _, err := exec.LookPath("rundll32"); err != nil {
 		logger.Info("'rundll32' command not found, cannot open browser automatically.")
+
 		return false
 	}
+
 	return true
 }
 
@@ -208,7 +216,7 @@ func openBrowser(url string) {
 	switch runtime.GOOS {
 	case "linux":
 		err = exec.Command("xdg-open", url).Start()
-	case "windows":
+	case OSWindows:
 		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
 	case "darwin":
 		err = exec.Command("open", url).Start()
