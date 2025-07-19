@@ -29,7 +29,7 @@ const (
 )
 
 var (
-	// Static errors for linter compliance
+	// Static errors for linter compliance.
 	errProtocolEmpty         = errors.New("protocol cannot be empty")
 	errInvalidProtocol       = errors.New("invalid protocol: must be 'http' or 'https'")
 	errNgrokServerEmpty      = errors.New("ngrok server cannot be empty")
@@ -190,13 +190,13 @@ func getPublicNgrokURLWithRetry(ctx context.Context) (string, error) {
 				maxRetryDuration.String(), err)
 		}
 
-		// Check if context was cancelled
+		// Check if context was canceled
 		select {
 		case <-ctx.Done():
 			return "", ctx.Err()
 		case <-time.After(delay):
-			// Continue to next retry attempt
 		}
+
 		// Exponential backoff with cap
 		delay *= 2
 		if delay > maxDelay {
@@ -216,6 +216,7 @@ func getPublicNgrokURL(ctx context.Context) (string, error) {
 		Host:   ngrokServer,
 		Path:   "/api/tunnels",
 	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL.String(), nil)
 	if err != nil {
 		// Wrap the error with context about what operation failed
@@ -244,6 +245,7 @@ func getPublicNgrokURL(ctx context.Context) (string, error) {
 
 	// Parse the JSON response containing tunnel information
 	var ngrokResp ngrokResponse
+
 	decoder := json.NewDecoder(resp.Body)
 
 	if err := decoder.Decode(&ngrokResp); err != nil {
@@ -288,7 +290,7 @@ func chooseNgrokTunnel(ngrokResp *ngrokResponse) (string, error) {
 	// Get user's tunnel selection
 	idx, _, err := prompt.Run()
 	if err != nil {
-		// User cancelled selection or prompt failed
+		// User canceled selection or prompt failed
 		return "", fmt.Errorf("failed to select tunnel: %w", err)
 	}
 
@@ -335,7 +337,7 @@ func waitForNgrok(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			// Context was cancelled (e.g., user pressed Ctrl+C)
+			// Context was canceled (e.g., user pressed Ctrl+C)
 			// Return the context error (e.g., context.Canceled, context.DeadlineExceeded)
 			return ctx.Err()
 		case <-ticker.C:
@@ -479,7 +481,9 @@ func updateDestinations(ctx context.Context, client *request.APIClient,
 			// Log URL merge failures but continue with other destinations
 			logger.Infof("failed to merge URLs for destination %s: %v",
 				dest.NameOrId(), err)
+
 			stats.skipped++
+
 			continue
 		}
 
@@ -496,7 +500,9 @@ func updateDestinations(ctx context.Context, client *request.APIClient,
 			// Log prompt failures but continue with other destinations
 			logger.Infof("failed to prompt for destination %s update: %v",
 				dest.NameOrId(), err)
+
 			stats.skipped++
+
 			continue
 		}
 
@@ -511,6 +517,7 @@ func updateDestinations(ctx context.Context, client *request.APIClient,
 		if err := updateDestination(ctx, client, dest, publicURL); err != nil {
 			// Log API update failures but continue with other destinations
 			logger.Infof("failed to update destination %s: %v", dest.NameOrId(), err)
+
 			stats.skipped++
 
 			continue
