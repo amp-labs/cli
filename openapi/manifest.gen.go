@@ -55,7 +55,8 @@ const (
 
 // Defines values for UpdateEventWatchFieldsAuto.
 const (
-	UpdateEventWatchFieldsAutoAll UpdateEventWatchFieldsAuto = "all"
+	UpdateEventWatchFieldsAutoAll      UpdateEventWatchFieldsAuto = "all"
+	UpdateEventWatchFieldsAutoSelected UpdateEventWatchFieldsAuto = "selected"
 )
 
 // AssociationChangeEvent defines model for AssociationChangeEvent.
@@ -350,14 +351,14 @@ type UpdateEvent struct {
 	Enabled             *UpdateEventEnabled `json:"enabled,omitempty"`
 	RequiredWatchFields *[]string           `json:"requiredWatchFields,omitempty"`
 
-	// WatchFieldsAuto If all, the integration will watch all fields for updates.
+	// WatchFieldsAuto If `all`, the integration will watch all fields for updates. If `selected`, the integration will watch only the fields that are selected by the user. If `inheritFieldsAndMapping` is true for Subscribe action, the integration will watch the selected fields from read action that are selected by the user.
 	WatchFieldsAuto *UpdateEventWatchFieldsAuto `json:"watchFieldsAuto,omitempty"`
 }
 
 // UpdateEventEnabled If always, the integration will subscribe to update events by default.
 type UpdateEventEnabled string
 
-// UpdateEventWatchFieldsAuto If all, the integration will watch all fields for updates.
+// UpdateEventWatchFieldsAuto If `all`, the integration will watch all fields for updates. If `selected`, the integration will watch only the fields that are selected by the user. If `inheritFieldsAndMapping` is true for Subscribe action, the integration will watch the selected fields from read action that are selected by the user.
 type UpdateEventWatchFieldsAuto string
 
 // ValueDefaults Configuration to set default write values for object fields.
