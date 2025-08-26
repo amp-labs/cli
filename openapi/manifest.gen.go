@@ -43,6 +43,11 @@ const (
 	String       FieldMetadataValueType = "string"
 )
 
+// Defines values for IntegrationObjectEnabled.
+const (
+	IntegrationObjectEnabledAlways IntegrationObjectEnabled = "always"
+)
+
 // Defines values for OptionalFieldsAutoOption.
 const (
 	OptionalFieldsAutoOptionAll OptionalFieldsAutoOption = "all"
@@ -50,12 +55,13 @@ const (
 
 // Defines values for UpdateEventEnabled.
 const (
-	UpdateEventEnabledAlways UpdateEventEnabled = "always"
+	Always UpdateEventEnabled = "always"
 )
 
 // Defines values for UpdateEventWatchFieldsAuto.
 const (
-	UpdateEventWatchFieldsAutoAll UpdateEventWatchFieldsAuto = "all"
+	UpdateEventWatchFieldsAutoAll      UpdateEventWatchFieldsAuto = "all"
+	UpdateEventWatchFieldsAutoSelected UpdateEventWatchFieldsAuto = "selected"
 )
 
 // AssociationChangeEvent defines model for AssociationChangeEvent.
@@ -271,6 +277,9 @@ type IntegrationObject struct {
 	Delivery    *Delivery `json:"delivery,omitempty"`
 	Destination string    `json:"destination"`
 
+	// Enabled If set to `always`, the integration will automatically install upon user connection and skip the user field selection step.
+	Enabled IntegrationObjectEnabled `json:"enabled,omitempty"`
+
 	// MapToDisplayName A display name to map to.
 	MapToDisplayName string `json:"mapToDisplayName,omitempty"`
 
@@ -282,6 +291,9 @@ type IntegrationObject struct {
 	RequiredFields     *[]IntegrationField       `json:"requiredFields,omitempty"`
 	Schedule           string                    `json:"schedule"`
 }
+
+// IntegrationObjectEnabled If set to `always`, the integration will automatically install upon user connection and skip the user field selection step.
+type IntegrationObjectEnabled string
 
 // IntegrationProxy defines model for IntegrationProxy.
 type IntegrationProxy struct {
@@ -350,14 +362,14 @@ type UpdateEvent struct {
 	Enabled             *UpdateEventEnabled `json:"enabled,omitempty"`
 	RequiredWatchFields *[]string           `json:"requiredWatchFields,omitempty"`
 
-	// WatchFieldsAuto If all, the integration will watch all fields for updates.
+	// WatchFieldsAuto If `all`, the integration will watch all fields for updates. If `selected`, the integration will watch only the fields that are selected by the user. If `inheritFieldsAndMapping` is true for Subscribe action, the integration will watch the selected fields from read action that are selected by the user.
 	WatchFieldsAuto *UpdateEventWatchFieldsAuto `json:"watchFieldsAuto,omitempty"`
 }
 
 // UpdateEventEnabled If always, the integration will subscribe to update events by default.
 type UpdateEventEnabled string
 
-// UpdateEventWatchFieldsAuto If all, the integration will watch all fields for updates.
+// UpdateEventWatchFieldsAuto If `all`, the integration will watch all fields for updates. If `selected`, the integration will watch only the fields that are selected by the user. If `inheritFieldsAndMapping` is true for Subscribe action, the integration will watch the selected fields from read action that are selected by the user.
 type UpdateEventWatchFieldsAuto string
 
 // ValueDefaults Configuration to set default write values for object fields.
