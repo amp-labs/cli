@@ -120,7 +120,7 @@ type Delivery struct {
 // DeliveryMode The data delivery mode for this object. If not specified, defaults to automatic.
 type DeliveryMode string
 
-// FieldMetadata defines model for FieldMetadata.
+// FieldMetadata Metadata about a field. Please note that different providers have different levels of support for field metadata. Please reach out to support@withampersand.com if need expanded support for a particular provider.
 type FieldMetadata struct {
 	// DisplayName The display name of the field from the provider API.
 	DisplayName string `json:"displayName"`
