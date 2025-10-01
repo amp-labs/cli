@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"crypto/md5" //nolint:gosec
 	"encoding/base64"
 	"errors"
@@ -12,8 +13,10 @@ import (
 	"github.com/amp-labs/cli/files"
 	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
+	"github.com/amp-labs/cli/openapi"
 	"github.com/amp-labs/cli/request"
 	"github.com/amp-labs/cli/storage"
+	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
 
@@ -37,6 +40,17 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 			}
 		}
 
+		// Parse the manifest to check for removed read objects
+		manifestData, err := files.ReadManifestFile(args[0])
+		if err != nil {
+			logger.FatalErr("Unable to read manifest file", err)
+		}
+
+		newManifest, err := files.ParseManifest(manifestData)
+		if err != nil {
+			logger.FatalErr("Unable to parse new manifest", err)
+		}
+
 		// nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-md5
 		hash := md5.New() //nolint:gosec
 
@@ -45,6 +59,12 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 		md5String := base64.StdEncoding.EncodeToString(md5Bytes)
 
 		client := request.NewAPIClient(projectId, &apiKey)
+
+		// Before deploying, check if any read objects were removed from the manifest. If so, prompt the user to confirm
+		// since this will stop all scheduled reads for those objects.
+		if err := confirmReadObjectRemoval(cmd.Context(), client, newManifest); err != nil {
+			logger.FatalErr("Deployment cancelled", err)
+		}
 
 		signed, err := client.GetPreSignedUploadURL(cmd.Context(), md5String)
 		if err != nil {
@@ -91,6 +111,182 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 			logger.Infof("Successfully deployed your integrations %s.\n", strings.Join(names, ", "))
 		}
 	},
+}
+
+var errDeploymentCancelled = errors.New("user cancelled deployment")
+
+type groupInfo struct {
+	name string
+	ref  string
+}
+
+func confirmReadObjectRemoval(
+	ctx context.Context, client *request.APIClient, newManifest *openapi.Manifest,
+) error {
+	integrations, err := client.ListIntegrations(ctx)
+	if err != nil {
+		logger.Debugf("Unable to list integrations to check for removed read objects: %v", err)
+
+		return nil
+	}
+
+	for _, newInteg := range newManifest.Integrations {
+		if err := checkIntegrationForRemovedObjects(ctx, client, integrations, newInteg); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func checkIntegrationForRemovedObjects(
+	ctx context.Context,
+	client *request.APIClient,
+	existingIntegrations []*request.Integration,
+	newInteg openapi.Integration,
+) error {
+	// If the integration doesn't exist or doesn't have a latest revision, then
+	// there's nothing to check for removed read objects.
+	existingInteg := findIntegrationByName(existingIntegrations, newInteg.Name)
+	if existingInteg == nil || existingInteg.LatestRevision == nil {
+		return nil
+	}
+
+	removedObjects := files.GetRemovedReadObjects(&existingInteg.LatestRevision.Content, &newInteg)
+	if len(removedObjects) == 0 {
+		return nil
+	}
+
+	installations, err := client.ListInstallations(ctx, existingInteg.Id)
+	if err != nil {
+		logger.Debugf("Unable to list installations for integration %s: %v", existingInteg.Id, err)
+	}
+
+	confirmed, err := promptUserConfirmation(buildPrompt(newInteg.Name, removedObjects, installations))
+	if err != nil {
+		return err
+	}
+
+	if !confirmed {
+		return errDeploymentCancelled
+	}
+
+	return nil
+}
+
+func findIntegrationByName(integrations []*request.Integration, name string) *request.Integration {
+	for _, integ := range integrations {
+		if integ.Name == name {
+			return integ
+		}
+	}
+	return nil
+}
+
+type promptData struct {
+	integrationName   string
+	removedObjects    []string
+	installationCount int
+	sampleGroups      []groupInfo
+}
+
+func buildPrompt(integrationName string, removedObjects []string, installations []*request.Installation) promptData {
+	const maxGroupSamples = 5
+
+	groups := make([]groupInfo, 0, maxGroupSamples)
+
+	for _, inst := range installations {
+		if inst.Group == nil {
+			continue
+		}
+
+		// Use groupName if available, otherwise default to groupRef (which is always available)
+		name := inst.Group.GroupName
+		if name == "" {
+			name = inst.Group.GroupRef
+		}
+
+		groups = append(groups, groupInfo{
+			name: name,
+			ref:  inst.Group.GroupRef,
+		})
+
+		if len(groups) >= maxGroupSamples {
+			break
+		}
+	}
+
+	return promptData{
+		integrationName:   integrationName,
+		removedObjects:    removedObjects,
+		installationCount: len(installations),
+		sampleGroups:      groups,
+	}
+}
+
+func promptUserConfirmation(data promptData) (bool, error) {
+	fmt.Println(formatPromptMessage(data))
+
+	prompter := promptui.Prompt{
+		Label:     "Confirm",
+		IsConfirm: true,
+		Stdin:     os.Stdin,
+		Stdout:    os.Stdout,
+	}
+
+	_, err := prompter.Run()
+	if err != nil {
+		if errors.Is(err, promptui.ErrAbort) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return true, nil
+}
+
+func formatPromptMessage(data promptData) string {
+	objectList := strings.Join(data.removedObjects, ", ")
+
+	var message string
+	if data.installationCount > 0 {
+		message = fmt.Sprintf(
+			"You are removing the following read object(s) from integration '%s': %s\n"+
+				"Any active read schedules for these objects will be stopped.\n"+
+				"This integration has %d installation(s).",
+			data.integrationName, objectList, data.installationCount,
+		)
+
+		if len(data.sampleGroups) > 0 {
+			message += formatAffectedInstallations(data.sampleGroups, data.installationCount)
+		}
+
+		message += "\nDo you still want to deploy a new revision of this integration?"
+	} else {
+		message = fmt.Sprintf(
+			"You are removing the following read object(s) from integration '%s': %s\n"+
+				"Any active read schedules for these objects will be stopped.\n"+
+				"Do you still want to deploy a new revision of this integration?",
+			data.integrationName, objectList,
+		)
+	}
+
+	return message
+}
+
+func formatAffectedInstallations(groups []groupInfo, totalCount int) string {
+	groupStrs := make([]string, len(groups))
+	for i, g := range groups {
+		groupStrs[i] = fmt.Sprintf("%s (%s)", g.name, g.ref)
+	}
+
+	result := fmt.Sprintf("\nInstallations: %s", strings.Join(groupStrs, ", "))
+	if totalCount > len(groups) {
+		result += fmt.Sprintf(" and %d more", totalCount-len(groups))
+	}
+
+	return result
 }
 
 func init() {

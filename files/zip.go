@@ -100,6 +100,35 @@ func statYaml() (os.FileInfo, error) {
 	return yamlStat, nil
 }
 
+// ReadManifestFile reads the manifest file from the given source path.
+func ReadManifestFile(source string) ([]byte, error) {
+	sourceDir, err := getZipDir(source)
+	if err != nil {
+		return nil, err
+	}
+
+	var contents []byte
+
+	chdirErr := chdir(sourceDir, func() error {
+		yamlStat, err := statYaml()
+		if err != nil {
+			return err
+		}
+
+		contents, err = os.ReadFile(yamlStat.Name())
+		if err != nil {
+			return fmt.Errorf("error reading %s file: %w", yamlStat.Name(), err)
+		}
+
+		return nil
+	})
+	if chdirErr != nil {
+		return nil, chdirErr
+	}
+
+	return contents, nil
+}
+
 func importYaml(writer *zip.Writer) error {
 	yamlStat, err := statYaml()
 	if err != nil {

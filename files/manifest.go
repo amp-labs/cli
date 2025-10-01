@@ -3,6 +3,7 @@ package files
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/amp-labs/cli/openapi"
 	"sigs.k8s.io/yaml"
@@ -236,4 +237,30 @@ func validateIntegration(integration openapi.Integration, path *pathTracker) err
 	}
 
 	return nil
+}
+
+// GetRemovedReadObjects returns a list of read objects that were removed from
+// the old revision but not in the new integration. The comparison is case-insensitive.
+func GetRemovedReadObjects(oldRevision *openapi.Integration, newIntegration *openapi.Integration) []string {
+	if oldRevision == nil || oldRevision.Read == nil || oldRevision.Read.Objects == nil {
+		return nil
+	}
+
+	newIntegrationObjects := make(map[string]bool)
+
+	if newIntegration.Read != nil && newIntegration.Read.Objects != nil {
+		for _, obj := range *newIntegration.Read.Objects {
+			newIntegrationObjects[strings.ToLower(obj.ObjectName)] = true
+		}
+	}
+
+	var removedObjects []string
+
+	for _, oldObj := range *oldRevision.Read.Objects {
+		if !newIntegrationObjects[strings.ToLower(oldObj.ObjectName)] {
+			removedObjects = append(removedObjects, oldObj.ObjectName)
+		}
+	}
+
+	return removedObjects
 }
