@@ -245,9 +245,9 @@ func formatPromptMessage(data promptData) string {
 	var message string
 	if data.installationCount > 0 {
 		message = fmt.Sprintf(
-			"You are removing the following read action object(s) from integration '%s': %s.\n"+
-				"Any active scheduled reads for these objects will be stopped.\n\n"+
-				"This integration has %d installation(s).",
+			"⚠️  You are removing the following read action object(s) from integration '%s': %s.\n"+
+				"   Any active scheduled reads for these objects will be stopped.\n\n"+
+				"   This integration has %d installation(s).",
 			data.integrationName, objectList, data.installationCount,
 		)
 
@@ -255,12 +255,12 @@ func formatPromptMessage(data promptData) string {
 			message += formatAffectedInstallations(data.sampleGroups, data.installationCount)
 		}
 
-		message += "\n\nDo you still want to deploy a new revision of this integration?"
+		message += "\n\n❓ Do you still want to deploy a new revision of this integration?"
 	} else {
 		message = fmt.Sprintf(
-			"You are removing the following read action object(s) from integration '%s': %s.\n"+
-				"Any active scheduled reads for these objects will be stopped.\n\n"+
-				"Do you still want to deploy a new revision of this integration?",
+			"⚠️  You are removing the following read action object(s) from integration '%s': %s.\n"+
+				"   Any active scheduled reads for these objects will be stopped.\n\n"+
+				"❓ Do you still want to deploy a new revision of this integration?",
 			data.integrationName, objectList,
 		)
 	}
@@ -271,11 +271,11 @@ func formatPromptMessage(data promptData) string {
 func formatAffectedInstallations(groups []groupInfo, totalCount int) string {
 	var result string
 	for _, g := range groups {
-		result += fmt.Sprintf("\n - %s (%s)", g.name, g.ref)
+		result += fmt.Sprintf("\n    - %s (%s)", g.name, g.ref)
 	}
 
 	if totalCount > len(groups) {
-		result += fmt.Sprintf("\n - and %d more", totalCount-len(groups))
+		result += fmt.Sprintf("\n    - and %d more", totalCount-len(groups))
 	}
 
 	return result
