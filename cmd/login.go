@@ -16,6 +16,7 @@ import (
 	"github.com/amp-labs/cli/vars"
 	"github.com/spf13/cobra"
 	"github.com/tidwall/pretty"
+	"golang.org/x/term"
 )
 
 const (
@@ -24,7 +25,19 @@ const (
 
 type handler struct{}
 
-const WaitBeforeExitSeconds = 3
+const (
+	WaitBeforeExitSeconds = 3
+	OSWindows             = "windows"
+)
+
+func getLoginURL() string {
+	loginURL, ok := os.LookupEnv("AMP_LOGIN_URL_OVERRIDE")
+	if ok {
+		return loginURL
+	}
+
+	return vars.LoginURL
+}
 
 func (h *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	// This path is followed after the user logs in. The CLI Auth Client redirects to here.
@@ -47,20 +60,14 @@ func (h *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 
 		go func() {
 			// Tell the user we're done and then forcefully exit the program.
-			fmt.Printf("Successfully logged in as %s\n", loginEmail)
+			fmt.Fprint(os.Stdout, "Successfully logged in as "+loginEmail+"\n")
 			time.Sleep(WaitBeforeExitSeconds * time.Second)
 			os.Exit(0)
 		}()
 
 		return
 	case request.URL.Path == "/" && request.Method == http.MethodGet:
-		loginURL, ok := os.LookupEnv("AMP_LOGIN_URL_OVERRIDE")
-		if ok {
-			writer.Header().Set("Location", loginURL)
-		} else {
-			writer.Header().Set("Location", vars.LoginURL)
-		}
-
+		writer.Header().Set("Location", getLoginURL())
 		writer.WriteHeader(http.StatusTemporaryRedirect)
 	default:
 		writer.WriteHeader(http.StatusNotFound)
@@ -107,9 +114,27 @@ var loginCmd = &cobra.Command{ //nolint:gochecknoglobals
 func doLogin() {
 	http.Handle("/", &handler{})
 
+	hasBrowser := canOpenBrowser()
+
 	runBrowser := func() {
 		time.Sleep(1 * time.Second)
-		openBrowser(fmt.Sprintf("http://localhost:%d", ServerPort))
+
+		if hasBrowser {
+			openBrowser(fmt.Sprintf("http://localhost:%d", ServerPort))
+		} else {
+			link := getLoginURL()
+
+			linkMsg := fmt.Sprintf("No browser detected, please open %s in your browser to log in.", link)
+			localhostMsg := fmt.Sprintf("NOTE: the login page will redirect to http://localhost:%d/...", ServerPort)
+
+			logger.Info(linkMsg)
+			logger.Info()
+			logger.Info(localhostMsg)
+			logger.Info("If this URL isn't accessible (e.g. you're using a remote server),")
+			logger.Info("the credentials won't be saved. It's best to run this command")
+			logger.Info("on a machine with a browser, but you can also overcome this using")
+			logger.Info("SSH port forwarding or a proxy.")
+		}
 	}
 
 	go runBrowser()
@@ -122,6 +147,68 @@ func doLogin() {
 	logger.FatalErr("error logging in:", server.ListenAndServe())
 }
 
+func isTerminal(fd uintptr) bool {
+	// This uses golang.org/x/term
+	return term.IsTerminal(int(fd))
+}
+
+func canOpenBrowser() bool {
+	switch runtime.GOOS {
+	case "linux":
+		return canOpenBrowserLinux()
+	case "darwin":
+		return canOpenBrowserDarwin()
+	case OSWindows:
+		return canOpenBrowserWindows()
+	default:
+		return false
+	}
+}
+
+func canOpenBrowserLinux() bool {
+	if os.Getenv("DISPLAY") == "" && os.Getenv("WAYLAND_DISPLAY") == "" {
+		return false
+	}
+
+	if _, err := exec.LookPath("xdg-open"); err != nil {
+		logger.Info("'xdg-open' command not found, cannot open browser automatically.")
+
+		return false
+	}
+
+	return true
+}
+
+func canOpenBrowserDarwin() bool {
+	// Usually safe to assume macOS has GUI, but check if stdout is a terminal
+	if !isTerminal(os.Stdout.Fd()) {
+		return false
+	}
+
+	if _, err := exec.LookPath("open"); err != nil {
+		logger.Info("'open' command not found, cannot open browser automatically.")
+
+		return false
+	}
+
+	return true
+}
+
+func canOpenBrowserWindows() bool {
+	// There's no great way to detect headless here, so assume yes unless redirected
+	if !isTerminal(os.Stdout.Fd()) {
+		return false
+	}
+
+	if _, err := exec.LookPath("rundll32"); err != nil {
+		logger.Info("'rundll32' command not found, cannot open browser automatically.")
+
+		return false
+	}
+
+	return true
+}
+
 // openBrowser tries to open the URL in a browser. Should work on most standard platforms.
 func openBrowser(url string) {
 	var err error
@@ -129,7 +216,7 @@ func openBrowser(url string) {
 	switch runtime.GOOS {
 	case "linux":
 		err = exec.Command("xdg-open", url).Start()
-	case "windows":
+	case OSWindows:
 		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
 	case "darwin":
 		err = exec.Command("open", url).Start()

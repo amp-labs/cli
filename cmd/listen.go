@@ -21,9 +21,10 @@ import (
 )
 
 var (
-	forwardURL    string
-	listenAddr    string
-	listenCommand = &cobra.Command{
+	ErrFailedToGetTCPAddress = errors.New("failed to get TCP address")
+	forwardURL               string
+	listenAddr               string
+	listenCommand            = &cobra.Command{
 		Use:   "listen",
 		Short: "Listen for webhooks locally",
 		Long: `Listen for webhooks locally and forward them to your application.
@@ -35,7 +36,8 @@ It's designed for local development and testing.`,
 )
 
 func init() {
-	listenCommand.Flags().StringVar(&forwardURL, "forward-to", "http://localhost:4000/webhook", "URL to forward webhooks to")
+	listenCommand.Flags().StringVar(&forwardURL, "forward-to", "http://localhost:4000/webhook",
+		"URL to forward webhooks to")
 	listenCommand.Flags().StringVar(&listenAddr, "listen", "127.0.0.1:0", "Address to listen on (default is random port)")
 	rootCmd.AddCommand(listenCommand)
 }
@@ -56,7 +58,11 @@ func runListen(cmd *cobra.Command, args []string) error {
 	}
 
 	// Save the port for the trigger command to use
-	addr := listener.Addr().(*net.TCPAddr)
+	addr, ok := listener.Addr().(*net.TCPAddr)
+	if !ok {
+		return ErrFailedToGetTCPAddress
+	}
+
 	port := strconv.Itoa(addr.Port)
 
 	// Save the port
@@ -64,8 +70,10 @@ func runListen(cmd *cobra.Command, args []string) error {
 		logger.FatalErr("failed to save port", err)
 	}
 
+	const serverTimeout = 10 * time.Second
 	srv := &http.Server{
-		Handler: mux,
+		Handler:           mux,
+		ReadHeaderTimeout: serverTimeout,
 	}
 
 	// Start the server in a goroutine so it doesn't block
@@ -78,16 +86,18 @@ func runListen(cmd *cobra.Command, args []string) error {
 	}()
 
 	// Print the listen address
-	fmt.Printf("🎧 Listening on %s:%s\n", addr.IP, port)
-	fmt.Printf("ℹ️  Forwarding to: %s\n", forwardURL)
-	fmt.Println("Press Ctrl+C to stop")
+	fmt.Fprint(os.Stdout, "🎧 Listening on "+addr.IP.String()+":"+port+"\n")
+	fmt.Fprint(os.Stdout, "ℹ️  Forwarding to: "+forwardURL+"\n")
+	fmt.Fprint(os.Stdout, "Press Ctrl+C to stop\n")
 
 	// Wait for interrupt signal
 	<-ctx.Done()
-	fmt.Println("\nShutting down webhook listener...")
+	fmt.Fprint(os.Stdout, "\nShutting down webhook listener...\n")
 
 	// Create a deadline to wait for current connections to complete
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	const shutdownTimeout = 5 * time.Second
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
@@ -97,7 +107,7 @@ func runListen(cmd *cobra.Command, args []string) error {
 	// Clean up the port file
 	clearListenerPort()
 
-	fmt.Println("Webhook listener stopped")
+	fmt.Fprint(os.Stdout, "Webhook listener stopped\n")
 
 	return nil
 }
@@ -132,56 +142,59 @@ func clearListenerPort() {
 	os.Remove(portFile) // Ignore errors
 }
 
-func handleWebhook(w http.ResponseWriter, r *http.Request) {
+func handleWebhook(writer http.ResponseWriter, req *http.Request) {
 	// Only accept POST requests
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if req.Method != http.MethodPost {
+		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
 
 		return
 	}
 
 	// Read the request body
-	body, err := io.ReadAll(r.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		logger.FatalErr("error reading request body", err)
-		http.Error(w, "Bad request", http.StatusBadRequest)
+		http.Error(writer, "Bad request", http.StatusBadRequest)
 
 		return
 	}
 
-	r.Body.Close()
+	req.Body.Close()
 
 	// Log the webhook payload
-	webhook.PrettyPrintJSON(body)
+	if err := webhook.PrettyPrintJSON(body); err != nil {
+		logger.FatalErr("error pretty printing JSON", err)
+	}
 
 	// Forward the request to the application
-	req, err := http.NewRequest(http.MethodPost, forwardURL, bytes.NewReader(body))
+	forwardReq, err := http.NewRequestWithContext(req.Context(), http.MethodPost, forwardURL, bytes.NewReader(body))
 	if err != nil {
 		logger.FatalErr("error creating forward request", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(writer, "Internal server error", http.StatusInternalServerError)
 
 		return
 	}
 
 	// Copy headers
-	for k, v := range r.Header {
+	for k, v := range req.Header {
 		if k == "Content-Length" {
 			continue
 		}
 
 		for _, vv := range v {
-			req.Header.Add(k, vv)
+			forwardReq.Header.Add(k, vv)
 		}
 	}
 
 	// Forward the request
-	client := &http.Client{Timeout: 5 * time.Second}
+	const clientTimeout = 5 * time.Second
+	client := &http.Client{Timeout: clientTimeout}
 
-	resp, err := client.Do(req)
+	resp, err := client.Do(forwardReq)
 	if err != nil {
 		logger.FatalErr("error forwarding request to "+forwardURL, err)
 		// Still return 200 to the original sender
-		w.WriteHeader(http.StatusOK)
+		writer.WriteHeader(http.StatusOK)
 
 		return
 	}
@@ -191,13 +204,13 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 	// Copy the response from the application back to the original sender
 	for k, v := range resp.Header {
 		for _, vv := range v {
-			w.Header().Add(k, vv)
+			writer.Header().Add(k, vv)
 		}
 	}
 
-	w.WriteHeader(resp.StatusCode)
+	writer.WriteHeader(resp.StatusCode)
 
-	if _, err := io.Copy(w, resp.Body); err != nil {
+	if _, err := io.Copy(writer, resp.Body); err != nil {
 		logger.FatalErr("error copying response", err)
 	}
 }

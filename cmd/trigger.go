@@ -2,13 +2,16 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,11 +21,12 @@ import (
 )
 
 var (
-	fixtureFile    string
-	rawJSON        string
-	interactive    bool
-	listenPort     string
-	triggerCommand = &cobra.Command{
+	ErrInvalidEventFormat = errors.New("invalid event format, expected 'provider.event'")
+	fixtureFile           string
+	rawJSON               string
+	interactive           bool
+	listenPort            string
+	triggerCommand        = &cobra.Command{
 		Use:   "trigger [provider.event]",
 		Short: "Trigger a webhook event",
 		Long: `Trigger a webhook event to be sent to the local listener.
@@ -53,7 +57,7 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 	provider, event := webhook.ParseEvent(eventName)
 
 	if event == "" {
-		return fmt.Errorf("invalid event format '%s', expected 'provider.event'", eventName)
+		return fmt.Errorf("%w: %q", ErrInvalidEventFormat, eventName)
 	}
 
 	// Determine which payload to use
@@ -94,7 +98,7 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 	}
 
 	// Send the webhook
-	fmt.Printf("🚀 Triggering webhook: %s\n", eventName)
+	fmt.Fprint(os.Stdout, "🚀 Triggering webhook: "+eventName+"\n")
 
 	return sendWebhook(payload)
 }
@@ -141,16 +145,12 @@ func openInEditor(data []byte) ([]byte, error) {
 	return os.ReadFile(tmpFile.Name())
 }
 
-// Send the webhook.
 func sendWebhook(payload []byte) error {
-	port, err := getListenerPort()
-	if err != nil {
-		return err
-	}
+	port := getListenerPort()
 
 	url := "http://127.0.0.1:" + port
 
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -158,7 +158,8 @@ func sendWebhook(payload []byte) error {
 	req.Header.Set("Content-Type", "application/json")
 
 	// Send the request
-	client := &http.Client{Timeout: 5 * time.Second}
+	const clientTimeout = 5 * time.Second
+	client := &http.Client{Timeout: clientTimeout}
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -167,14 +168,14 @@ func sendWebhook(payload []byte) error {
 
 	defer resp.Body.Close()
 
-	fmt.Printf("✅ Sent webhook → %d %s\n", resp.StatusCode, resp.Status)
+	fmt.Fprint(os.Stdout, "✅ Sent webhook → "+strconv.Itoa(resp.StatusCode)+" "+resp.Status+"\n")
 
 	return nil
 }
 
-func getListenerPort() (string, error) {
+func getListenerPort() string {
 	if listenPort != "" {
-		return listenPort, nil
+		return listenPort
 	}
 
 	// Try to get the port from the port file
@@ -191,8 +192,8 @@ func getListenerPort() (string, error) {
 	if err != nil {
 		logger.Debug("could not find webhook port file, using default port 4242")
 
-		return "4242", nil // Default fallback port
+		return "4242" // Default fallback port
 	}
 
-	return strings.TrimSpace(string(data)), nil
+	return strings.TrimSpace(string(data))
 }

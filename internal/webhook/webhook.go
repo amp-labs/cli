@@ -38,10 +38,13 @@ func LoadFixture(provider, event, customPath string) ([]byte, error) {
 	return data, nil
 }
 
+// ParseEvent parses an event string into provider and event name.
 // Format: provider.event_name (e.g., "stripe.payment_intent.created").
 func ParseEvent(event string) (provider, eventName string) {
-	parts := strings.SplitN(event, ".", 2)
-	if len(parts) < 2 {
+	const expectedParts = 2
+	parts := strings.SplitN(event, ".", expectedParts)
+
+	if len(parts) < expectedParts {
 		return event, ""
 	}
 
@@ -57,8 +60,8 @@ func PrettyPrintJSON(data []byte) error {
 		return err
 	}
 
-	fmt.Printf("\n→ Received webhook event:\n%s\n", prettyJSON.String())
-	fmt.Println("------------------------------------------")
+	fmt.Fprint(os.Stdout, "\n→ Received webhook event:\n"+prettyJSON.String()+"\n")
+	fmt.Fprint(os.Stdout, "------------------------------------------\n")
 
 	return nil
 }
