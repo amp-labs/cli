@@ -30,7 +30,7 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 		projectId := flags.GetProjectOrFail()
 		apiKey := flags.GetAPIKey()
 
-		zippedData, err := files.Zip(args[0])
+		zipResult, err := files.Zip(args[0])
 		if err != nil {
 			if errors.Is(err, files.ErrBadManifest) {
 				fmt.Println(err.Error())
@@ -40,21 +40,10 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 			}
 		}
 
-		// Parse the manifest to check for removed read objects
-		manifestData, err := files.ReadManifestFile(args[0])
-		if err != nil {
-			logger.FatalErr("Unable to read manifest file", err)
-		}
-
-		newManifest, err := files.ParseManifest(manifestData)
-		if err != nil {
-			logger.FatalErr("Unable to parse new manifest", err)
-		}
-
 		// nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-md5
 		hash := md5.New() //nolint:gosec
 
-		hash.Write(zippedData)
+		hash.Write(zipResult.Data)
 		md5Bytes := hash.Sum(nil)
 		md5String := base64.StdEncoding.EncodeToString(md5Bytes)
 
@@ -62,7 +51,7 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 
 		// Before deploying, check if any read objects were removed from the manifest. If so, prompt the user to confirm
 		// since this will stop all scheduled reads for those objects.
-		if err := confirmReadObjectRemoval(cmd.Context(), client, newManifest); err != nil {
+		if err := confirmReadObjectRemoval(cmd.Context(), client, zipResult.Manifest); err != nil {
 			logger.FatalErr("Deployment cancelled", err)
 		}
 
@@ -77,7 +66,7 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 			logger.FatalErr("Unable to get pre-signed upload URL", err)
 		}
 
-		if err := storage.Upload(cmd.Context(), zippedData, signed.URL, md5String); err != nil {
+		if err := storage.Upload(cmd.Context(), zipResult.Data, signed.URL, md5String); err != nil {
 			logger.FatalErr("Unable to upload to Google Cloud Storage", err)
 		}
 
@@ -180,6 +169,7 @@ func findIntegrationByName(integrations []*request.Integration, name string) *re
 			return integ
 		}
 	}
+
 	return nil
 }
 
@@ -252,8 +242,8 @@ func formatPromptMessage(data promptData) string {
 	var message string
 	if data.installationCount > 0 {
 		message = fmt.Sprintf(
-			"You are removing the following read object(s) from integration '%s': %s\n"+
-				"Any active read schedules for these objects will be stopped.\n"+
+			"You are removing the following read action object(s) from integration '%s': %s.\n"+
+				"Any active scheduled reads for these objects will be stopped.\n\n"+
 				"This integration has %d installation(s).",
 			data.integrationName, objectList, data.installationCount,
 		)
@@ -262,11 +252,11 @@ func formatPromptMessage(data promptData) string {
 			message += formatAffectedInstallations(data.sampleGroups, data.installationCount)
 		}
 
-		message += "\nDo you still want to deploy a new revision of this integration?"
+		message += "\n\nDo you still want to deploy a new revision of this integration?"
 	} else {
 		message = fmt.Sprintf(
-			"You are removing the following read object(s) from integration '%s': %s\n"+
-				"Any active read schedules for these objects will be stopped.\n"+
+			"You are removing the following read action object(s) from integration '%s': %s.\n"+
+				"Any active scheduled reads for these objects will be stopped.\n\n"+
 				"Do you still want to deploy a new revision of this integration?",
 			data.integrationName, objectList,
 		)
@@ -276,14 +266,13 @@ func formatPromptMessage(data promptData) string {
 }
 
 func formatAffectedInstallations(groups []groupInfo, totalCount int) string {
-	groupStrs := make([]string, len(groups))
-	for i, g := range groups {
-		groupStrs[i] = fmt.Sprintf("%s (%s)", g.name, g.ref)
+	var result string
+	for _, g := range groups {
+		result += fmt.Sprintf("\n - %s (%s)", g.name, g.ref)
 	}
 
-	result := fmt.Sprintf("\nInstallations: %s", strings.Join(groupStrs, ", "))
 	if totalCount > len(groups) {
-		result += fmt.Sprintf(" and %d more", totalCount-len(groups))
+		result += fmt.Sprintf("\n - and %d more", totalCount-len(groups))
 	}
 
 	return result

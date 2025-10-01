@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/amp-labs/cli/openapi"
 )
 
 var ErrBadManifest = errors.New("Invalid manifest") //nolint:stylecheck
@@ -100,44 +102,15 @@ func statYaml() (os.FileInfo, error) {
 	return yamlStat, nil
 }
 
-// ReadManifestFile reads the manifest file from the given source path.
-func ReadManifestFile(source string) ([]byte, error) {
-	sourceDir, err := getZipDir(source)
+func importYaml(writer *zip.Writer) (*openapi.Manifest, error) {
+	yamlStat, err := statYaml()
 	if err != nil {
 		return nil, err
 	}
 
-	var contents []byte
-
-	chdirErr := chdir(sourceDir, func() error {
-		yamlStat, err := statYaml()
-		if err != nil {
-			return err
-		}
-
-		contents, err = os.ReadFile(yamlStat.Name())
-		if err != nil {
-			return fmt.Errorf("error reading %s file: %w", yamlStat.Name(), err)
-		}
-
-		return nil
-	})
-	if chdirErr != nil {
-		return nil, chdirErr
-	}
-
-	return contents, nil
-}
-
-func importYaml(writer *zip.Writer) error {
-	yamlStat, err := statYaml()
-	if err != nil {
-		return err
-	}
-
 	header, err := zip.FileInfoHeader(yamlStat)
 	if err != nil {
-		return fmt.Errorf("error adding file header while zipping: %w", err)
+		return nil, fmt.Errorf("error adding file header while zipping: %w", err)
 	}
 
 	header.Method = zip.Deflate
@@ -146,46 +119,54 @@ func importYaml(writer *zip.Writer) error {
 
 	headerWriter, err := writer.CreateHeader(header)
 	if err != nil {
-		return fmt.Errorf("error adding file header while zipping: %w", err)
+		return nil, fmt.Errorf("error adding file header while zipping: %w", err)
 	}
 
 	contents, err := os.ReadFile(yamlStat.Name())
 	if err != nil {
-		return fmt.Errorf("error opening %s file while zipping: %w", yamlStat.Name(), err)
+		return nil, fmt.Errorf("error opening %s file while zipping: %w", yamlStat.Name(), err)
 	}
 
 	manifest, err := ParseManifest(contents)
 	if err != nil {
-		return fmt.Errorf("error parsing manifest: %w", err)
+		return nil, fmt.Errorf("error parsing manifest: %w", err)
 	}
 
 	if err := ValidateManifest(manifest); err != nil {
-		return err
+		return nil, err
 	}
 
 	_, err = io.Copy(headerWriter, bytes.NewReader(contents))
 	if err != nil {
-		return fmt.Errorf("error copying file for zipping: %w", err)
+		return nil, fmt.Errorf("error copying file for zipping: %w", err)
 	}
 
-	return nil
+	return manifest, nil
 }
 
-// Zip creates a zip archive of the given directory in-memory.
-func Zip(source string) ([]byte, error) { // nolint:funlen,cyclop
+type ZipResult struct {
+	Data     []byte
+	Manifest *openapi.Manifest
+}
+
+// Zip creates a zip archive of the given directory in-memory and returns the parsed manifest.
+func Zip(source string) (*ZipResult, error) { // nolint:funlen,cyclop
 	sourceDir, err := getZipDir(source)
 	if err != nil {
 		return nil, err
 	}
 
 	var out bytes.Buffer
+	var manifest *openapi.Manifest
 
 	chdirErr := chdir(sourceDir, func() error {
 		writer := zip.NewWriter(&out)
 
-		if err := importYaml(writer); err != nil {
+		m, err := importYaml(writer)
+		if err != nil {
 			return err
 		}
+		manifest = m
 
 		if err := writer.Close(); err != nil {
 			return fmt.Errorf("error closing zip writer: %w", err)
@@ -197,5 +178,8 @@ func Zip(source string) ([]byte, error) { // nolint:funlen,cyclop
 		return nil, chdirErr
 	}
 
-	return out.Bytes(), nil
+	return &ZipResult{
+		Data:     out.Bytes(),
+		Manifest: manifest,
+	}, nil
 }

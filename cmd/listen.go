@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -71,7 +72,7 @@ func runListen(cmd *cobra.Command, args []string) error {
 	go func() {
 		logger.Info("starting webhook listener")
 
-		if err := srv.Serve(listener); err != nil && err != http.ErrServerClosed {
+		if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.FatalErr("webhook listener failed", err)
 		}
 	}()
@@ -101,7 +102,7 @@ func runListen(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// saveListenerPort saves the listener port to a temporary file
+// saveListenerPort saves the listener port to a temporary file.
 func saveListenerPort(port string) error {
 	dir, err := os.UserCacheDir()
 	if err != nil {
@@ -110,17 +111,17 @@ func saveListenerPort(port string) error {
 
 	// Create ampersand directory if it doesn't exist
 	ampDir := filepath.Join(dir, "ampersand")
-	if err := os.MkdirAll(ampDir, 0700); err != nil {
+	if err := os.MkdirAll(ampDir, 0o700); err != nil {
 		return err
 	}
 
 	// Write port to file
 	portFile := filepath.Join(ampDir, "webhook-port")
 
-	return os.WriteFile(portFile, []byte(port), 0600)
+	return os.WriteFile(portFile, []byte(port), 0o600)
 }
 
-// clearListenerPort removes the port file
+// clearListenerPort removes the port file.
 func clearListenerPort() {
 	dir, err := os.UserCacheDir()
 	if err != nil {
@@ -135,6 +136,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 	// Only accept POST requests
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+
 		return
 	}
 
@@ -177,7 +179,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.FatalErr(fmt.Sprintf("error forwarding request to %s", forwardURL), err)
+		logger.FatalErr("error forwarding request to "+forwardURL, err)
 		// Still return 200 to the original sender
 		w.WriteHeader(http.StatusOK)
 

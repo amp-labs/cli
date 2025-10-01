@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// LoadFixture loads a fixture file and replaces template placeholders
+// LoadFixture loads a fixture file and replaces template placeholders.
 func LoadFixture(provider, event, customPath string) ([]byte, error) {
 	var path string
 	if customPath != "" {
@@ -38,8 +38,7 @@ func LoadFixture(provider, event, customPath string) ([]byte, error) {
 	return data, nil
 }
 
-// ParseEvent parses an event string into provider and event name
-// Format: provider.event_name (e.g., "stripe.payment_intent.created")
+// Format: provider.event_name (e.g., "stripe.payment_intent.created").
 func ParseEvent(event string) (provider, eventName string) {
 	parts := strings.SplitN(event, ".", 2)
 	if len(parts) < 2 {
@@ -49,7 +48,7 @@ func ParseEvent(event string) (provider, eventName string) {
 	return parts[0], parts[1]
 }
 
-// PrettyPrintJSON formats and prints JSON data to stdout with colors
+// PrettyPrintJSON formats and prints JSON data to stdout with colors.
 func PrettyPrintJSON(data []byte) error {
 	var prettyJSON bytes.Buffer
 

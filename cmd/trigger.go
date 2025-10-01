@@ -58,6 +58,7 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 
 	// Determine which payload to use
 	var payload []byte
+
 	var err error
 
 	switch {
@@ -98,7 +99,7 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 	return sendWebhook(payload)
 }
 
-// openInEditor opens the JSON payload in the default editor
+// openInEditor opens the JSON payload in the default editor.
 func openInEditor(data []byte) ([]byte, error) {
 	// Create a temporary file
 	tmpFile, err := os.CreateTemp("", "amp-webhook-*.json")
@@ -140,14 +141,14 @@ func openInEditor(data []byte) ([]byte, error) {
 	return os.ReadFile(tmpFile.Name())
 }
 
-// Send the webhook
+// Send the webhook.
 func sendWebhook(payload []byte) error {
 	port, err := getListenerPort()
 	if err != nil {
 		return err
 	}
 
-	url := fmt.Sprintf("http://127.0.0.1:%s", port)
+	url := "http://127.0.0.1:" + port
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(payload))
 	if err != nil {
@@ -180,6 +181,7 @@ func getListenerPort() (string, error) {
 	dir, err := os.UserCacheDir()
 	if err != nil {
 		logger.Debugf("error getting user cache dir: %v", err)
+
 		return "4242", nil // Default fallback port
 	}
 
@@ -188,6 +190,7 @@ func getListenerPort() (string, error) {
 	data, err := os.ReadFile(portFile)
 	if err != nil {
 		logger.Debug("could not find webhook port file, using default port 4242")
+
 		return "4242", nil // Default fallback port
 	}
 
