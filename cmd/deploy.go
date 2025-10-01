@@ -215,6 +215,7 @@ func buildPrompt(integrationName string, removedObjects []string, installations 
 }
 
 func promptUserConfirmation(data promptData) (bool, error) {
+	fmt.Println()
 	fmt.Println(formatPromptMessage(data))
 
 	prompter := promptui.Prompt{
@@ -232,6 +233,8 @@ func promptUserConfirmation(data promptData) (bool, error) {
 
 		return false, err
 	}
+
+	fmt.Println()
 
 	return true, nil
 }

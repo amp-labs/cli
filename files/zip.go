@@ -157,6 +157,7 @@ func Zip(source string) (*ZipResult, error) { // nolint:funlen,cyclop
 	}
 
 	var out bytes.Buffer
+
 	var manifest *openapi.Manifest
 
 	chdirErr := chdir(sourceDir, func() error {
@@ -166,6 +167,7 @@ func Zip(source string) (*ZipResult, error) { // nolint:funlen,cyclop
 		if err != nil {
 			return err
 		}
+
 		manifest = m
 
 		if err := writer.Close(); err != nil {
