@@ -183,7 +183,7 @@ func getListenerPort() string {
 	if err != nil {
 		logger.Debugf("error getting user cache dir: %v", err)
 
-		return "4242", nil // Default fallback port
+		return "4242" // Default fallback port
 	}
 
 	portFile := filepath.Join(dir, "ampersand", "webhook-port")
