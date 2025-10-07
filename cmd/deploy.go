@@ -132,6 +132,7 @@ func confirmReadObjectRemoval(
 		if err != nil {
 			return false, err
 		}
+
 		if info != nil {
 			integrationsWithRemovedObjects = append(integrationsWithRemovedObjects, *info)
 		}
@@ -187,6 +188,7 @@ func getIntegrationRemovedObjectsInfo(
 
 	// Extract group names and refs for display (max 5)
 	groups := make([]groupInfo, 0, 5)
+
 	for _, inst := range installations {
 		if inst.Group == nil {
 			continue
