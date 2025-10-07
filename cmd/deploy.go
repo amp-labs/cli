@@ -277,6 +277,7 @@ func promptUserConfirmationGlobal(integrations []integrationRemovedObjectsInfo) 
 	// If they selected cancel, no need to confirm
 	if index == 2 {
 		fmt.Println()
+
 		return choiceCancel, nil
 	}
 
@@ -294,6 +295,7 @@ func promptUserConfirmationGlobal(integrations []integrationRemovedObjectsInfo) 
 	if err != nil {
 		// User said no or aborted
 		fmt.Println()
+
 		return choiceCancel, nil
 	}
 
@@ -312,6 +314,7 @@ func promptUserConfirmationGlobal(integrations []integrationRemovedObjectsInfo) 
 
 func formatGlobalPromptMessage(integrations []integrationRemovedObjectsInfo) string {
 	pl := pluralize.NewClient()
+
 	var message string
 
 	if len(integrations) == 1 {
