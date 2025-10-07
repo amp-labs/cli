@@ -44,6 +44,10 @@ func NewAPIClient(projectId string, key *string) *APIClient {
 
 type BatchUpsertIntegrationsParams struct {
 	SourceZipURL string `json:"sourceZipUrl"`
+
+	// Defaults to false. This flag controls whether to perform destructive actions when deploying integrations, like
+	// pausing all read actions for an object that was removed in the latest revision.
+	Destructive bool `json:"-"` // Not sent in body, used as query param
 }
 
 type IntegrationName struct {
@@ -54,6 +58,11 @@ func (c *APIClient) BatchUpsertIntegrations(
 	ctx context.Context, reqParams BatchUpsertIntegrationsParams,
 ) ([]IntegrationName, error) {
 	intURL := fmt.Sprintf("%s/projects/%s/integrations:batch", c.Root, c.ProjectId)
+
+	// Add destructive query param if true (default is false)
+	if reqParams.Destructive {
+		intURL += "?destructive=true"
+	}
 
 	var integrations []IntegrationName
 

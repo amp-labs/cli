@@ -49,9 +49,10 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 
 		client := request.NewAPIClient(projectId, &apiKey)
 
-		// Before deploying, check if any read objects were removed from the manifest. If so, prompt the user to confirm
-		// since this will stop all scheduled reads for those objects.
-		if err := confirmReadObjectRemoval(cmd.Context(), client, zipResult.Manifest); err != nil {
+		// Before deploying, check if any read objects were removed from the manifest. If so, prompt the user to decide
+		// whether to pause scheduled reads for those objects.
+		shouldPauseReads, err := confirmReadObjectRemoval(cmd.Context(), client, zipResult.Manifest)
+		if err != nil {
 			logger.FatalErr("Deployment cancelled", err)
 		}
 
@@ -79,7 +80,10 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 		logger.Debugf("Uploaded to %v", gcsURL)
 
 		integrations, err := client.BatchUpsertIntegrations(cmd.Context(),
-			request.BatchUpsertIntegrationsParams{SourceZipURL: gcsURL})
+			request.BatchUpsertIntegrationsParams{
+				SourceZipURL: gcsURL,
+				Destructive:  shouldPauseReads,
+			})
 		if err != nil {
 			logger.FatalErr(
 				"Unable to deploy integrations, you can run the command again with '--debug' flag to troubleshoot.\n",
@@ -111,39 +115,68 @@ type groupInfo struct {
 
 func confirmReadObjectRemoval(
 	ctx context.Context, client *request.APIClient, newManifest *openapi.Manifest,
-) error {
+) (bool, error) {
 	integrations, err := client.ListIntegrations(ctx)
 	if err != nil {
 		logger.Debugf("Unable to list integrations to check for removed read objects: %v", err)
 
-		return nil
+		return false, nil
 	}
 
+	// Collect all integrations with removed objects
+	var integrationsWithRemovedObjects []integrationRemovedObjectsInfo
+
 	for _, newInteg := range newManifest.Integrations {
-		if err := checkIntegrationForRemovedObjects(ctx, client, integrations, newInteg); err != nil {
-			return err
+		info, err := getIntegrationRemovedObjectsInfo(ctx, client, integrations, newInteg)
+		if err != nil {
+			return false, err
+		}
+		if info != nil {
+			integrationsWithRemovedObjects = append(integrationsWithRemovedObjects, *info)
 		}
 	}
 
-	return nil
+	// If no integrations have removed objects, nothing to prompt
+	if len(integrationsWithRemovedObjects) == 0 {
+		return false, nil
+	}
+
+	// Prompt once globally for all integrations
+	choice, err := promptUserConfirmationGlobal(integrationsWithRemovedObjects)
+	if err != nil {
+		return false, err
+	}
+
+	if choice == choiceCancel {
+		return false, errDeploymentCancelled
+	}
+
+	return choice == choicePause, nil
 }
 
-func checkIntegrationForRemovedObjects(
+type integrationRemovedObjectsInfo struct {
+	integrationName   string
+	removedObjects    []string
+	installationCount int
+	sampleGroups      []groupInfo
+}
+
+func getIntegrationRemovedObjectsInfo(
 	ctx context.Context,
 	client *request.APIClient,
 	existingIntegrations []*request.Integration,
 	newInteg openapi.Integration,
-) error {
+) (*integrationRemovedObjectsInfo, error) {
 	// If the integration doesn't exist or doesn't have a latest revision, then
 	// there's nothing to check for removed read objects.
 	existingInteg := findIntegrationByName(existingIntegrations, newInteg.Name)
 	if existingInteg == nil || existingInteg.LatestRevision == nil {
-		return nil
+		return nil, nil
 	}
 
 	removedObjects := files.GetRemovedReadObjects(&existingInteg.LatestRevision.Content, &newInteg)
 	if len(removedObjects) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	installations, err := client.ListInstallations(ctx, existingInteg.Id)
@@ -151,16 +184,35 @@ func checkIntegrationForRemovedObjects(
 		logger.Debugf("Unable to list installations for integration %s: %v", existingInteg.Id, err)
 	}
 
-	confirmed, err := promptUserConfirmation(buildPrompt(newInteg.Name, removedObjects, installations))
-	if err != nil {
-		return err
+	// Extract group names and refs for display (max 5)
+	groups := make([]groupInfo, 0, 5)
+	for _, inst := range installations {
+		if inst.Group == nil {
+			continue
+		}
+
+		// Use groupName if available, otherwise default to groupRef
+		name := inst.Group.GroupName
+		if name == "" {
+			name = inst.Group.GroupRef
+		}
+
+		groups = append(groups, groupInfo{
+			name: name,
+			ref:  inst.Group.GroupRef,
+		})
+
+		if len(groups) >= 5 {
+			break
+		}
 	}
 
-	if !confirmed {
-		return errDeploymentCancelled
-	}
-
-	return nil
+	return &integrationRemovedObjectsInfo{
+		integrationName:   newInteg.Name,
+		removedObjects:    removedObjects,
+		installationCount: len(installations),
+		sampleGroups:      groups,
+	}, nil
 }
 
 func findIntegrationByName(integrations []*request.Integration, name string) *request.Integration {
@@ -173,95 +225,113 @@ func findIntegrationByName(integrations []*request.Integration, name string) *re
 	return nil
 }
 
-type promptData struct {
-	integrationName   string
-	removedObjects    []string
-	installationCount int
-	sampleGroups      []groupInfo
-}
+type userChoice int
 
-func buildPrompt(integrationName string, removedObjects []string, installations []*request.Installation) promptData {
-	const maxGroupSamples = 5
+const (
+	choicePause userChoice = iota
+	choiceKeep
+	choiceCancel
+)
 
-	groups := make([]groupInfo, 0, maxGroupSamples)
-
-	for _, inst := range installations {
-		if inst.Group == nil {
-			continue
-		}
-
-		// Use groupName if available, otherwise default to groupRef (which is always available)
-		name := inst.Group.GroupName
-		if name == "" {
-			name = inst.Group.GroupRef
-		}
-
-		groups = append(groups, groupInfo{
-			name: name,
-			ref:  inst.Group.GroupRef,
-		})
-
-		if len(groups) >= maxGroupSamples {
-			break
-		}
-	}
-
-	return promptData{
-		integrationName:   integrationName,
-		removedObjects:    removedObjects,
-		installationCount: len(installations),
-		sampleGroups:      groups,
-	}
-}
-
-func promptUserConfirmation(data promptData) (bool, error) {
+func promptUserConfirmationGlobal(integrations []integrationRemovedObjectsInfo) (userChoice, error) {
 	fmt.Println()
-	fmt.Println(formatPromptMessage(data))
+	fmt.Println(formatGlobalPromptMessage(integrations))
 
-	prompter := promptui.Prompt{
-		Label:     "Confirm",
+	var items []string
+	if len(integrations) == 1 {
+		items = []string{
+			"Keep read actions running across all installations & deploy new revision",
+			"Pause read actions across all installations & deploy new revision",
+			"Cancel current deployment",
+		}
+	} else {
+		items = []string{
+			fmt.Sprintf("Keep read actions running across all installations of these %d integrations & deploy new revision", len(integrations)),
+			fmt.Sprintf("Pause read actions across all installations of these %d integrations & deploy new revision", len(integrations)),
+			"Cancel current deployment",
+		}
+	}
+
+	selectPrompt := promptui.Select{
+		Label:     "Select",
+		Items:     items,
+		CursorPos: 0, // Default to "Keep read actions running"
+		Stdin:     os.Stdin,
+		Stdout:    os.Stdout,
+	}
+
+	index, _, err := selectPrompt.Run()
+	if err != nil {
+		return choiceCancel, err
+	}
+
+	// If they selected cancel, no need to confirm
+	if index == 2 {
+		fmt.Println()
+		return choiceCancel, nil
+	}
+
+	// Ask for confirmation of their choice
+	confirmPrompt := promptui.Prompt{
+		Label:     "Confirm (yes/no)",
 		IsConfirm: true,
 		Stdin:     os.Stdin,
 		Stdout:    os.Stdout,
 	}
 
-	_, err := prompter.Run()
+	_, err = confirmPrompt.Run()
 	if err != nil {
-		if errors.Is(err, promptui.ErrAbort) {
-			return false, nil
-		}
-
-		return false, err
+		// User said no or aborted
+		fmt.Println()
+		return choiceCancel, nil
 	}
 
 	fmt.Println()
 
-	return true, nil
+	// Map the selection to our choices
+	switch index {
+	case 0:
+		return choiceKeep, nil
+	case 1:
+		return choicePause, nil
+	default:
+		return choiceCancel, nil
+	}
 }
 
-func formatPromptMessage(data promptData) string {
-	objectList := strings.Join(data.removedObjects, ", ")
-
+func formatGlobalPromptMessage(integrations []integrationRemovedObjectsInfo) string {
 	var message string
-	if data.installationCount > 0 {
+
+	if len(integrations) == 1 {
+		// Single integration
+		info := integrations[0]
+		objectList := strings.Join(info.removedObjects, ", ")
+
 		message = fmt.Sprintf(
-			"⚠️  You are removing the following read action object(s) from integration '%s': %s.\n"+
-				"   Any active scheduled reads for these objects will be stopped.\n\n"+
+			"⚠️  You are removing the following read action object(s) from integration '%s': %s.\n\n"+
 				"   This integration has %d installation(s).",
-			data.integrationName, objectList, data.installationCount,
+			info.integrationName, objectList, info.installationCount,
 		)
 
-		if len(data.sampleGroups) > 0 {
-			message += formatAffectedInstallations(data.sampleGroups, data.installationCount)
+		if len(info.sampleGroups) > 0 {
+			message += formatAffectedInstallations(info.sampleGroups, info.installationCount)
 		}
 
-		message += "\n\n❓ Do you still want to deploy a new revision of this integration?"
+		message += "\n\n❓ Optionally, do you want to pause active read actions for these objects across all installations?"
 	} else {
-		message = fmt.Sprintf(
-			"⚠️  You are removing the following read action object(s) from integration '%s': %s.\n"+
-				"   Any active scheduled reads for these objects will be stopped.\n\n"+
-				"❓ Do you still want to deploy a new revision of this integration?",
-			data.integrationName, objectList,
+		// Multiple integrations
+		message = fmt.Sprintf("⚠️  You are removing read action objects from %d integration(s):\n\n", len(integrations))
+
+		for _, info := range integrations {
+			objectList := strings.Join(info.removedObjects, ", ")
+			message += fmt.Sprintf("   • %s: %s (%d installation(s))\n",
+				info.integrationName, objectList, info.installationCount)
+		}
+
+		message += fmt.Sprintf(
+			"\n\n❓ Optionally, do you want to pause active read actions for these objects across all installations of these %d integrations?\n\n"+
+				"   Note: If you want to pause reads for some integrations & not all, deploy changes to one integration at a time.",
+			len(integrations),
 		)
 	}
 
