@@ -133,8 +133,11 @@ func confirmReadObjectRemoval(
 			return false, err
 		}
 
-		if info != nil {
+		// Only include if there are removed objects AND at least 1 installation
+		if info != nil && info.installationCount > 0 {
 			integrationsWithRemovedObjects = append(integrationsWithRemovedObjects, *info)
+		} else if info != nil && info.installationCount == 0 {
+			logger.Debugf("Skipping confirmation with user about removing read objects from integration '%s' because it has 0 installations", info.integrationName)
 		}
 	}
 
