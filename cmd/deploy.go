@@ -16,6 +16,7 @@ import (
 	"github.com/amp-labs/cli/openapi"
 	"github.com/amp-labs/cli/request"
 	"github.com/amp-labs/cli/storage"
+	"github.com/gertd/go-pluralize"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
@@ -237,17 +238,20 @@ func promptUserConfirmationGlobal(integrations []integrationRemovedObjectsInfo) 
 	fmt.Println()
 	fmt.Println(formatGlobalPromptMessage(integrations))
 
+	pl := pluralize.NewClient()
+	integrationWord := pl.Pluralize("integration", len(integrations), false)
+
 	var items []string
 	if len(integrations) == 1 {
 		items = []string{
-			"Keep read actions running across all installations & deploy new revision",
-			"Pause read actions across all installations & deploy new revision",
+			"Continue reading these objects across all installations & continue deployment",
+			"Stop reading these objects across all installations & continue deployment",
 			"Cancel current deployment",
 		}
 	} else {
 		items = []string{
-			fmt.Sprintf("Keep read actions running across all installations of these %d integrations & deploy new revision", len(integrations)),
-			fmt.Sprintf("Pause read actions across all installations of these %d integrations & deploy new revision", len(integrations)),
+			fmt.Sprintf("Continue reading these objects across all installations of these %d %s & continue deployment", len(integrations), integrationWord),
+			fmt.Sprintf("Stop reading these objects across all installations of these %d %s & continue deployment", len(integrations), integrationWord),
 			"Cancel current deployment",
 		}
 	}
@@ -255,12 +259,12 @@ func promptUserConfirmationGlobal(integrations []integrationRemovedObjectsInfo) 
 	selectPrompt := promptui.Select{
 		Label:     "Select",
 		Items:     items,
-		CursorPos: 0, // Default to "Keep read actions running"
+		CursorPos: 0, // Default to "Continue reading"
 		Stdin:     os.Stdin,
 		Stdout:    os.Stdout,
 	}
 
-	index, _, err := selectPrompt.Run()
+	index, selectedItem, err := selectPrompt.Run()
 	if err != nil {
 		return choiceCancel, err
 	}
@@ -271,7 +275,9 @@ func promptUserConfirmationGlobal(integrations []integrationRemovedObjectsInfo) 
 		return choiceCancel, nil
 	}
 
-	// Ask for confirmation of their choice
+	// Print their choice and ask for confirmation
+	fmt.Printf("\nYou selected: %s\n", selectedItem)
+
 	confirmPrompt := promptui.Prompt{
 		Label:     "Confirm (yes/no)",
 		IsConfirm: true,
@@ -300,6 +306,7 @@ func promptUserConfirmationGlobal(integrations []integrationRemovedObjectsInfo) 
 }
 
 func formatGlobalPromptMessage(integrations []integrationRemovedObjectsInfo) string {
+	pl := pluralize.NewClient()
 	var message string
 
 	if len(integrations) == 1 {
@@ -307,31 +314,36 @@ func formatGlobalPromptMessage(integrations []integrationRemovedObjectsInfo) str
 		info := integrations[0]
 		objectList := strings.Join(info.removedObjects, ", ")
 
+		objectWord := pl.Pluralize("object", len(info.removedObjects), false)
+		installationWord := pl.Pluralize("installation", info.installationCount, false)
+
 		message = fmt.Sprintf(
-			"⚠️  You are removing the following read action object(s) from integration '%s': %s.\n\n"+
-				"   This integration has %d installation(s).",
-			info.integrationName, objectList, info.installationCount,
+			"⚠️  You are removing the following read action %s from integration '%s': %s.\n\n"+
+				"   This integration has %d %s.",
+			objectWord, info.integrationName, objectList, info.installationCount, installationWord,
 		)
 
 		if len(info.sampleGroups) > 0 {
 			message += formatAffectedInstallations(info.sampleGroups, info.installationCount)
 		}
 
-		message += "\n\n❓ Optionally, do you want to pause active read actions for these objects across all installations?"
+		message += "\n\n❓ Do you want to stop reading these objects across all installations?"
 	} else {
 		// Multiple integrations
-		message = fmt.Sprintf("⚠️  You are removing read action objects from %d integration(s):\n\n", len(integrations))
+		integrationWord := pl.Pluralize("integration", len(integrations), false)
+		message = fmt.Sprintf("⚠️  You are removing read action objects from %d %s:\n\n", len(integrations), integrationWord)
 
 		for _, info := range integrations {
 			objectList := strings.Join(info.removedObjects, ", ")
-			message += fmt.Sprintf("   • %s: %s (%d installation(s))\n",
-				info.integrationName, objectList, info.installationCount)
+			installationWord := pl.Pluralize("installation", info.installationCount, false)
+			message += fmt.Sprintf("   • %s: %s (%d %s)\n",
+				info.integrationName, objectList, info.installationCount, installationWord)
 		}
 
 		message += fmt.Sprintf(
-			"\n\n❓ Optionally, do you want to pause active read actions for these objects across all installations of these %d integrations?\n\n"+
-				"   Note: If you want to pause reads for some integrations & not all, deploy changes to one integration at a time.",
-			len(integrations),
+			"\n\n❓ Do you want to stop reading these objects across all installations of these %d %s?\n\n"+
+				"   Note: To stop reads for some integrations & not all, deploy changes to one integration at a time.",
+			len(integrations), integrationWord,
 		)
 	}
 
