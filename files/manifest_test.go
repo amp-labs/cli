@@ -95,19 +95,19 @@ func TestGetRemovedReadObjects(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := GetRemovedReadObjects(tt.oldRevision, tt.newInteg)
+			got := GetRemovedReadObjects(testCase.oldRevision, testCase.newInteg)
 
-			if len(got) != len(tt.want) {
-				t.Errorf("GetRemovedReadObjects() = %v, want %v", got, tt.want)
+			if len(got) != len(testCase.want) {
+				t.Errorf("GetRemovedReadObjects() = %v, want %v", got, testCase.want)
 
 				return
 			}
 
-			if tt.want == nil && got == nil {
+			if testCase.want == nil && got == nil {
 				return
 			}
 
@@ -117,9 +117,9 @@ func TestGetRemovedReadObjects(t *testing.T) {
 				gotMap[obj] = true
 			}
 
-			for _, wantObj := range tt.want {
+			for _, wantObj := range testCase.want {
 				if !gotMap[wantObj] {
-					t.Errorf("GetRemovedReadObjects() missing %s, got %v, want %v", wantObj, got, tt.want)
+					t.Errorf("GetRemovedReadObjects() missing %s, got %v, want %v", wantObj, got, testCase.want)
 				}
 			}
 		})

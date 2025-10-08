@@ -128,16 +128,16 @@ func confirmReadObjectRemoval(
 	var integrationsWithRemovedObjects []integrationRemovedObjectsInfo
 
 	for _, newInteg := range newManifest.Integrations {
-		info, err := getIntegrationRemovedObjectsInfo(ctx, client, integrations, newInteg)
-		if err != nil {
-			return false, err
-		}
+		info := getIntegrationRemovedObjectsInfo(ctx, client, integrations, newInteg)
 
 		// Only include if there are removed objects AND at least 1 installation
 		if info != nil && info.installationCount > 0 {
 			integrationsWithRemovedObjects = append(integrationsWithRemovedObjects, *info)
 		} else if info != nil && info.installationCount == 0 {
-			logger.Debugf("Skipping confirmation with user about removing read objects from integration '%s' because it has 0 installations", info.integrationName)
+			logger.Debugf(
+				"Skipping confirmation with user about removing read objects from integration '%s' because it has 0 installations",
+				info.integrationName,
+			)
 		}
 	}
 
@@ -171,17 +171,17 @@ func getIntegrationRemovedObjectsInfo(
 	client *request.APIClient,
 	existingIntegrations []*request.Integration,
 	newInteg openapi.Integration,
-) (*integrationRemovedObjectsInfo, error) {
+) *integrationRemovedObjectsInfo {
 	// If the integration doesn't exist or doesn't have a latest revision, then
 	// there's nothing to check for removed read objects.
 	existingInteg := findIntegrationByName(existingIntegrations, newInteg.Name)
 	if existingInteg == nil || existingInteg.LatestRevision == nil {
-		return nil, nil
+		return nil
 	}
 
 	removedObjects := files.GetRemovedReadObjects(&existingInteg.LatestRevision.Content, &newInteg)
 	if len(removedObjects) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	installations, err := client.ListInstallations(ctx, existingInteg.Id)
@@ -190,7 +190,9 @@ func getIntegrationRemovedObjectsInfo(
 	}
 
 	// Extract group names and refs for display (max 5)
-	groups := make([]groupInfo, 0, 5)
+	const maxSampleGroups = 5
+
+	groups := make([]groupInfo, 0, maxSampleGroups)
 
 	for _, inst := range installations {
 		if inst.Group == nil {
@@ -208,7 +210,7 @@ func getIntegrationRemovedObjectsInfo(
 			ref:  inst.Group.GroupRef,
 		})
 
-		if len(groups) >= 5 {
+		if len(groups) >= maxSampleGroups {
 			break
 		}
 	}
@@ -218,7 +220,7 @@ func getIntegrationRemovedObjectsInfo(
 		removedObjects:    removedObjects,
 		installationCount: len(installations),
 		sampleGroups:      groups,
-	}, nil
+	}
 }
 
 func findIntegrationByName(integrations []*request.Integration, name string) *request.Integration {
@@ -240,11 +242,15 @@ const (
 )
 
 func promptUserConfirmationGlobal(integrations []integrationRemovedObjectsInfo) (userChoice, error) {
-	fmt.Println()
-	fmt.Println(formatGlobalPromptMessage(integrations))
+	logger.Info("")
+	logger.Info(formatGlobalPromptMessage(integrations))
 
-	pl := pluralize.NewClient()
-	integrationWord := pl.Pluralize("integration", len(integrations), false)
+	pluralizer := pluralize.NewClient()
+	integrationWord := pluralizer.Pluralize("integration", len(integrations), false)
+
+	const (
+		cancelChoiceIndex = 2
+	)
 
 	var items []string
 	if len(integrations) == 1 {
@@ -255,8 +261,14 @@ func promptUserConfirmationGlobal(integrations []integrationRemovedObjectsInfo) 
 		}
 	} else {
 		items = []string{
-			fmt.Sprintf("Continue reading these objects across all installations of these %d %s & continue deployment", len(integrations), integrationWord),
-			fmt.Sprintf("Stop reading these objects across all installations of these %d %s & continue deployment", len(integrations), integrationWord),
+			fmt.Sprintf(
+				"Continue reading these objects across all installations of these %d %s & continue deployment",
+				len(integrations), integrationWord,
+			),
+			fmt.Sprintf(
+				"Stop reading these objects across all installations of these %d %s & continue deployment",
+				len(integrations), integrationWord,
+			),
 			"Cancel current deployment",
 		}
 	}
@@ -275,14 +287,14 @@ func promptUserConfirmationGlobal(integrations []integrationRemovedObjectsInfo) 
 	}
 
 	// If they selected cancel, no need to confirm
-	if index == 2 {
-		fmt.Println()
+	if index == cancelChoiceIndex {
+		logger.Info("")
 
 		return choiceCancel, nil
 	}
 
 	// Print their choice and ask for confirmation
-	fmt.Printf("\nYou selected: %s\n", selectedItem)
+	logger.Infof("\nYou selected: %s", selectedItem)
 
 	confirmPrompt := promptui.Prompt{
 		Label:     "Confirm? (enter 'y' or 'n')",
@@ -294,12 +306,12 @@ func promptUserConfirmationGlobal(integrations []integrationRemovedObjectsInfo) 
 	_, err = confirmPrompt.Run()
 	if err != nil {
 		// User said no or aborted
-		fmt.Println()
+		logger.Info("")
 
-		return choiceCancel, nil
+		return choiceCancel, fmt.Errorf("confirmation cancelled: %w", err)
 	}
 
-	fmt.Println()
+	logger.Info("")
 
 	// Map the selection to our choices
 	switch index {
@@ -313,7 +325,7 @@ func promptUserConfirmationGlobal(integrations []integrationRemovedObjectsInfo) 
 }
 
 func formatGlobalPromptMessage(integrations []integrationRemovedObjectsInfo) string {
-	pl := pluralize.NewClient()
+	pluralizer := pluralize.NewClient()
 
 	var message string
 
@@ -322,8 +334,8 @@ func formatGlobalPromptMessage(integrations []integrationRemovedObjectsInfo) str
 		info := integrations[0]
 		objectList := strings.Join(info.removedObjects, ", ")
 
-		objectWord := pl.Pluralize("object", len(info.removedObjects), false)
-		installationWord := pl.Pluralize("installation", info.installationCount, false)
+		objectWord := pluralizer.Pluralize("object", len(info.removedObjects), false)
+		installationWord := pluralizer.Pluralize("installation", info.installationCount, false)
 
 		message = fmt.Sprintf(
 			"⚠️  You are removing the following read action %s from integration '%s': %s.\n\n"+
@@ -338,12 +350,12 @@ func formatGlobalPromptMessage(integrations []integrationRemovedObjectsInfo) str
 		message += "\n\n❓ Do you want to stop reading these objects across all installations?"
 	} else {
 		// Multiple integrations
-		integrationWord := pl.Pluralize("integration", len(integrations), false)
+		integrationWord := pluralizer.Pluralize("integration", len(integrations), false)
 		message = fmt.Sprintf("⚠️  You are removing read action objects from %d %s:\n\n", len(integrations), integrationWord)
 
 		for _, info := range integrations {
 			objectList := strings.Join(info.removedObjects, ", ")
-			installationWord := pl.Pluralize("installation", info.installationCount, false)
+			installationWord := pluralizer.Pluralize("installation", info.installationCount, false)
 			message += fmt.Sprintf("   • %s: %s (%d %s)\n",
 				info.integrationName, objectList, info.installationCount, installationWord)
 		}
