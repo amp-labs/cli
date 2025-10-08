@@ -112,6 +112,11 @@ func runListen(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+const (
+	mkdirPerm = 0o700
+	filePerm  = 0o600
+)
+
 // saveListenerPort saves the listener port to a temporary file.
 func saveListenerPort(port string) error {
 	dir, err := os.UserCacheDir()
@@ -122,18 +127,14 @@ func saveListenerPort(port string) error {
 	// Create ampersand directory if it doesn't exist
 	ampDir := filepath.Join(dir, "ampersand")
 
-	const dirPermissions = 0o700
-
-	if err := os.MkdirAll(ampDir, dirPermissions); err != nil {
+	if err := os.MkdirAll(ampDir, mkdirPerm); err != nil {
 		return err
 	}
 
 	// Write port to file
 	portFile := filepath.Join(ampDir, "webhook-port")
 
-	const filePermissions = 0o600
-
-	return os.WriteFile(portFile, []byte(port), filePermissions)
+	return os.WriteFile(portFile, []byte(port), filePerm)
 }
 
 // clearListenerPort removes the port file.

@@ -145,7 +145,6 @@ func openInEditor(data []byte) ([]byte, error) {
 	return os.ReadFile(tmpFile.Name())
 }
 
-// sendWebhook sends the webhook.
 func sendWebhook(payload []byte) error {
 	port := getListenerPort()
 
