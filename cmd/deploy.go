@@ -285,7 +285,7 @@ func promptUserConfirmationGlobal(integrations []integrationRemovedObjectsInfo) 
 	fmt.Printf("\nYou selected: %s\n", selectedItem)
 
 	confirmPrompt := promptui.Prompt{
-		Label:     "Confirm (yes/no)",
+		Label:     "Confirm? (enter 'y' or 'n')",
 		IsConfirm: true,
 		Stdin:     os.Stdin,
 		Stdout:    os.Stdout,
