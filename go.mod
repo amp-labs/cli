@@ -8,20 +8,21 @@ require (
 	github.com/amp-labs/connectors v0.0.0-20250613204826-9739804cf2c3
 	github.com/buildkite/shellwords v1.0.1
 	github.com/clerkinc/clerk-sdk-go v1.49.1
+	github.com/gertd/go-pluralize v0.2.1
 	github.com/imdario/mergo v0.3.15
 	github.com/manifoldco/promptui v0.9.0
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0
 	github.com/tidwall/pretty v1.2.1
-	golang.org/x/term v0.35.0
+	golang.org/x/term v0.37.0
 	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
 )
 
@@ -44,7 +45,6 @@ require (
 	github.com/aws/smithy-go v1.22.2 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
-	github.com/gertd/go-pluralize v0.2.1 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
