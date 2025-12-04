@@ -12,7 +12,7 @@ require (
 	github.com/imdario/mergo v0.3.15
 	github.com/manifoldco/promptui v0.9.0
 	github.com/oapi-codegen/runtime v1.1.2
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/tidwall/pretty v1.2.1
 	golang.org/x/term v0.37.0
