@@ -30,6 +30,11 @@ const (
 	OnRequest DeliveryMode = "onRequest"
 )
 
+// Defines values for FieldChangedEventEnabled.
+const (
+	FieldChangedEventEnabledAlways FieldChangedEventEnabled = "always"
+)
+
 // Defines values for FieldCreatedEventEnabled.
 const (
 	FieldCreatedEventEnabledAlways FieldCreatedEventEnabled = "always"
@@ -51,11 +56,6 @@ const (
 	Other        FieldMetadataValueType = "other"
 	SingleSelect FieldMetadataValueType = "singleSelect"
 	String       FieldMetadataValueType = "string"
-)
-
-// Defines values for FieldTypeChangedEventEnabled.
-const (
-	FieldTypeChangedEventEnabledAlways FieldTypeChangedEventEnabled = "always"
 )
 
 // Defines values for IntegrationObjectEnabled.
@@ -135,6 +135,15 @@ type Delivery struct {
 // DeliveryMode The data delivery mode for this object. If not specified, defaults to automatic.
 type DeliveryMode string
 
+// FieldChangedEvent Configuration for detecting when fields are changed.
+type FieldChangedEvent struct {
+	// Enabled If always, the integration will monitor for field changes by default.
+	Enabled FieldChangedEventEnabled `json:"enabled"`
+}
+
+// FieldChangedEventEnabled If always, the integration will monitor for field changes by default.
+type FieldChangedEventEnabled string
+
 // FieldCreatedEvent Configuration for detecting when new fields are created.
 type FieldCreatedEvent struct {
 	// Enabled If always, the integration will monitor for new fields by default.
@@ -182,15 +191,6 @@ type FieldMetadata struct {
 
 // FieldMetadataValueType A normalized field type
 type FieldMetadataValueType string
-
-// FieldTypeChangedEvent Configuration for detecting when field types change.
-type FieldTypeChangedEvent struct {
-	// Enabled If always, the integration will monitor for field type changes by default.
-	Enabled FieldTypeChangedEventEnabled `json:"enabled"`
-}
-
-// FieldTypeChangedEventEnabled If always, the integration will monitor for field type changes by default.
-type FieldTypeChangedEventEnabled string
 
 // FieldValue Represents a field value
 type FieldValue struct {
@@ -443,14 +443,14 @@ type WatchSchema struct {
 
 // WatchSchemaAllObjects Schema change event configuration for all objects in the integration.
 type WatchSchemaAllObjects struct {
+	// FieldChanged Configuration for detecting when fields are changed.
+	FieldChanged *FieldChangedEvent `json:"fieldChanged,omitempty"`
+
 	// FieldCreated Configuration for detecting when new fields are created.
 	FieldCreated *FieldCreatedEvent `json:"fieldCreated,omitempty"`
 
 	// FieldDeleted Configuration for detecting when fields are deleted.
 	FieldDeleted *FieldDeletedEvent `json:"fieldDeleted,omitempty"`
-
-	// FieldTypeChanged Configuration for detecting when field types change.
-	FieldTypeChanged *FieldTypeChangedEvent `json:"fieldTypeChanged,omitempty"`
 }
 
 // AsHydratedIntegrationFieldExistent returns the union data inside the HydratedIntegrationField as a HydratedIntegrationFieldExistent
