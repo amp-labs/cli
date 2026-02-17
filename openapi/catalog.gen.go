@@ -274,7 +274,7 @@ type MetadataItemInput struct {
 	// DocsURL URL with more information about how to locate this value
 	DocsURL string `json:"docsURL,omitempty"`
 
-	// ModuleDependencies Does this metadata item only apply to a specific module?
+	// ModuleDependencies Specifies which modules REQUIRE (depend on) this metadata item. This field lists the modules that depend on/require the metadata item. Example: If "workspace" metadata has moduleDependencies: {crm: {}}, it means the CRM module requires the workspace metadata to function. Each module that needs this metadata item MUST be specified in this field. Even if it is all modules. The empty ModuleDependency {} is for future-proofing in case we need to add additional configuration options.
 	ModuleDependencies *ModuleDependencies `json:"moduleDependencies,omitempty"`
 
 	// Name The internal identifier for the metadata field
@@ -286,14 +286,14 @@ type MetadataItemInput struct {
 
 // MetadataItemPostAuthentication defines model for MetadataItemPostAuthentication.
 type MetadataItemPostAuthentication struct {
-	// ModuleDependencies Does this metadata item only apply to a specific module?
+	// ModuleDependencies Specifies which modules REQUIRE (depend on) this metadata item. This field lists the modules that depend on/require the metadata item. Example: If "workspace" metadata has moduleDependencies: {crm: {}}, it means the CRM module requires the workspace metadata to function. Each module that needs this metadata item MUST be specified in this field. Even if it is all modules. The empty ModuleDependency {} is for future-proofing in case we need to add additional configuration options.
 	ModuleDependencies *ModuleDependencies `json:"moduleDependencies,omitempty"`
 
 	// Name The internal identifier for the metadata field
 	Name string `json:"name"`
 }
 
-// ModuleDependencies Does this metadata item only apply to a specific module?
+// ModuleDependencies Specifies which modules REQUIRE (depend on) this metadata item. This field lists the modules that depend on/require the metadata item. Example: If "workspace" metadata has moduleDependencies: {crm: {}}, it means the CRM module requires the workspace metadata to function. Each module that needs this metadata item MUST be specified in this field. Even if it is all modules. The empty ModuleDependency {} is for future-proofing in case we need to add additional configuration options.
 type ModuleDependencies map[string]ModuleDependency
 
 // ModuleDependency Dependency for a single module.
@@ -410,6 +410,16 @@ type ProviderMetadata struct {
 // ProviderOpts Additional provider-specific metadata.
 type ProviderOpts map[string]string
 
+// SearchOperators defines model for SearchOperators.
+type SearchOperators struct {
+	Equals bool `json:"equals"`
+}
+
+// SearchSupport defines model for SearchSupport.
+type SearchSupport struct {
+	Operators SearchOperators `json:"operators"`
+}
+
 // SubscribeOpts defines model for SubscribeOpts.
 type SubscribeOpts struct {
 	// RegistrationTiming The timing of the registration.
@@ -440,8 +450,10 @@ type SubscribeSupport struct {
 type Support struct {
 	BatchWrite       *BatchWriteSupport `json:"batchWrite,omitempty"`
 	BulkWrite        BulkWriteSupport   `json:"bulkWrite" validate:"required"`
+	Delete           bool               `json:"delete"`
 	Proxy            bool               `json:"proxy"`
 	Read             bool               `json:"read"`
+	Search           SearchSupport      `json:"search"`
 	Subscribe        bool               `json:"subscribe"`
 	SubscribeSupport *SubscribeSupport  `json:"subscribeSupport,omitempty"`
 	Write            bool               `json:"write"`
