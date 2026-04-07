@@ -38,8 +38,8 @@ var listInstallationsCmd = &cobra.Command{ //nolint:gochecknoglobals
 		})
 
 		for _, inst := range insts {
-			logger.Info(fmt.Sprintf("Installation ID: %s, Group Ref: %s (Last Status: %s)",
-				inst.Id, inst.Group.GroupRef, inst.HealthStatus))
+			logger.Info(fmt.Sprintf("Installation ID: %s, Group Ref: %s",
+				inst.Id, inst.Group.GroupRef))
 		}
 	},
 }
