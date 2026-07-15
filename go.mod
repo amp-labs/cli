@@ -1,6 +1,6 @@
 module github.com/amp-labs/cli
 
-go 1.24.3
+go 1.25.0
 
 require (
 	github.com/adrg/xdg v0.5.3
@@ -14,15 +14,15 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/tidwall/pretty v1.2.1
-	golang.org/x/term v0.38.0
+	golang.org/x/term v0.43.0
 	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 )
 
 require (
@@ -43,5 +43,5 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.46.0 // indirect
+	golang.org/x/crypto v0.52.0 // indirect
 )
