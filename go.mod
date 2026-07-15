@@ -10,7 +10,7 @@ require (
 	github.com/gertd/go-pluralize v0.2.1
 	github.com/imdario/mergo v0.3.15
 	github.com/manifoldco/promptui v0.9.0
-	github.com/oapi-codegen/runtime v1.4.0
+	github.com/oapi-codegen/runtime v1.5.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/tidwall/pretty v1.2.1
