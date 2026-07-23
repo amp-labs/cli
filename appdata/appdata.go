@@ -11,9 +11,10 @@ import (
 
 const fileName = "Ampersand/config.json"
 
-// IMPORTANT:
-// Do not modify the JSON labels in this struct without ensuring backwards compatibility,
-// since those strings are written to the user's config file on their computer.
+// Config is the user's persisted CLI configuration.
+//
+// IMPORTANT: Do not modify the JSON labels in this struct without ensuring backwards
+// compatibility, since those strings are written to the user's config file on their computer.
 type Config struct {
 	Token Token `json:"token"`
 }
@@ -40,7 +41,9 @@ func Get() (Config, error) {
 	}
 
 	var c Config
-	if err := json.Unmarshal(data, &c); err != nil {
+
+	err = json.Unmarshal(data, &c)
+	if err != nil {
 		return Config{}, fmt.Errorf("can't parse config: %w", err)
 	}
 
@@ -56,7 +59,9 @@ func Set(config Config) error {
 	}
 
 	merged := config
-	if err := mergo.Merge(&merged, existing); err != nil {
+
+	err = mergo.Merge(&merged, existing)
+	if err != nil {
 		return fmt.Errorf("can't merge new config with existing config: %w", err)
 	}
 

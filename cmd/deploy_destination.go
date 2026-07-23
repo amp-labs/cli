@@ -21,13 +21,16 @@ var deployDestinationCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Run: func(cmd *cobra.Command, args []string) {
 		projectId := flags.GetProjectOrFail()
 		apiKey := flags.GetAPIKey()
+
 		input := viper.GetString("input")
 		if input == "" {
 			logger.Fatal("Must provide an input file path")
 		}
 
 		var dest request.Destination
-		if _, err := utils.ReadStructFromFile(input, &dest); err != nil {
+
+		_, err := utils.ReadStructFromFile(input, &dest)
+		if err != nil {
 			logger.FatalErr("Unable to read destination file", err)
 		}
 
@@ -35,15 +38,15 @@ var deployDestinationCmd = &cobra.Command{ //nolint:gochecknoglobals
 		oldDest := getOldDest(cmd.Context(), client, &dest)
 
 		var output *request.Destination
-		var err error
 
 		if oldDest == nil {
 			output, err = client.CreateDestination(cmd.Context(), &dest)
 		} else {
 			patch := generatePatch(oldDest, &dest)
 			if len(patch.UpdateMask) == 0 {
-				if err := utils.WriteStructToFile(viper.GetString("output"),
-					flags.GetOutputFormat(), oldDest); err != nil {
+				err := utils.WriteStructToFile(viper.GetString("output"),
+					flags.GetOutputFormat(), oldDest)
+				if err != nil {
 					logger.FatalErr("Unable to write destination file", err)
 				}
 
@@ -57,8 +60,9 @@ var deployDestinationCmd = &cobra.Command{ //nolint:gochecknoglobals
 			logger.FatalErr("Unable to deploy destination", err)
 		}
 
-		if err := utils.WriteStructToFile(viper.GetString("output"),
-			flags.GetOutputFormat(), output); err != nil {
+		err = utils.WriteStructToFile(viper.GetString("output"),
+			flags.GetOutputFormat(), output)
+		if err != nil {
 			logger.FatalErr("Unable to write destination file", err)
 		}
 	},
@@ -137,17 +141,20 @@ func findDestId(ctx context.Context, client *request.APIClient, dest *request.De
 func init() {
 	deployDestinationCmd.Flags().StringP("input", "i", "", "The input file path")
 
-	if err := viper.BindPFlag("input", deployDestinationCmd.Flags().Lookup("input")); err != nil {
+	err := viper.BindPFlag("input", deployDestinationCmd.Flags().Lookup("input"))
+	if err != nil {
 		logger.FatalErr("unable to bind flag", err)
 	}
 
 	deployDestinationCmd.Flags().StringP("output", "o", "-", "The output file path")
 
-	if err := viper.BindPFlag("output", deployDestinationCmd.Flags().Lookup("output")); err != nil {
+	err = viper.BindPFlag("output", deployDestinationCmd.Flags().Lookup("output"))
+	if err != nil {
 		logger.FatalErr("unable to bind flag", err)
 	}
 
-	if err := flags.InitAndBindFormatFlag(deployDestinationCmd); err != nil {
+	err = flags.InitAndBindFormatFlag(deployDestinationCmd)
+	if err != nil {
 		logger.FatalErr("unable to bind flag", err)
 	}
 

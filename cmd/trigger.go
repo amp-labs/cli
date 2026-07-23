@@ -71,8 +71,10 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 		payload = []byte(rawJSON)
 
 		// Validate it's valid JSON
-		var jsonObj interface{}
-		if err := json.Unmarshal(payload, &jsonObj); err != nil {
+		var jsonObj any
+
+		err := json.Unmarshal(payload, &jsonObj)
+		if err != nil {
 			return fmt.Errorf("invalid JSON provided: %w", err)
 		}
 	case fixtureFile != "":
@@ -91,7 +93,7 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 
 	// Let user edit the payload if requested
 	if interactive {
-		payload, err = openInEditor(payload)
+		payload, err = openInEditor(cmd.Context(), payload)
 		if err != nil {
 			return fmt.Errorf("failed to edit payload: %w", err)
 		}
@@ -104,7 +106,7 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 }
 
 // openInEditor opens the JSON payload in the default editor.
-func openInEditor(data []byte) ([]byte, error) {
+func openInEditor(ctx context.Context, data []byte) ([]byte, error) {
 	// Create a temporary file
 	tmpFile, err := os.CreateTemp("", "amp-webhook-*.json")
 	if err != nil {
@@ -113,11 +115,14 @@ func openInEditor(data []byte) ([]byte, error) {
 	defer os.Remove(tmpFile.Name())
 
 	// Write the data to the file
-	if _, err := tmpFile.Write(data); err != nil {
+
+	_, err = tmpFile.Write(data)
+	if err != nil {
 		return nil, err
 	}
 
-	if err := tmpFile.Close(); err != nil {
+	err = tmpFile.Close()
+	if err != nil {
 		return nil, err
 	}
 
@@ -131,13 +136,17 @@ func openInEditor(data []byte) ([]byte, error) {
 		}
 	}
 
-	// Open the editor
-	cmd := exec.Command(editor, tmpFile.Name())
+	// Open the editor. The command is the user's own $EDITOR (or a static
+	// vi/notepad fallback) and runs locally as the invoking user, so there is
+	// no untrusted input and no injection surface here.
+	// nosemgrep: go.lang.security.audit.dangerous-exec-command.dangerous-exec-command
+	cmd := exec.CommandContext(ctx, editor, tmpFile.Name())
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	if err := cmd.Run(); err != nil {
+	err = cmd.Run()
+	if err != nil {
 		return nil, err
 	}
 
@@ -159,6 +168,7 @@ func sendWebhook(payload []byte) error {
 
 	// Send the request
 	const clientTimeout = 5 * time.Second
+
 	client := &http.Client{Timeout: clientTimeout}
 
 	resp, err := client.Do(req)

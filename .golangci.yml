@@ -1,11 +1,10 @@
-run:
-  timeout: 10m
+version: "2"
 output:
   formats:
-    - format: colored-line-number
+    text:
       path: stdout
 linters:
-  enable-all: true
+  default: all
   disable:
     # Disabled because we use inits all over the place
     - gochecknoinits
@@ -37,45 +36,76 @@ linters:
     - maintidx
     # We have legitimate use cases for returning an interface
     - ireturn
-    # deprecated
-    - tenv
     # Sometimes it's useful to return nil, nil
     - nilnil
-linters-settings:
-  # See https://golangci-lint.run/usage/linters#revive
-  revive:
+    # Deprecated alias of wsl_v5; keep it off so only wsl_v5 runs (avoids a deprecation warning).
+    - wsl
+  settings:
+    ireturn:
+      allow:
+        - error
+        - generic
+        - stdlib
+        - empty
+    misspell:
+      mode: restricted
+      locale: US
+    # See https://golangci-lint.run/usage/linters#revive
+    revive:
+      rules:
+        # Use var-naming, but add a special rule to accept "Id" rather than forcing "ID"
+        - name: var-naming
+          arguments:
+            - - ID
+              - API
+          disabled: false
+    # v2 merged stylecheck into staticcheck; keep "all" checks but drop ST1003 (var-naming), matching the prior config.
+    staticcheck:
+      checks:
+        - all
+        - -ST1003
+    varnamelen:
+      # The longest distance, in source lines, that is being considered a "small scope" where it is ok to use short variable names.
+      # The default is 5, which is quite strict.
+      max-distance: 15
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
     rules:
-      # Use var-naming, but add a special rule to accept "Id" rather than forcing "ID"
-      - name: var-naming
-        disabled: false
-        arguments:
-          - ["ID", "API"]
-  # See https://staticcheck.io/docs/configuration/options/#checks
-  staticcheck:
-    checks: ["all"]
-  stylecheck:
-    checks: ["all", "-ST1003"]
-  varnamelen:
-    # The longest distance, in source lines, that is being considered a "small scope" where it is ok to use short variable names.
-    # The default is 5, which is quite strict.
-    max-distance: 15
-  ireturn:
-    allow:
-      - error
-      - generic
-      - stdlib
-      - empty
-  misspell:
-    locale: US
-    mode: restricted
-issues:
-  exclude-rules:
-    - text: "don't use ALL_CAPS in Go names"
-      linters:
-        - revive
-  exclude-dirs:
-    - openapi
-    - scripts
-    - tmp
-    - playground
-    - testrun
+      - linters:
+          - revive
+        text: don't use ALL_CAPS in Go names
+      # `utils` is an established package name here; v2's revive flags it as "meaningless".
+      - linters:
+          - revive
+        text: avoid meaningless package names
+    paths:
+      - openapi
+      - scripts
+      - tmp
+      - playground
+      - testrun
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - openapi
+      - scripts
+      - tmp
+      - playground
+      - testrun
+      - third_party$
+      - builtin$
+      - examples$

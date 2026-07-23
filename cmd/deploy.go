@@ -68,7 +68,8 @@ var deployCmd = &cobra.Command{ //nolint:gochecknoglobals
 			logger.FatalErr("Unable to get pre-signed upload URL", err)
 		}
 
-		if err := storage.Upload(cmd.Context(), zipResult.Data, signed.URL, md5String); err != nil {
+		err = storage.Upload(cmd.Context(), zipResult.Data, signed.URL, md5String)
+		if err != nil {
 			logger.FatalErr("Unable to upload to Google Cloud Storage", err)
 		}
 
@@ -353,12 +354,16 @@ func formatGlobalPromptMessage(integrations []integrationRemovedObjectsInfo) str
 		integrationWord := pluralizer.Pluralize("integration", len(integrations), false)
 		message = fmt.Sprintf("⚠️  You are removing read action objects from %d %s:\n\n", len(integrations), integrationWord)
 
+		var lines strings.Builder
+
 		for _, info := range integrations {
 			objectList := strings.Join(info.removedObjects, ", ")
 			installationWord := pluralizer.Pluralize("installation", info.installationCount, false)
-			message += fmt.Sprintf("   • %s: %s (%d %s)\n",
-				info.integrationName, objectList, info.installationCount, installationWord)
+			lines.WriteString(fmt.Sprintf("   • %s: %s (%d %s)\n",
+				info.integrationName, objectList, info.installationCount, installationWord))
 		}
+
+		message += lines.String()
 
 		message += fmt.Sprintf(
 			"\n\n❓ Do you want to stop reading these objects across all installations of these %d %s?\n\n"+
@@ -371,16 +376,16 @@ func formatGlobalPromptMessage(integrations []integrationRemovedObjectsInfo) str
 }
 
 func formatAffectedInstallations(groups []groupInfo, totalCount int) string {
-	var result string
+	var result strings.Builder
 	for _, g := range groups {
-		result += fmt.Sprintf("\n    - %s (%s)", g.name, g.ref)
+		result.WriteString(fmt.Sprintf("\n    - %s (%s)", g.name, g.ref))
 	}
 
 	if totalCount > len(groups) {
-		result += fmt.Sprintf("\n    - and %d more", totalCount-len(groups))
+		result.WriteString(fmt.Sprintf("\n    - and %d more", totalCount-len(groups)))
 	}
 
-	return result
+	return result.String()
 }
 
 func init() {

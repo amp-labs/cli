@@ -38,6 +38,7 @@ var listDestinationsCmd = &cobra.Command{ //nolint:gochecknoglobals
 			if dest.Metadata.URL != "" {
 				output += " (" + dest.Metadata.URL + ")"
 			}
+
 			logger.Info(output)
 		}
 	},

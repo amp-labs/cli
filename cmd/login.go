@@ -79,13 +79,16 @@ const JwtFilePermissions = 0o600
 // processLogin takes the JWT token, verifies it, and then stores it in the jwt.json file.
 func processLogin(ctx context.Context, payload []byte, write bool) (string, string, error) { //nolint:cyclop
 	data := &clerk.LoginData{}
-	if err := json.Unmarshal(payload, data); err != nil {
+
+	err := json.Unmarshal(payload, data)
+	if err != nil {
 		return "", "", err
 	}
 
 	path := clerk.GetJwtPath()
 	if write {
-		if err := os.WriteFile(path, pretty.Pretty(payload), JwtFilePermissions); err != nil {
+		err := os.WriteFile(path, pretty.Pretty(payload), JwtFilePermissions)
+		if err != nil {
 			return "", "", err
 		}
 	}
@@ -170,7 +173,8 @@ func canOpenBrowserLinux() bool {
 		return false
 	}
 
-	if _, err := exec.LookPath("xdg-open"); err != nil {
+	_, err := exec.LookPath("xdg-open")
+	if err != nil {
 		logger.Info("'xdg-open' command not found, cannot open browser automatically.")
 
 		return false
@@ -185,7 +189,8 @@ func canOpenBrowserDarwin() bool {
 		return false
 	}
 
-	if _, err := exec.LookPath("open"); err != nil {
+	_, err := exec.LookPath("open")
+	if err != nil {
 		logger.Info("'open' command not found, cannot open browser automatically.")
 
 		return false
@@ -200,7 +205,8 @@ func canOpenBrowserWindows() bool {
 		return false
 	}
 
-	if _, err := exec.LookPath("rundll32"); err != nil {
+	_, err := exec.LookPath("rundll32")
+	if err != nil {
 		logger.Info("'rundll32' command not found, cannot open browser automatically.")
 
 		return false
@@ -213,15 +219,17 @@ func canOpenBrowserWindows() bool {
 func openBrowser(url string) {
 	var err error
 
+	// The browser launch is intentionally detached from any request context: it must
+	// outlive this command, so we use context.Background() rather than a cancelable ctx.
 	switch runtime.GOOS {
 	case "linux":
-		err = exec.Command("xdg-open", url).Start()
+		err = exec.CommandContext(context.Background(), "xdg-open", url).Start()
 	case OSWindows:
-		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+		err = exec.CommandContext(context.Background(), "rundll32", "url.dll,FileProtocolHandler", url).Start()
 	case "darwin":
-		err = exec.Command("open", url).Start()
+		err = exec.CommandContext(context.Background(), "open", url).Start()
 	default:
-		err = fmt.Errorf("unsupported platform: %s", runtime.GOOS) //nolint:goerr113
+		err = fmt.Errorf("unsupported platform: %s", runtime.GOOS) //nolint:err113
 	}
 
 	if err != nil {

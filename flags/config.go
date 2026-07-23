@@ -20,19 +20,23 @@ func Init(rootCmd *cobra.Command) error {
 	rootCmd.PersistentFlags().StringP("project", "p", "", "Ampersand project name or ID")
 	rootCmd.PersistentFlags().StringP("key", "k", "", "Ampersand API key")
 
-	if err := viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug")); err != nil {
+	err := viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
+	if err != nil {
 		return err
 	}
 
-	if err := viper.BindPFlag("project", rootCmd.PersistentFlags().Lookup("project")); err != nil {
+	err = viper.BindPFlag("project", rootCmd.PersistentFlags().Lookup("project"))
+	if err != nil {
 		return err
 	}
 
-	if err := viper.BindPFlag("key", rootCmd.PersistentFlags().Lookup("key")); err != nil {
+	err = viper.BindPFlag("key", rootCmd.PersistentFlags().Lookup("key"))
+	if err != nil {
 		return err
 	}
 
-	if err := viper.BindEnv("key", "AMP_API_KEY"); err != nil {
+	err = viper.BindEnv("key", "AMP_API_KEY")
+	if err != nil {
 		panic(err)
 	}
 
@@ -43,7 +47,8 @@ func Init(rootCmd *cobra.Command) error {
 func InitAndBindFormatFlag(cmd *cobra.Command) error {
 	cmd.Flags().StringP("format", "f", "json", "Output format, defaults to json. Options: json, yaml")
 
-	if err := viper.BindPFlag("format", cmd.Flags().Lookup("format")); err != nil {
+	err := viper.BindPFlag("format", cmd.Flags().Lookup("format"))
+	if err != nil {
 		return err
 	}
 
@@ -63,6 +68,13 @@ func GetOutputFormat() utils.Format {
 
 func GetDebugMode() bool {
 	return viper.GetBool("debug")
+}
+
+// GetProject returns the configured project name or ID, or an empty string if
+// none is set. Unlike GetProjectOrFail it does not exit, so callers that can
+// operate without a project (e.g. offline validation) can degrade gracefully.
+func GetProject() string {
+	return viper.GetString("project")
 }
 
 func GetProjectOrFail() string {
