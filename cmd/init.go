@@ -67,24 +67,28 @@ var initCmd = &cobra.Command{ //nolint:gochecknoglobals
 		disp := "my integration"
 
 		var integ openapi.Integration
+
 		integ.Name = name
 		integ.DisplayName = disp
 		integ.Provider = provider.Name
 
 		if provider.Support.Read {
-			if err := setupRead(&integ, provider); err != nil {
+			err := setupRead(&integ, provider)
+			if err != nil {
 				logger.FatalErr("Unable to setup read", err)
 			}
 		}
 
 		if provider.Support.Write {
-			if err := setupWrite(&integ, provider); err != nil {
+			err := setupWrite(&integ, provider)
+			if err != nil {
 				logger.FatalErr("Unable to setup write", err)
 			}
 		}
 
 		if provider.Support.Proxy {
-			if err := setupProxy(&integ, provider); err != nil {
+			err := setupProxy(&integ, provider)
+			if err != nil {
 				logger.FatalErr("Unable to setup proxy", err)
 			}
 		}
@@ -104,7 +108,8 @@ var initCmd = &cobra.Command{ //nolint:gochecknoglobals
 			logger.FatalErr("Unable to marshal manifest", err)
 		}
 
-		if err := os.WriteFile("amp.yaml", ys, YamlFileMode); err != nil { //nolint:gosec
+		err = os.WriteFile("amp.yaml", ys, YamlFileMode) //nolint:gosec
+		if err != nil {
 			logger.FatalErr("Unable to write manifest to file", err)
 		}
 
@@ -145,7 +150,8 @@ func setupWrite(integ *openapi.Integration, provider *openapi.ProviderInfo) erro
 	write := &openapi.IntegrationWrite{}
 
 	for {
-		if err := addWriteObject(write, provider); err != nil {
+		err := addWriteObject(write, provider)
+		if err != nil {
 			return err
 		}
 
@@ -211,9 +217,10 @@ func getIntegrationField() (*openapi.IntegrationField, error) { //nolint:funlen,
 	}
 
 	if !remap {
-		if err := field.FromIntegrationFieldExistent(openapi.IntegrationFieldExistent{
+		err := field.FromIntegrationFieldExistent(openapi.IntegrationFieldExistent{
 			FieldName: fieldName,
-		}); err != nil {
+		})
+		if err != nil {
 			return nil, err
 		}
 
@@ -264,7 +271,8 @@ func getIntegrationField() (*openapi.IntegrationField, error) { //nolint:funlen,
 		mapping.Prompt = &promptText
 	}
 
-	if err := field.FromIntegrationFieldMapping(mapping); err != nil {
+	err = field.FromIntegrationFieldMapping(mapping)
+	if err != nil {
 		return nil, err
 	}
 
@@ -302,7 +310,8 @@ func addReadObject(read *openapi.IntegrationRead, provider *openapi.ProviderInfo
 	}
 
 	if wantBackfill {
-		if err := setupBackfill(obj); err != nil {
+		err := setupBackfill(obj)
+		if err != nil {
 			return err
 		}
 	}
@@ -416,7 +425,8 @@ func setupRead(integ *openapi.Integration, provider *openapi.ProviderInfo) error
 	read := &openapi.IntegrationRead{}
 
 	for {
-		if err := addReadObject(read, provider); err != nil {
+		err := addReadObject(read, provider)
+		if err != nil {
 			return err
 		}
 
@@ -455,7 +465,8 @@ func promptString(prompt string, validate ...func(string) error) (string, error)
 		Label: prompt,
 		Validate: func(s string) error {
 			for _, fn := range validate {
-				if err := fn(s); err != nil {
+				err := fn(s)
+				if err != nil {
 					return err
 				}
 			}

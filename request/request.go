@@ -215,7 +215,9 @@ func (c *Client) makeRequestAndParseJSONResult(req *http.Request, result any) (*
 			if err == nil {
 				if mt == "application/problem+json" {
 					prob := &ProblemError{}
-					if err := json.Unmarshal(payload, prob); err == nil {
+
+					err := json.Unmarshal(payload, prob)
+					if err == nil {
 						if prob.Status == http.StatusNotFound {
 							return res, fmt.Errorf("%w: %w\n%w", ErrNon200Status, ErrNotFound, prob)
 						} else {
@@ -233,7 +235,8 @@ func (c *Client) makeRequestAndParseJSONResult(req *http.Request, result any) (*
 		}
 	}
 
-	if err := json.Unmarshal(payload, result); err != nil {
+	err = json.Unmarshal(payload, result)
+	if err != nil {
 		return nil, err
 	}
 
@@ -381,7 +384,8 @@ func (c *Client) sendRequest(req *http.Request) (*http.Response, []byte, error) 
 
 	defer func() {
 		if res != nil && res.Body != nil {
-			if closeErr := res.Body.Close(); closeErr != nil {
+			closeErr := res.Body.Close()
+			if closeErr != nil {
 				logger.Debugf("unable to close response body %v", closeErr)
 			}
 		}

@@ -232,7 +232,8 @@ func getPublicNgrokURL(ctx context.Context) (string, error) {
 
 	// Ensure response body is properly closed to prevent resource leaks
 	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil {
+		closeErr := resp.Body.Close()
+		if closeErr != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "error closing response body: %v\n", closeErr)
 		}
 	}()
@@ -248,7 +249,8 @@ func getPublicNgrokURL(ctx context.Context) (string, error) {
 
 	decoder := json.NewDecoder(resp.Body)
 
-	if err := decoder.Decode(&ngrokResp); err != nil {
+	err = decoder.Decode(&ngrokResp)
+	if err != nil {
 		// JSON parsing errors indicate malformed response from ngrok
 		return "", fmt.Errorf("failed to parse ngrok response: %w", err)
 	}
@@ -309,7 +311,9 @@ func waitForNgrok(ctx context.Context) error {
 	}
 
 	// Perform initial connectivity check to see if ngrok is already running
-	conn, err := net.DialTimeout("tcp", address, connectTimeout)
+	dialer := net.Dialer{Timeout: connectTimeout}
+
+	conn, err := dialer.DialContext(ctx, "tcp", address)
 	if err == nil {
 		// ngrok is already available, close connection and return immediately
 		_ = conn.Close()
@@ -349,7 +353,7 @@ func waitForNgrok(ctx context.Context) error {
 			}
 
 			// Attempt to connect to ngrok API endpoint
-			conn, err = net.DialTimeout("tcp", address, connectTimeout)
+			conn, err = dialer.DialContext(ctx, "tcp", address)
 			if err == nil {
 				// Success! ngrok is now available
 				_ = conn.Close()
@@ -370,7 +374,8 @@ func waitForNgrok(ctx context.Context) error {
 // This function is called by the Cobra framework when the ngrok command is invoked.
 func runSyncNgrok(cmd *cobra.Command, _ []string) error {
 	// Validate protocol flag before proceeding
-	if err := validateProtocol(); err != nil {
+	err := validateProtocol()
+	if err != nil {
 		return err
 	}
 
@@ -431,7 +436,8 @@ func getNgrokTunnelURL(ctx context.Context) (string, error) {
 	// Step 1: Wait for ngrok service to become available
 	logger.Info("waiting for ngrok to start...")
 
-	if err := waitForNgrok(ctx); err != nil {
+	err := waitForNgrok(ctx)
+	if err != nil {
 		// Provide helpful context about ngrok not being available
 		return "", fmt.Errorf("ngrok is not running: %w", err)
 	}
@@ -514,7 +520,9 @@ func updateDestinations(ctx context.Context, client *request.APIClient,
 		}
 
 		// Attempt to update the destination via API
-		if err := updateDestination(ctx, client, dest, publicURL); err != nil {
+
+		err = updateDestination(ctx, client, dest, publicURL)
+		if err != nil {
 			// Log API update failures but continue with other destinations
 			logger.Infof("failed to update destination %s: %v", dest.NameOrId(), err)
 

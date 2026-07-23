@@ -16,7 +16,7 @@ var listInstallationsCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Use:   "list:installations <integrationId>",
 	Short: "List installations",
 	Long:  "List installations",
-	Args:  cobra.ExactArgs(1), //nolint:gomnd,mnd
+	Args:  cobra.ExactArgs(1), //nolint:mnd
 	Run: func(cmd *cobra.Command, args []string) {
 		integrationId := args[0]
 		projectId := flags.GetProjectOrFail()

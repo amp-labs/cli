@@ -162,7 +162,9 @@ func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 		}
 
 		data := &LoginData{}
-		if err := json.Unmarshal(contents, data); err != nil {
+
+		err = json.Unmarshal(contents, data)
+		if err != nil {
 			return "", fmt.Errorf("error unmarshalling jwt file: %w", err)
 		}
 
@@ -224,11 +226,13 @@ func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 	}
 
 	if rsp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("http %d (%s)", rsp.StatusCode, string(bb)) //nolint:goerr113
+		return "", fmt.Errorf("http %d (%s)", rsp.StatusCode, string(bb)) //nolint:err113
 	}
 
 	cr := &clientResponse{}
-	if err := json.Unmarshal(bb, cr); err != nil {
+
+	err = json.Unmarshal(bb, cr)
+	if err != nil {
 		return "", fmt.Errorf("error unmarshalling response body: %w", err)
 	}
 
@@ -274,7 +278,9 @@ func DecodeJWT(jwt string) (string, string, error) {
 func getHTML(emailStr string) (string, error) {
 	// Render the HTML
 	tmpl := mustache.New()
-	if err := tmpl.ParseString(HTML); err != nil {
+
+	err := tmpl.ParseString(HTML)
+	if err != nil {
 		return "", err
 	}
 

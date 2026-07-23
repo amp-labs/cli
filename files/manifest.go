@@ -14,17 +14,18 @@ const manifestVersion = "1.0.0"
 func ParseManifest(yamlData []byte) (*openapi.Manifest, error) {
 	manifest := &openapi.Manifest{}
 
-	if err := yaml.Unmarshal(yamlData, manifest); err != nil {
+	err := yaml.Unmarshal(yamlData, manifest)
+	if err != nil {
 		return nil, fmt.Errorf("failed to parse yaml: %w", err)
 	}
 
 	return manifest, nil
 }
 
-// nolint: goerr113
+// nolint: err113
 func validationError(tracker *pathTracker, msg string, args ...any) error {
 	err1 := fmt.Errorf(msg, args...)
-	err2 := fmt.Errorf("The validation error happened at the %s", tracker.String()) //nolint:stylecheck
+	err2 := fmt.Errorf("The validation error happened at the %s", tracker.String()) //nolint:staticcheck
 
 	return errors.Join(ErrBadManifest, err1, err2)
 }
@@ -47,7 +48,8 @@ func ValidateManifest(manifest *openapi.Manifest) error {
 	}
 
 	for idx, integ := range manifest.Integrations {
-		if err := validateIntegration(integ, tracker.PushObj("integrations").PushArr(idx)); err != nil {
+		err := validateIntegration(integ, tracker.PushObj("integrations").PushArr(idx))
+		if err != nil {
 			return err
 		}
 	}
@@ -168,29 +170,33 @@ func validateSubscribe(sub *openapi.IntegrationSubscribe, path *pathTracker) err
 		}
 
 		if obj.AssociationChangeEvent != nil {
-			if err := validateSubscribeAssocChange(obj.AssociationChangeEvent,
-				path.PushArr(idx).PushObj("associationChangeEvent")); err != nil {
+			err := validateSubscribeAssocChange(obj.AssociationChangeEvent,
+				path.PushArr(idx).PushObj("associationChangeEvent"))
+			if err != nil {
 				return err
 			}
 		}
 
 		if obj.CreateEvent != nil {
-			if err := validateSubscribeCreateEvent(obj.CreateEvent,
-				path.PushArr(idx).PushObj("createEvent")); err != nil {
+			err := validateSubscribeCreateEvent(obj.CreateEvent,
+				path.PushArr(idx).PushObj("createEvent"))
+			if err != nil {
 				return err
 			}
 		}
 
 		if obj.UpdateEvent != nil {
-			if err := validateSubscribeUpdateEvent(obj.UpdateEvent,
-				path.PushArr(idx).PushObj("updateEvent")); err != nil {
+			err := validateSubscribeUpdateEvent(obj.UpdateEvent,
+				path.PushArr(idx).PushObj("updateEvent"))
+			if err != nil {
 				return err
 			}
 		}
 
 		if obj.DeleteEvent != nil {
-			if err := validateSubscribeDeleteEvent(obj.DeleteEvent,
-				path.PushArr(idx).PushObj("deleteEvent")); err != nil {
+			err := validateSubscribeDeleteEvent(obj.DeleteEvent,
+				path.PushArr(idx).PushObj("deleteEvent"))
+			if err != nil {
 				return err
 			}
 		}
@@ -213,25 +219,29 @@ func validateIntegration(integration openapi.Integration, path *pathTracker) err
 	}
 
 	if integration.Proxy != nil {
-		if err := validateProxy(integration.Proxy, path.PushObj("proxy")); err != nil {
+		err := validateProxy(integration.Proxy, path.PushObj("proxy"))
+		if err != nil {
 			return err
 		}
 	}
 
 	if integration.Read != nil {
-		if err := validateRead(integration.Read, path.PushObj("read")); err != nil {
+		err := validateRead(integration.Read, path.PushObj("read"))
+		if err != nil {
 			return err
 		}
 	}
 
 	if integration.Write != nil {
-		if err := validateWrite(integration.Write, path.PushObj("write")); err != nil {
+		err := validateWrite(integration.Write, path.PushObj("write"))
+		if err != nil {
 			return err
 		}
 	}
 
 	if integration.Subscribe != nil {
-		if err := validateSubscribe(integration.Subscribe, path.PushObj("subscribe")); err != nil {
+		err := validateSubscribe(integration.Subscribe, path.PushObj("subscribe"))
+		if err != nil {
 			return err
 		}
 	}

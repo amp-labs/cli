@@ -35,7 +35,8 @@ func DoLogout(showLogs bool) {
 		}
 	}
 
-	if err := os.Remove(path); err != nil {
+	err = os.Remove(path)
+	if err != nil {
 		logger.Fatal(err.Error())
 	}
 

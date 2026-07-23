@@ -137,7 +137,8 @@ func (c *APIClient) DeleteIntegration(ctx context.Context, integrationId string)
 		return err
 	}
 
-	if _, err := c.Client.Delete(ctx, delURL, auth); err != nil { //nolint:bodyclose
+	_, err = c.Client.Delete(ctx, delURL, auth) //nolint:bodyclose
+	if err != nil {
 		return fmt.Errorf("error deleting integration: %w", err)
 	}
 
@@ -336,7 +337,8 @@ func (c *APIClient) DeleteInstallation(ctx context.Context, integrationId string
 		return err
 	}
 
-	if _, err := c.Client.Delete(ctx, delURL, auth); err != nil { //nolint:bodyclose
+	_, err = c.Client.Delete(ctx, delURL, auth) //nolint:bodyclose
+	if err != nil {
 		return fmt.Errorf("error deleting installation: %w", err)
 	}
 

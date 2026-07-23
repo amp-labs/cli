@@ -39,16 +39,20 @@ func ReadStruct(r io.Reader, out any) (Format, error) {
 		return Unknown, err
 	}
 
-	if err := json.Unmarshal(data, out); err != nil {
-		var se *json.SyntaxError
-		if !errors.As(err, &se) {
-			return Unknown, err
-		}
-	} else {
+	err = json.Unmarshal(data, out)
+	if err == nil {
 		return JSON, nil
 	}
 
-	if err := yaml.Unmarshal(data, out); err != nil {
+	// A JSON syntax error means the data may still be YAML, so fall through. Any other
+	// error means the data is JSON-shaped but invalid (e.g. a type mismatch); report it.
+	var se *json.SyntaxError
+	if !errors.As(err, &se) {
+		return Unknown, err
+	}
+
+	err = yaml.Unmarshal(data, out)
+	if err != nil {
 		return Unknown, err
 	}
 
@@ -69,7 +73,8 @@ func ReadStructFromFile(filePath string, out any) (Format, error) {
 		_ = f.Close()
 	}()
 
-	if format, err := ReadStruct(f, out); err == nil {
+	format, err := ReadStruct(f, out)
+	if err == nil {
 		return format, nil
 	}
 
@@ -85,7 +90,8 @@ func WriteStruct(writer io.Writer, format Format, data any) error {
 		enc.SetIndent("", "  ")
 		enc.SetEscapeHTML(false)
 
-		if err := enc.Encode(data); err != nil {
+		err := enc.Encode(data)
+		if err != nil {
 			return err
 		}
 

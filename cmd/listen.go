@@ -52,7 +52,9 @@ func runListen(cmd *cobra.Command, args []string) error {
 	mux.HandleFunc("/", handleWebhook)
 
 	// Start the server
-	listener, err := net.Listen("tcp", listenAddr)
+	var lc net.ListenConfig
+
+	listener, err := lc.Listen(ctx, "tcp", listenAddr)
 	if err != nil {
 		return fmt.Errorf("failed to start listener: %w", err)
 	}
@@ -66,11 +68,14 @@ func runListen(cmd *cobra.Command, args []string) error {
 	port := strconv.Itoa(addr.Port)
 
 	// Save the port
-	if err := saveListenerPort(port); err != nil {
+
+	err = saveListenerPort(port)
+	if err != nil {
 		logger.FatalErr("failed to save port", err)
 	}
 
 	const serverTimeout = 10 * time.Second
+
 	srv := &http.Server{
 		Handler:           mux,
 		ReadHeaderTimeout: serverTimeout,
@@ -80,7 +85,8 @@ func runListen(cmd *cobra.Command, args []string) error {
 	go func() {
 		logger.Info("starting webhook listener")
 
-		if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		err := srv.Serve(listener)
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.FatalErr("webhook listener failed", err)
 		}
 	}()
@@ -96,11 +102,13 @@ func runListen(cmd *cobra.Command, args []string) error {
 
 	// Create a deadline to wait for current connections to complete
 	const shutdownTimeout = 5 * time.Second
+
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 
 	defer cancel()
 
-	if err := srv.Shutdown(shutdownCtx); err != nil {
+	err = srv.Shutdown(shutdownCtx)
+	if err != nil {
 		logger.FatalErr("shutdown error", err)
 	}
 
@@ -127,7 +135,8 @@ func saveListenerPort(port string) error {
 	// Create ampersand directory if it doesn't exist
 	ampDir := filepath.Join(dir, "ampersand")
 
-	if err := os.MkdirAll(ampDir, mkdirPerm); err != nil {
+	err = os.MkdirAll(ampDir, mkdirPerm)
+	if err != nil {
 		return err
 	}
 
@@ -168,7 +177,9 @@ func handleWebhook(writer http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	// Log the webhook payload
-	if err := webhook.PrettyPrintJSON(body); err != nil {
+
+	err = webhook.PrettyPrintJSON(body)
+	if err != nil {
 		logger.FatalErr("error pretty printing JSON", err)
 	}
 
@@ -194,6 +205,7 @@ func handleWebhook(writer http.ResponseWriter, req *http.Request) {
 
 	// Forward the request
 	const clientTimeout = 5 * time.Second
+
 	client := &http.Client{Timeout: clientTimeout}
 
 	resp, err := client.Do(forwardReq)
@@ -216,7 +228,8 @@ func handleWebhook(writer http.ResponseWriter, req *http.Request) {
 
 	writer.WriteHeader(resp.StatusCode)
 
-	if _, err := io.Copy(writer, resp.Body); err != nil {
+	_, err = io.Copy(writer, resp.Body)
+	if err != nil {
 		logger.FatalErr("error copying response", err)
 	}
 }

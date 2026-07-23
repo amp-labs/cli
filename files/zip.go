@@ -12,7 +12,7 @@ import (
 	"github.com/amp-labs/cli/openapi"
 )
 
-var ErrBadManifest = errors.New("Invalid manifest") //nolint:stylecheck
+var ErrBadManifest = errors.New("Invalid manifest") //nolint:staticcheck
 
 const (
 	mode        = 0o644
@@ -132,7 +132,8 @@ func importYaml(writer *zip.Writer) (*openapi.Manifest, error) {
 		return nil, fmt.Errorf("error parsing manifest: %w", err)
 	}
 
-	if err := ValidateManifest(manifest); err != nil {
+	err = ValidateManifest(manifest)
+	if err != nil {
 		return nil, err
 	}
 
@@ -170,7 +171,8 @@ func Zip(source string) (*ZipResult, error) { // nolint:funlen,cyclop
 
 		manifest = m
 
-		if err := writer.Close(); err != nil {
+		err = writer.Close()
+		if err != nil {
 			return fmt.Errorf("error closing zip writer: %w", err)
 		}
 

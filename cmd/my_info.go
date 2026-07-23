@@ -40,14 +40,17 @@ var myInfoCmd = &cobra.Command{ //nolint:gochecknoglobals
 		}
 
 		format := flags.GetOutputFormat()
-		if err := utils.WriteStruct(os.Stdout, format, info); err != nil {
+
+		err = utils.WriteStruct(os.Stdout, format, info)
+		if err != nil {
 			logger.FatalErr("Unable to write user info", err)
 		}
 	},
 }
 
 func init() {
-	if err := flags.InitAndBindFormatFlag(myInfoCmd); err != nil {
+	err := flags.InitAndBindFormatFlag(myInfoCmd)
+	if err != nil {
 		logger.FatalErr("unable to initialize flags", err)
 	}
 

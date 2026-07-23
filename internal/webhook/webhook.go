@@ -30,8 +30,10 @@ func LoadFixture(provider, event, customPath string) ([]byte, error) {
 	data = bytes.ReplaceAll(data, []byte("{{NOW}}"), []byte(now))
 
 	// Validate it's valid JSON
-	var jsonObj interface{}
-	if err := json.Unmarshal(data, &jsonObj); err != nil {
+	var jsonObj any
+
+	err = json.Unmarshal(data, &jsonObj)
+	if err != nil {
 		return nil, fmt.Errorf("fixture contains invalid JSON: %w", err)
 	}
 
@@ -42,6 +44,7 @@ func LoadFixture(provider, event, customPath string) ([]byte, error) {
 // Format: provider.event_name (e.g., "stripe.payment_intent.created").
 func ParseEvent(event string) (provider, eventName string) {
 	const expectedParts = 2
+
 	parts := strings.SplitN(event, ".", expectedParts)
 
 	if len(parts) < expectedParts {
