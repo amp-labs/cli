@@ -82,6 +82,38 @@ func getZipDir(source string) (string, error) {
 	return sourceDir, nil
 }
 
+// FindManifestFile resolves source to the path of a manifest file to validate.
+// An explicit file path is returned as-is regardless of its name; a directory is
+// searched for the conventional amp.yaml/amp.yml manifest. It returns
+// ErrBadManifest if the source does not resolve to a manifest file.
+func FindManifestFile(source string) (string, error) {
+	info, err := os.Stat(source)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", fmt.Errorf("%w: source %q does not exist", ErrBadManifest, source)
+		}
+
+		return "", fmt.Errorf("%w: stat %q: %w", ErrBadManifest, source, err)
+	}
+
+	// An explicit file path is used as-is, whatever it's named.
+	if !info.IsDir() {
+		return source, nil
+	}
+
+	// A directory is searched for the conventional manifest file names.
+	for _, name := range []string{yamlName, yamlAltName} {
+		candidate := filepath.Join(source, name)
+
+		fi, statErr := os.Stat(candidate)
+		if statErr == nil && !fi.IsDir() {
+			return candidate, nil
+		}
+	}
+
+	return "", fmt.Errorf("%w: no %s or %s found in %q", ErrBadManifest, yamlName, yamlAltName, source)
+}
+
 func statYaml() (os.FileInfo, error) {
 	yamlStat, err := os.Stat(yamlName)
 	if err != nil { //nolint:nestif
