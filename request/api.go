@@ -237,6 +237,24 @@ func (c *APIClient) ListProviderApps(ctx context.Context) ([]*ProviderApp, error
 	return providerApps, nil
 }
 
+func (c *APIClient) CreateProviderApp(ctx context.Context, params *CreateProviderAppParams) (*ProviderApp, error) {
+	createURL := fmt.Sprintf("%s/projects/%s/provider-apps", c.Root, c.ProjectId)
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var providerApp ProviderApp
+
+	_, err = c.Client.Post(ctx, createURL, params, &providerApp, auth) //nolint:bodyclose
+	if err != nil {
+		return nil, err
+	}
+
+	return &providerApp, nil
+}
+
 func (c *APIClient) ListProjects(ctx context.Context) ([]*Project, error) {
 	listURL := c.Root + "/projects"
 
