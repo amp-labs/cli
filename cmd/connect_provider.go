@@ -40,7 +40,7 @@ func newConnectProviderCmd(
 
 	cmd := &cobra.Command{
 		Use:   "connect:provider <provider>",
-		Short: "Connect an account to a provider",
+		Short: "Start a provider OAuth connection",
 		Long: "Generate an OAuth authorization URL. Open it in a browser when available; " +
 			"otherwise, print it.",
 		Args: cobra.ExactArgs(1),
