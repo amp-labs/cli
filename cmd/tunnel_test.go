@@ -130,3 +130,28 @@ func TestCloudflareTunnelURL(t *testing.T) {
 		t.Fatalf("cloudflareTunnelURL() = %q", got)
 	}
 }
+
+func TestResolveTunnelTarget(t *testing.T) {
+	t.Parallel()
+
+	if got := resolveTunnelTarget("", func() (string, error) {
+		return "", errListenerPortMissing
+	}); got != defaultTunnelTarget {
+		t.Fatalf("resolveTunnelTarget() without listener = %q", got)
+	}
+
+	if got := resolveTunnelTarget("", func() (string, error) {
+		return "54321", nil
+	}); got != "http://127.0.0.1:54321" {
+		t.Fatalf("resolveTunnelTarget() = %q", got)
+	}
+
+	const explicit = "http://127.0.0.1:9876"
+	if got := resolveTunnelTarget(explicit, func() (string, error) {
+		t.Fatal("read listener port for explicit target")
+
+		return "", nil
+	}); got != explicit {
+		t.Fatalf("resolveTunnelTarget(explicit) = %q", got)
+	}
+}

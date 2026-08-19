@@ -9,7 +9,9 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"regexp"
+	"strings"
 	"syscall"
 	"time"
 
@@ -27,17 +29,17 @@ const (
 
 var (
 	errCloudflaredNotFound = errors.New("cloudflared was not found in PATH")
+	errListenerPortMissing = errors.New("listener port is empty")
 	errTunnelURLTimeout    = errors.New("timed out waiting for the Cloudflare tunnel URL")
 	errTunnelStopped       = errors.New("cloudflared stopped before the tunnel was ready")
 	cloudflareURLPattern   = regexp.MustCompile(`https://[a-z0-9-]+\.trycloudflare\.com`)
 	tunnelTarget           string
 	tunnelCommand          = &cobra.Command{
-		Use:    "tunnel <destination>",
-		Short:  "Start a local tunnel for a webhook destination",
-		Long:   "Start a Cloudflare tunnel, point one webhook destination to it, and restore the destination when stopped.",
-		Args:   cobra.ExactArgs(1),
-		Hidden: true,
-		RunE:   runTunnelCommand,
+		Use:   "tunnel <destination>",
+		Short: "Start a local tunnel for a webhook destination",
+		Long:  "Start a Cloudflare tunnel, point one webhook destination to it, and restore the destination when stopped.",
+		Args:  cobra.ExactArgs(1),
+		RunE:  runTunnelCommand,
 	}
 )
 
@@ -50,8 +52,8 @@ type runningTunnel struct {
 type tunnelStarter func(context.Context, string) (*runningTunnel, error)
 
 func init() {
-	tunnelCommand.Flags().StringVar(&tunnelTarget, "target", defaultTunnelTarget,
-		"Local URL that receives tunneled requests")
+	tunnelCommand.Flags().StringVar(&tunnelTarget, "target", "",
+		"Local URL that receives tunneled requests (default: running listener or http://127.0.0.1:4000)")
 	rootCmd.AddCommand(tunnelCommand)
 }
 
@@ -68,7 +70,41 @@ func runTunnelCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return runDestinationTunnel(ctx, client, destination, tunnelTarget, startCloudflareTunnel)
+	return runDestinationTunnel(
+		ctx, client, destination, resolveTunnelTarget(tunnelTarget, readSavedListenerPort), startCloudflareTunnel,
+	)
+}
+
+func resolveTunnelTarget(explicitTarget string, readPort func() (string, error)) string {
+	if explicitTarget != "" {
+		return explicitTarget
+	}
+
+	port, err := readPort()
+	if err != nil {
+		return defaultTunnelTarget
+	}
+
+	return "http://127.0.0.1:" + port
+}
+
+func readSavedListenerPort() (string, error) {
+	dir, err := os.UserCacheDir()
+	if err != nil {
+		return "", fmt.Errorf("get user cache directory: %w", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(dir, "ampersand", "webhook-port"))
+	if err != nil {
+		return "", fmt.Errorf("read listener port: %w", err)
+	}
+
+	port := strings.TrimSpace(string(data))
+	if port == "" {
+		return "", errListenerPortMissing
+	}
+
+	return port, nil
 }
 
 func getTunnelDestination(
