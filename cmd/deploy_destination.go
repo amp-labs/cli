@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"context"
-	"errors"
-	"reflect"
 
 	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
@@ -83,59 +81,31 @@ func generatePatch(oldDest *request.Destination, newDest *request.Destination) *
 		patch.UpdateMask = append(patch.UpdateMask, "type")
 	}
 
-	if oldDest.Metadata != nil { //nolint:nestif
-		if newDest.Metadata == nil {
-			patch.Destination["metadata"] = nil
-			patch.UpdateMask = append(patch.UpdateMask, "metadata")
-		} else if !reflect.DeepEqual(oldDest.Metadata, newDest.Metadata) {
-			patch.Destination["metadata"] = newDest.Metadata
-			patch.UpdateMask = append(patch.UpdateMask, "metadata")
-		}
-	} else {
-		if newDest.Metadata != nil {
-			patch.Destination["metadata"] = newDest.Metadata
-			patch.UpdateMask = append(patch.UpdateMask, "metadata")
-		}
+	if newDest.Metadata != nil && (oldDest.Metadata == nil || oldDest.Metadata.URL != newDest.Metadata.URL) {
+		patch.Destination["metadata"] = map[string]any{"url": newDest.Metadata.URL}
+		patch.UpdateMask = append(patch.UpdateMask, "metadata.url")
 	}
 
 	return patch
 }
 
 func getOldDest(ctx context.Context, client *request.APIClient, dest *request.Destination) *request.Destination {
-	id := findDestId(ctx, client, dest)
-	if id == "" {
-		return nil
-	}
-
-	dst, err := client.GetDestination(ctx, id)
-	if err != nil {
-		if errors.Is(err, request.ErrNotFound) {
-			return nil
-		} else {
-			logger.FatalErr("Unable to get destination", err)
-		}
-	}
-
-	return dst
-}
-
-func findDestId(ctx context.Context, client *request.APIClient, dest *request.Destination) string {
-	if dest.Id != "" {
-		return dest.Id
-	}
-
-	dests, err := client.ListDestinations(ctx)
+	destinations, err := client.ListDestinations(ctx)
 	if err != nil {
 		logger.FatalErr("Unable to list destinations", err)
 	}
 
-	for _, d := range dests {
-		if d.Name == dest.Name {
-			return d.Id
+	for _, existing := range destinations {
+		if dest.Id != "" && existing.Id == dest.Id {
+			return existing
+		}
+
+		if dest.Id == "" && existing.Name == dest.Name {
+			return existing
 		}
 	}
 
-	return ""
+	return nil
 }
 
 func init() {
