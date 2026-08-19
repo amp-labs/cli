@@ -12,10 +12,9 @@ import (
 )
 
 var deployDestinationCmd = &cobra.Command{ //nolint:gochecknoglobals
-	Use:    "deploy:destination -i <input file path> [-o <output file path>] [-f <format>]",
-	Short:  "Deploy a destination",
-	Long:   "Deploy a destination",
-	Hidden: true,
+	Use:   "deploy:destination -i <input file path> [-o <output file path>] [-f <format>]",
+	Short: "Deploy a destination",
+	Long:  "Create or update a destination from a JSON or YAML file.",
 	Run: func(cmd *cobra.Command, args []string) {
 		projectId := flags.GetProjectOrFail()
 		apiKey := flags.GetAPIKey()
@@ -35,6 +34,11 @@ var deployDestinationCmd = &cobra.Command{ //nolint:gochecknoglobals
 		client := request.NewAPIClient(projectId, &apiKey)
 		oldDest := getOldDest(cmd.Context(), client, &dest)
 
+		format, err := cmd.Flags().GetString("format")
+		if err != nil {
+			logger.FatalErr("Unable to read output format", err)
+		}
+
 		var output *request.Destination
 
 		if oldDest == nil {
@@ -43,7 +47,7 @@ var deployDestinationCmd = &cobra.Command{ //nolint:gochecknoglobals
 			patch := generatePatch(oldDest, &dest)
 			if len(patch.UpdateMask) == 0 {
 				err := utils.WriteStructToFile(viper.GetString("output"),
-					flags.GetOutputFormat(), oldDest)
+					utils.Format(format), oldDest)
 				if err != nil {
 					logger.FatalErr("Unable to write destination file", err)
 				}
@@ -59,7 +63,7 @@ var deployDestinationCmd = &cobra.Command{ //nolint:gochecknoglobals
 		}
 
 		err = utils.WriteStructToFile(viper.GetString("output"),
-			flags.GetOutputFormat(), output)
+			utils.Format(format), output)
 		if err != nil {
 			logger.FatalErr("Unable to write destination file", err)
 		}
