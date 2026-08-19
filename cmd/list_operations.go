@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"os"
 	"sort"
 	"time"
 
@@ -9,8 +10,42 @@ import (
 	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/request"
+	"github.com/amp-labs/cli/utils"
 	"github.com/spf13/cobra"
 )
+
+type operationSummary struct {
+	Id          string  `json:"id"`
+	Action      string  `json:"action"`
+	Status      string  `json:"status"`
+	ReadType    string  `json:"readType,omitempty"`
+	StartedAt   string  `json:"startedAt"`
+	CompletedAt *string `json:"completedAt"`
+}
+
+func summarizeOperations(operations []*request.Operation) []operationSummary {
+	summaries := make([]operationSummary, 0, len(operations))
+
+	for _, operation := range operations {
+		var completedAt *string
+
+		if operation.UpdateTime != nil {
+			formatted := operation.UpdateTime.Format(time.RFC3339)
+			completedAt = &formatted
+		}
+
+		summaries = append(summaries, operationSummary{
+			Id:          operation.Id,
+			Action:      operation.ActionType,
+			Status:      operation.Status,
+			ReadType:    operation.ReadType,
+			StartedAt:   operation.CreateTime.Format(time.RFC3339),
+			CompletedAt: completedAt,
+		})
+	}
+
+	return summaries
+}
 
 var listOperationsCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Use:   "list:operations <integrationId> <installationId>",
@@ -35,26 +70,23 @@ var listOperationsCmd = &cobra.Command{ //nolint:gochecknoglobals
 			return operations[i].CreateTime.After(operations[j].CreateTime)
 		})
 
-		for _, operation := range operations {
-			completed := "-"
-			if operation.UpdateTime != nil {
-				completed = operation.UpdateTime.Format(time.RFC3339)
-			}
+		format, err := cmd.Flags().GetString("format")
+		if err != nil {
+			logger.FatalErr("Unable to read output format", err)
+		}
 
-			logger.Infof(
-				"Operation ID: %s, Action: %s, Resource: %s, Read Type: %s, Status: %s, Started: %s, Completed: %s",
-				operation.Id,
-				operation.ActionType,
-				operation.Resource,
-				operation.ReadType,
-				operation.Status,
-				operation.CreateTime.Format(time.RFC3339),
-				completed,
-			)
+		err = utils.WriteStruct(os.Stdout, utils.Format(format), summarizeOperations(operations))
+		if err != nil {
+			logger.FatalErr("Unable to write operations", err)
 		}
 	},
 }
 
 func init() {
+	err := flags.InitAndBindFormatFlag(listOperationsCmd)
+	if err != nil {
+		logger.FatalErr("unable to initialize flags", err)
+	}
+
 	rootCmd.AddCommand(listOperationsCmd)
 }
