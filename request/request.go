@@ -195,8 +195,9 @@ func (c *Client) Delete(ctx context.Context,
 }
 
 var (
-	ErrNon200Status = errors.New("error response from API")
-	ErrNotFound     = errors.New("HTTP Status 404")
+	ErrNon200Status          = errors.New("error response from API")
+	ErrNotFound              = errors.New("HTTP Status 404")
+	errPlainTextResultTarget = errors.New("plain text response requires a string result")
 )
 
 func (c *Client) makeRequestAndParseJSONResult(req *http.Request, result any) (*http.Response, error) { //nolint:cyclop
@@ -233,6 +234,18 @@ func (c *Client) makeRequestAndParseJSONResult(req *http.Request, result any) (*
 		} else {
 			return res, fmt.Errorf("%w: HTTP Status %s", ErrNon200Status, res.Status)
 		}
+	}
+
+	contentType, _, contentTypeErr := mime.ParseMediaType(res.Header.Get("Content-Type"))
+	if contentTypeErr == nil && contentType == "text/plain" {
+		textResult, ok := result.(*string)
+		if !ok {
+			return nil, errPlainTextResultTarget
+		}
+
+		*textResult = string(payload)
+
+		return res, nil
 	}
 
 	err = json.Unmarshal(payload, result)
