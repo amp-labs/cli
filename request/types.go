@@ -1,6 +1,7 @@
 package request
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/amp-labs/cli/openapi"
@@ -18,6 +19,16 @@ type Installation struct {
 	Config        *Config     `json:"config"`
 	CreateTime    time.Time   `json:"createTime"`
 	HealthStatus  string      `json:"healthStatus"`
+}
+
+type CreateInstallationParams struct {
+	GroupRef     string                   `json:"groupRef"`
+	ConnectionId string                   `json:"connectionId"`
+	Config       CreateInstallationConfig `json:"config"`
+}
+
+type CreateInstallationConfig struct {
+	Content json.RawMessage `json:"content"`
 }
 
 type Group struct {
