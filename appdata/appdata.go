@@ -15,25 +15,31 @@ const fileName = "Ampersand/config.json"
 //
 // IMPORTANT: Do not modify the JSON labels in this struct without ensuring backwards
 // compatibility, since those strings are written to the user's config file on their computer.
-type Config struct {}
+type Config struct {
+	// Region is the Ampersand deployment region the CLI talks to, e.g. "us" or "eu".
+	// An empty value means no region has been selected and the default ("us") applies.
+	Region string `json:"region"`
+}
 
 // Get returns the user's existing config, or an empty config if the file doesn't exist.
 func Get() (Config, error) {
 	path, err := getExistingFilePath()
 	if err != nil {
-		return Config{}, err
+		// if no config file exists, that is not an error
+		// the caller is returned an empty Config object, and Set() will create the file
+		return Config{}, nil //nolint:nilerr
 	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return Config{}, fmt.Errorf("can't read config file: %w", err)
+		return Config{}, fmt.Errorf("can't read config file at %s: %w", path, err)
 	}
 
 	var c Config
 
 	err = json.Unmarshal(data, &c)
 	if err != nil {
-		return Config{}, fmt.Errorf("can't parse config: %w", err)
+		return Config{}, fmt.Errorf("can't parse config at %s: %w", path, err)
 	}
 
 	return c, nil

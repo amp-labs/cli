@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/amp-labs/cli/clerk"
+	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/openapi"
 	"github.com/amp-labs/cli/vars"
@@ -31,7 +32,7 @@ func NewAPIClient(projectId string, key *string) *APIClient {
 	// For testing reasons, sometimes it's useful to override the API endpoint
 	rootURL, ok := os.LookupEnv("AMP_API_URL")
 	if !ok {
-		rootURL = vars.ApiURL
+		rootURL = flags.GetRegion().Regionalize(vars.ApiURL)
 	}
 
 	return &APIClient{

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/amp-labs/cli/clerk"
+	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
 	"github.com/amp-labs/cli/vars"
 	"github.com/spf13/cobra"
@@ -36,7 +37,7 @@ func getLoginURL() string {
 		return loginURL
 	}
 
-	return vars.LoginURL
+	return flags.GetRegion().Regionalize(vars.LoginURL)
 }
 
 func (h *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
