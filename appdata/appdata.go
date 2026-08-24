@@ -15,18 +15,7 @@ const fileName = "Ampersand/config.json"
 //
 // IMPORTANT: Do not modify the JSON labels in this struct without ensuring backwards
 // compatibility, since those strings are written to the user's config file on their computer.
-type Config struct {
-	Token Token `json:"token"`
-}
-
-// Token represents a JWT token.
-type Token struct {
-	Iss string `json:"iss"`
-	Sub string `json:"sub"`
-	Aud string `json:"aud"`
-	Iat int    `json:"iat"`
-	Exp int    `json:"exp"`
-}
+type Config struct {}
 
 // Get returns the user's existing config, or an empty config if the file doesn't exist.
 func Get() (Config, error) {
