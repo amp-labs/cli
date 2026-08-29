@@ -2,7 +2,9 @@ package appdata
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 
 	"github.com/adrg/xdg"
@@ -23,15 +25,19 @@ type Config struct {
 
 // Get returns the user's existing config, or an empty config if the file doesn't exist.
 func Get() (Config, error) {
-	path, err := getExistingFilePath()
+	path, err := configFilePath()
 	if err != nil {
-		// if no config file exists, that is not an error
-		// the caller is returned an empty Config object, and Set() will create the file
-		return Config{}, nil //nolint:nilerr
+		return Config{}, err
 	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			// no config file exists yet, which is not an error:
+			// the caller is returned an empty Config object, and Set() will create the file
+			return Config{}, nil
+		}
+
 		return Config{}, fmt.Errorf("can't read config file at %s: %w", path, err)
 	}
 
@@ -64,12 +70,9 @@ func Set(config Config) error {
 }
 
 func setEntireConfig(config Config) error {
-	path, err := getExistingFilePath()
+	path, err := configFilePath()
 	if err != nil {
-		path, err = getPathForNewFile()
-		if err != nil {
-			return fmt.Errorf("can't get path for new config file: %w", err)
-		}
+		return err
 	}
 
 	js, err := json.Marshal(config)
@@ -80,12 +83,15 @@ func setEntireConfig(config Config) error {
 	return writeFile(path, js)
 }
 
-func getPathForNewFile() (string, error) {
-	return xdg.ConfigFile(fileName)
-}
+// configFilePath returns the path of the user's config file in the XDG config home, creating
+// its parent directory if needed. This mirrors how clerk.GetJwtPath locates jwt.json.
+func configFilePath() (string, error) {
+	path, err := xdg.ConfigFile(fileName)
+	if err != nil {
+		return "", fmt.Errorf("can't determine config file path: %w", err)
+	}
 
-func getExistingFilePath() (string, error) {
-	return xdg.SearchConfigFile(fileName)
+	return path, nil
 }
 
 const perm = 0o600 // Regular file with read/write permission for owner
