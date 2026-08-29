@@ -22,7 +22,7 @@ var myInfoCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Run: func(cmd *cobra.Command, args []string) {
 		rootURL, ok := os.LookupEnv("AMP_API_URL")
 		if !ok {
-			rootURL = vars.ApiURL
+			rootURL = flags.GetRegion().RegionalizeURL(vars.ApiURL)
 		}
 
 		client := &request.APIClient{
