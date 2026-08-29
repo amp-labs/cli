@@ -90,12 +90,12 @@ func Parse(name string) (Region, error) {
 	return region, nil
 }
 
-// Regionalize rewrites an Ampersand hostname into its equivalent in this region, eg:
+// RegionalizeURL rewrites an Ampersand hostname into its equivalent in this region, eg:
 //
 //	clerk.withampersand.com         ->      clerk.eu.withampersand.com
 //	cli-signin.withampersand.com    ->      cli-signin.eu.withampersand.com
 //	staging-api.withampersand.com   ->      staging-api.eu.withampersand.com
-func (region Region) Regionalize(rawURL string) string {
+func (region Region) RegionalizeURL(rawURL string) string {
 	label := region.label()
 	if label == "" {
 		// if US region, no <region> label, return original URL

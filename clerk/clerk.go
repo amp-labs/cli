@@ -93,7 +93,7 @@ func GetClerkRootURL() string {
 		return clerkRoot
 	}
 
-	return flags.GetRegion().Regionalize(vars.ClerkRootURL)
+	return flags.GetRegion().RegionalizeURL(vars.ClerkRootURL)
 }
 
 func GetSessionURL(data *LoginData) string {

@@ -37,7 +37,7 @@ func getLoginURL() string {
 		return loginURL
 	}
 
-	return flags.GetRegion().Regionalize(vars.LoginURL)
+	return flags.GetRegion().RegionalizeURL(vars.LoginURL)
 }
 
 func (h *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {

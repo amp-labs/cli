@@ -113,7 +113,7 @@ func TestIsKnown(t *testing.T) {
 	}
 }
 
-func TestRegionalize(t *testing.T) {
+func TestRegionalizeURL(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -212,9 +212,9 @@ func TestRegionalize(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := testCase.region.Regionalize(testCase.rawURL)
+			got := testCase.region.RegionalizeURL(testCase.rawURL)
 			if got != testCase.want {
-				t.Errorf("Regionalize(%q) = %q, want %q", testCase.rawURL, got, testCase.want)
+				t.Errorf("RegionalizeURL(%q) = %q, want %q", testCase.rawURL, got, testCase.want)
 			}
 		})
 	}

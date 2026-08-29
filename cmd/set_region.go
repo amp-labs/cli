@@ -32,7 +32,7 @@ var setRegionCmd = &cobra.Command{ //nolint:gochecknoglobals
 
 		if !region.IsKnown(selected) {
 			logger.Infof("Warning: this version of amp does not know region %q; requests will go to %s.",
-				selected, selected.Regionalize(vars.ApiURL))
+				selected, selected.RegionalizeURL(vars.ApiURL))
 		}
 	},
 }

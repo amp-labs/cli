@@ -32,7 +32,7 @@ func NewAPIClient(projectId string, key *string) *APIClient {
 	// For testing reasons, sometimes it's useful to override the API endpoint
 	rootURL, ok := os.LookupEnv("AMP_API_URL")
 	if !ok {
-		rootURL = flags.GetRegion().Regionalize(vars.ApiURL)
+		rootURL = flags.GetRegion().RegionalizeURL(vars.ApiURL)
 	}
 
 	return &APIClient{
