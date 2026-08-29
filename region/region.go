@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"os"
 	"regexp"
 	"sort"
 	"strings"
@@ -25,9 +26,14 @@ const (
 	Default = US
 )
 
-// FlagName is the name of the persistent flag, viper key, and environment variable that select the region.
-// The flags package binds all three; see flags.GetRegion.
+// FlagName is the name of the persistent flag and viper key that select the region.
+// The flags package binds both; see flags.GetRegion.
 const FlagName = "region"
+
+// EnvVar is the environment variable that selects the region when neither --region nor
+// 'amp set:region' has. It is deliberately not bound to viper, which would rank it above the
+// saved region; Resolve reads it directly instead.
+const EnvVar = "AMP_REGION"
 
 // baseDomain is the top-level domain that every Ampersand hostname sits under.
 const baseDomain = "withampersand.com"
@@ -147,16 +153,18 @@ func (region Region) label() string {
 
 // Resolve returns the region to use, by priority:
 //  1. --region
-//  2. AMP_REGION
-//  3. 'amp set:region' (config/appdata file)
+//  2. 'amp set:region' (config/appdata file)
+//  3. AMP_REGION
 //  4. region.Default ("us")
+//
+// The saved region deliberately outranks AMP_REGION, unlike viper's usual env-over-config order.
 //
 // A missing config file is not an error: it means no region has been saved yet.
 // A malformed region name, or a config file that exists but cannot be read, is.
-func Resolve(requested string) (Region, error) {
-	// --region / AMP_REGION invoke this function with the provided value
-	if requested != "" {
-		return Parse(requested)
+func Resolve(flagValue string) (Region, error) {
+	// --region invokes this function with the provided value
+	if flagValue != "" {
+		return Parse(flagValue)
 	}
 
 	// otherwise, check if the config file has a region set
@@ -167,6 +175,11 @@ func Resolve(requested string) (Region, error) {
 
 	if config.Region != "" {
 		return Parse(config.Region)
+	}
+
+	// otherwise, check the environment variable
+	if fromEnv := os.Getenv(EnvVar); fromEnv != "" {
+		return Parse(fromEnv)
 	}
 
 	// otherwise, default to US

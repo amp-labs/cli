@@ -251,39 +251,46 @@ func TestResolve(t *testing.T) {
 	tests := []struct {
 		name      string
 		config    string
-		requested string
+		env       string
+		flagValue string
 		want      Region
 		wantErr   bool
 	}{
-		{name: "default", config: "", requested: "", want: Default},
-		{name: "saved", config: `{"region":"eu"}`, requested: "", want: EU},
-		{name: "requested over saved", config: `{"region":"eu"}`, requested: "us", want: US},
-		{name: "requested unknown", config: "", requested: "ap", want: Region("ap")},
-		{name: "requested malformed", config: "", requested: "eu west", wantErr: true},
-		{name: "saved malformed", config: `{"region":"eu west"}`, requested: "", wantErr: true},
-		{name: "corrupt config", config: `{"region":`, requested: "", wantErr: true},
+		{name: "default", config: "", flagValue: "", want: Default},
+		{name: "saved", config: `{"region":"eu"}`, flagValue: "", want: EU},
+		{name: "env", config: "", env: "eu", flagValue: "", want: EU},
+		{name: "flag over saved", config: `{"region":"eu"}`, flagValue: "us", want: US},
+		{name: "flag over env", config: "", env: "eu", flagValue: "us", want: US},
+		{name: "saved over env", config: `{"region":"eu"}`, env: "ap", flagValue: "", want: EU},
+		{name: "flag unknown", config: "", flagValue: "ap", want: Region("ap")},
+		{name: "flag malformed", config: "", flagValue: "eu west", wantErr: true},
+		{name: "saved malformed", config: `{"region":"eu west"}`, flagValue: "", wantErr: true},
+		{name: "env malformed", config: "", env: "eu west", flagValue: "", wantErr: true},
+		{name: "corrupt config", config: `{"region":`, flagValue: "", wantErr: true},
 	}
 
 	for _, testCase := range tests {
 		t.Run(testCase.name, func(t *testing.T) {
 			setupConfig(t, testCase.config)
+			// Always set, so that AMP_REGION in the developer's own shell cannot leak in.
+			t.Setenv(EnvVar, testCase.env)
 
-			got, err := Resolve(testCase.requested)
+			got, err := Resolve(testCase.flagValue)
 
 			if testCase.wantErr {
 				if err == nil {
-					t.Errorf("Resolve(%q) = %q, want error", testCase.requested, got)
+					t.Errorf("Resolve(%q) = %q, want error", testCase.flagValue, got)
 				}
 
 				return
 			}
 
 			if err != nil {
-				t.Fatalf("Resolve(%q) error = %v", testCase.requested, err)
+				t.Fatalf("Resolve(%q) error = %v", testCase.flagValue, err)
 			}
 
 			if got != testCase.want {
-				t.Errorf("Resolve(%q) = %q, want %q", testCase.requested, got, testCase.want)
+				t.Errorf("Resolve(%q) = %q, want %q", testCase.flagValue, got, testCase.want)
 			}
 		})
 	}

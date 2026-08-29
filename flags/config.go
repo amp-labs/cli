@@ -44,17 +44,9 @@ func Init(rootCmd *cobra.Command) error {
 		panic(err)
 	}
 
-	err = viper.BindPFlag(region.FlagName, rootCmd.PersistentFlags().Lookup(region.FlagName))
-	if err != nil {
-		return err
-	}
-
-	err = viper.BindEnv(region.FlagName, "AMP_REGION")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	// Unlike --key, the region's environment variable (AMP_REIGON) is not bound here,
+	// as viper would then rank it above the 'amp set:region' saved/config region, when we want it ranked below
+	return viper.BindPFlag(region.FlagName, rootCmd.PersistentFlags().Lookup(region.FlagName))
 }
 
 // InitAndBindFormatFlag initializes and binds the format flag to the provided command.
@@ -105,13 +97,6 @@ func GetProjectOrFail() string {
 
 func GetAPIKey() string {
 	return viper.GetString("key")
-}
-
-// GetRequestedRegion returns what the --region flag or the AMP_REGION environment variable
-// was set to, or an empty string. Only used by PersistentPreRun, which then calls SetRegion,
-// so subsequent callers should rely on GetRegion.
-func GetRequestedRegion() string {
-	return viper.GetString(region.FlagName)
 }
 
 // GetRegion returns the region this process talks to.
