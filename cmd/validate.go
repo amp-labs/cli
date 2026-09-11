@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 
 	ampyaml "github.com/amp-labs/amp-yaml-validator"
@@ -15,11 +16,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	validateStrict       bool
-	validateSkipProvider bool
-	validateSkipAsync    bool
+// Exit codes for the validate command. Zero means the manifest is clean; every
+// failure — an invalid manifest, a manifest that can't be found or parsed, or a
+// check that couldn't be run — is exitValidateFailure, so CI and agents only have
+// to distinguish zero from non-zero.
+const (
+	exitValidateSuccess = 0
+	exitValidateFailure = 1
 )
+
+var validateStrict bool
 
 var validateCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Use:   "validate [ampYamlSourcePath]",
@@ -28,8 +34,10 @@ var validateCmd = &cobra.Command{ //nolint:gochecknoglobals
 		"You can provide a path to the folder that contains amp.yaml or a path to the file " +
 		"itself; if omitted the current directory is used.\n\n" +
 		"When a project is configured (via --project), destinations and provider apps " +
-		"referenced by the manifest are checked against your Ampersand project. Without a " +
-		"project only schema and best-practice checks run.",
+		"referenced by the manifest are checked against your Ampersand project, and the " +
+		"command fails if those checks can't be run. Without a project only schema and " +
+		"best-practice checks run.\n\n" +
+		"Exits 0 when the manifest is clean and 1 otherwise, so it can gate CI.",
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		source := "."
@@ -37,61 +45,88 @@ var validateCmd = &cobra.Command{ //nolint:gochecknoglobals
 			source = args[0]
 		}
 
-		manifestPath, err := files.FindManifestFile(source)
-		if err != nil {
-			if errors.Is(err, files.ErrBadManifest) {
-				logger.Fatal(err.Error())
-			}
-
-			logger.FatalErr("Unable to locate manifest", err)
-		}
-
-		result, err := ampyaml.ValidateFile(cmd.Context(), manifestPath, buildValidateOptions(cmd.Context())...)
-		if err != nil {
-			logger.FatalErr("Unable to validate manifest", err)
-		}
-
-		printValidationResult(manifestPath, result)
-
-		if !result.Valid {
-			os.Exit(1)
+		if code := runValidate(cmd.Context(), source); code != exitValidateSuccess {
+			os.Exit(code)
 		}
 	},
 }
 
-// buildValidateOptions assembles the validator options from the command flags and,
-// when a project is configured, the API-backed checkers.
-func buildValidateOptions(ctx context.Context) []ampyaml.Option {
-	var opts []ampyaml.Option
+// runValidate validates the manifest found at source and returns the process exit
+// code. It reports failures itself rather than calling logger.Fatal so that the
+// exit-code decisions are testable.
+func runValidate(ctx context.Context, source string) int {
+	manifestPath, err := files.FindManifestFile(source)
+	if err != nil {
+		if errors.Is(err, files.ErrBadManifest) {
+			logger.Info(err.Error())
+		} else {
+			printValidateError("Unable to locate manifest", err)
+		}
+
+		return exitValidateFailure
+	}
+
+	logger.Infof("Validating: %s", manifestPath)
+
+	opts, err := buildValidateOptions(ctx)
+	if err != nil {
+		printValidateError("Unable to validate manifest", err)
+
+		return exitValidateFailure
+	}
+
+	result, err := ampyaml.ValidateFile(ctx, manifestPath, opts...)
+	if err != nil {
+		printValidateError("Unable to validate manifest", err)
+
+		return exitValidateFailure
+	}
+
+	printValidationResult(result)
+
+	if !result.Valid {
+		return exitValidateFailure
+	}
+
+	return exitValidateSuccess
+}
+
+// printValidateError reports a failure the way logger.FatalErr would, minus the
+// exit, leaving the exit code to the caller.
+func printValidateError(msg string, err error) {
+	logger.Infof("✗ %s\nerror: %v", msg, err)
+	logger.PrintDebugTip()
+}
+
+// buildValidateOptions assembles the validator options from the command flags, the
+// provider catalog, and — when a project is configured — the API-backed checkers.
+func buildValidateOptions(ctx context.Context) ([]ampyaml.Option, error) {
+	opts := []ampyaml.Option{catalogOption(ctx)}
 
 	if validateStrict {
 		opts = append(opts, ampyaml.WithStrictMode(true))
 	}
 
-	if validateSkipProvider {
-		opts = append(opts, ampyaml.WithSkipProviderValidation())
+	checkerOpts, err := apiCheckerOptions(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	if validateSkipAsync {
-		opts = append(opts, ampyaml.WithSkipAsyncValidation())
-	}
-
-	opts = append(opts, catalogOption(ctx))
-	opts = append(opts, apiCheckerOptions(ctx)...)
-
-	return opts
+	return append(opts, checkerOpts...), nil
 }
 
 // catalogOption backs provider/module/capability validation with the live ("dynamic")
 // provider catalog fetched from the API, which changes several times a day. The
 // catalog endpoint is public, so this runs regardless of whether a project is
-// configured. If the fetch fails (e.g. offline), it degrades gracefully to the
-// catalog embedded in the connectors library.
+// configured. If the fetch fails (e.g. offline), it degrades to the catalog embedded
+// in the connectors library and says so, since that catalog goes stale between
+// releases.
 func catalogOption(ctx context.Context) ampyaml.Option {
 	catProvider, err := validate.NewCatalogProvider(ctx)
 	if err != nil {
-		logger.Debugf("Unable to fetch the live provider catalog, "+
-			"falling back to the embedded catalog: %v", err)
+		logger.Info("⚠ Unable to fetch the live provider catalog; falling back to the catalog " +
+			"bundled with this CLI. Provider and module checks may be out of date.")
+		logger.Debugf("Provider catalog fetch failed: %v", err)
 
 		return ampyaml.WithCatalogProvider(catalog.NewDefaultCatalogProvider())
 	}
@@ -100,44 +135,40 @@ func catalogOption(ctx context.Context) ampyaml.Option {
 }
 
 // apiCheckerOptions wires the destination and provider-app checkers to the Ampersand
-// API. If no project is configured these checks are skipped, and the validator falls
-// back to emitting reminder warnings instead of hard errors. Failures fetching either
-// list are logged (debug) and treated as "checker unavailable" rather than fatal so
-// that offline/schema validation still succeeds.
-func apiCheckerOptions(ctx context.Context) []ampyaml.Option {
+// API. Without a project there is nothing to check them against, so those checks are
+// left out and the rest of validation runs offline. With a project the user is asking
+// for the manifest to be checked against that project, so a failure to fetch either
+// list is reported as an error: skipping the check would let validation report
+// success without ever having run it.
+func apiCheckerOptions(ctx context.Context) ([]ampyaml.Option, error) {
 	projectID := flags.GetProject()
 	if projectID == "" {
-		logger.Debugf("No project configured; skipping destination and provider-app checks. " +
-			"Pass --project to validate these against your Ampersand project.")
+		logger.Info("ℹ No project configured; skipping destination and provider-app checks. " +
+			"Pass --project to check those against your Ampersand project.")
 
-		return nil
+		return nil, nil
 	}
 
 	apiKey := flags.GetAPIKey()
 	client := request.NewAPIClient(projectID, &apiKey)
 
-	var opts []ampyaml.Option
-
 	destChecker, err := validate.NewDestinationChecker(ctx, client)
 	if err != nil {
-		logger.Debugf("Unable to fetch destinations for validation, skipping destination checks: %v", err)
-	} else {
-		opts = append(opts, ampyaml.WithDestinationChecker(destChecker))
+		return nil, fmt.Errorf("unable to list the destinations in project %q: %w", projectID, err)
 	}
 
 	appChecker, err := validate.NewProviderAppChecker(ctx, client)
 	if err != nil {
-		logger.Debugf("Unable to fetch provider apps for validation, skipping provider-app checks: %v", err)
-	} else {
-		opts = append(opts, ampyaml.WithProviderAppChecker(appChecker))
+		return nil, fmt.Errorf("unable to list the provider apps in project %q: %w", projectID, err)
 	}
 
-	return opts
+	return []ampyaml.Option{
+		ampyaml.WithDestinationChecker(destChecker),
+		ampyaml.WithProviderAppChecker(appChecker),
+	}, nil
 }
 
-func printValidationResult(manifestPath string, result *ampyaml.ValidationResult) {
-	logger.Infof("Validating: %s", manifestPath)
-
+func printValidationResult(result *ampyaml.ValidationResult) {
 	if result.Valid && len(result.Warnings) == 0 {
 		logger.Info("✓ Validation passed with no issues!")
 
@@ -162,9 +193,13 @@ func printValidationResult(manifestPath string, result *ampyaml.ValidationResult
 
 	logger.Info("")
 
-	if result.Valid {
+	switch {
+	case result.Valid:
 		logger.Infof("✓ Validation passed with %d warning(s)", len(result.Warnings))
-	} else {
+	case len(result.Errors) == 0:
+		logger.Infof("✗ Validation failed: %d warning(s) treated as errors by --strict",
+			len(result.Warnings))
+	default:
 		logger.Infof("✗ Validation failed with %d error(s) and %d warning(s)",
 			len(result.Errors), len(result.Warnings))
 	}
@@ -192,10 +227,6 @@ func printValidationIssue(num int, issue ampyaml.ValidationIssue) {
 
 func init() {
 	validateCmd.Flags().BoolVar(&validateStrict, "strict", false, "Treat warnings as errors")
-	validateCmd.Flags().BoolVar(&validateSkipProvider, "skip-provider", false,
-		"Skip provider-specific validation")
-	validateCmd.Flags().BoolVar(&validateSkipAsync, "skip-async", false,
-		"Skip async error-prevention validation")
 
 	rootCmd.AddCommand(validateCmd)
 }
