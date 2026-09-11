@@ -6,6 +6,11 @@ import (
 	"github.com/amp-labs/cli/openapi"
 )
 
+const (
+	objAccounts = "accounts"
+	objContacts = "contacts"
+)
+
 func TestGetRemovedReadObjects(t *testing.T) {
 	t.Parallel()
 
@@ -21,15 +26,15 @@ func TestGetRemovedReadObjects(t *testing.T) {
 				Read: &openapi.IntegrationRead{
 					Objects: &[]openapi.IntegrationObject{
 						{ObjectName: "Accounts"},
-						{ObjectName: "contacts"},
+						{ObjectName: objContacts},
 					},
 				},
 			},
 			newInteg: &openapi.Integration{
 				Read: &openapi.IntegrationRead{
 					Objects: &[]openapi.IntegrationObject{
-						{ObjectName: "accounts"},
-						{ObjectName: "contacts"},
+						{ObjectName: objAccounts},
+						{ObjectName: objContacts},
 					},
 				},
 			},
@@ -41,33 +46,33 @@ func TestGetRemovedReadObjects(t *testing.T) {
 				Read: &openapi.IntegrationRead{
 					Objects: &[]openapi.IntegrationObject{
 						{ObjectName: "AccounTs"},
-						{ObjectName: "contacts"},
+						{ObjectName: objContacts},
 					},
 				},
 			},
 			newInteg: &openapi.Integration{
 				Read: &openapi.IntegrationRead{
 					Objects: &[]openapi.IntegrationObject{
-						{ObjectName: "accounts"},
+						{ObjectName: objAccounts},
 					},
 				},
 			},
-			want: []string{"contacts"},
+			want: []string{objContacts},
 		},
 		{
 			name: "all objects removed",
 			oldRevision: &openapi.Integration{
 				Read: &openapi.IntegrationRead{
 					Objects: &[]openapi.IntegrationObject{
-						{ObjectName: "accounts"},
-						{ObjectName: "contacts"},
+						{ObjectName: objAccounts},
+						{ObjectName: objContacts},
 					},
 				},
 			},
 			newInteg: &openapi.Integration{
 				Read: nil,
 			},
-			want: []string{"accounts", "contacts"},
+			want: []string{objAccounts, objContacts},
 		},
 		{
 			name:        "no old read config",
@@ -75,7 +80,7 @@ func TestGetRemovedReadObjects(t *testing.T) {
 			newInteg: &openapi.Integration{
 				Read: &openapi.IntegrationRead{
 					Objects: &[]openapi.IntegrationObject{
-						{ObjectName: "accounts"},
+						{ObjectName: objAccounts},
 					},
 				},
 			},
@@ -87,7 +92,7 @@ func TestGetRemovedReadObjects(t *testing.T) {
 			newInteg: &openapi.Integration{
 				Read: &openapi.IntegrationRead{
 					Objects: &[]openapi.IntegrationObject{
-						{ObjectName: "accounts"},
+						{ObjectName: objAccounts},
 					},
 				},
 			},

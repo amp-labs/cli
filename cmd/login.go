@@ -55,8 +55,12 @@ func (h *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 
 		writer.WriteHeader(http.StatusOK)
 
+		// rsp is the login-success page rendered by clerk.getHTML, whose only
+		// interpolation is mustache's {{email}} -- the escaping form, so the claim
+		// value cannot inject markup. gosec's taint analysis cannot see through the
+		// template engine.
 		// nosemgrep: go.lang.security.audit.xss.no-direct-write-to-responsewriter.no-direct-write-to-responsewriter
-		_, _ = writer.Write([]byte(rsp))
+		_, _ = writer.Write([]byte(rsp)) //nolint:gosec // G705: template-escaped, see above
 
 		go func() {
 			// Tell the user we're done and then forcefully exit the program.
@@ -87,7 +91,10 @@ func processLogin(ctx context.Context, payload []byte, write bool) (string, stri
 
 	path := clerk.GetJwtPath()
 	if write {
-		err := os.WriteFile(path, pretty.Pretty(payload), JwtFilePermissions)
+		// path is the XDG config path for this stage (clerk.GetJwtPath). The only
+		// caller-influenced part is AMP_STAGE_OVERRIDE, an env var the user sets for
+		// themselves on their own machine, so there is no cross-trust-boundary taint.
+		err := os.WriteFile(path, pretty.Pretty(payload), JwtFilePermissions) //nolint:gosec // G703: user's own config path
 		if err != nil {
 			return "", "", err
 		}

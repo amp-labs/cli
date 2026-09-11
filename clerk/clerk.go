@@ -202,6 +202,7 @@ func FetchJwt(ctx context.Context) (string, error) { //nolint:funlen,cyclop
 			Domain:   GetClerkDomain(),
 			Secure:   true,
 			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
 		})
 	}
 

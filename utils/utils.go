@@ -46,8 +46,7 @@ func ReadStruct(r io.Reader, out any) (Format, error) {
 
 	// A JSON syntax error means the data may still be YAML, so fall through. Any other
 	// error means the data is JSON-shaped but invalid (e.g. a type mismatch); report it.
-	var se *json.SyntaxError
-	if !errors.As(err, &se) {
+	if _, ok := errors.AsType[*json.SyntaxError](err); !ok {
 		return Unknown, err
 	}
 
