@@ -1,11 +1,17 @@
 name: Linter
 run-name: ${{ github.actor }} is running the linter
 on: [push]
+env:
+  # amp-labs modules (connectors) use Git LFS; fetch them directly with git
+  # instead of proxy.golang.org, which serves LFS pointer files.
+  GOPRIVATE: "github.com/amp-labs/*"
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Set up Git LFS
+        run: git lfs install
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
           go-version-file: go.mod
