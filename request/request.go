@@ -16,7 +16,12 @@ import (
 	"github.com/amp-labs/cli/utils"
 )
 
-const clientName = "amp-cli"
+const (
+	clientName = "amp-cli"
+
+	headerContentType   = "Content-Type"
+	mimeApplicationJSON = "application/json"
+)
 
 type Client struct {
 	Client         *http.Client
@@ -209,7 +214,7 @@ func (c *Client) makeRequestAndParseJSONResult(req *http.Request, result any) (*
 	}
 
 	if res.StatusCode < 200 || res.StatusCode > 299 { //nolint:nestif
-		ct := res.Header.Get("Content-Type")
+		ct := res.Header.Get(headerContentType)
 		if len(ct) > 0 {
 			mt, _, err := mime.ParseMediaType(ct)
 			if err == nil {
@@ -291,7 +296,7 @@ func makeJSONPatchRequest(ctx context.Context, url string, headers []Header, bod
 
 	addDebugHeader(req)
 
-	headers = append(headers, Header{Key: "Content-Type", Value: "application/json"})
+	headers = append(headers, Header{Key: headerContentType, Value: mimeApplicationJSON})
 	req.ContentLength = int64(len(jBody))
 
 	return addAcceptJSONHeaders(req, headers)
@@ -310,7 +315,7 @@ func makeJSONPostRequest(ctx context.Context, url string, headers []Header, body
 
 	addDebugHeader(req)
 
-	headers = append(headers, Header{Key: "Content-Type", Value: "application/json"})
+	headers = append(headers, Header{Key: headerContentType, Value: mimeApplicationJSON})
 	req.ContentLength = int64(len(jBody))
 
 	return addAcceptJSONHeaders(req, headers)
@@ -329,7 +334,7 @@ func makeJSONPutRequest(ctx context.Context, url string, headers []Header, body 
 
 	addDebugHeader(req)
 
-	headers = append(headers, Header{Key: "Content-Type", Value: "application/json"})
+	headers = append(headers, Header{Key: headerContentType, Value: mimeApplicationJSON})
 	req.ContentLength = int64(len(jBody))
 
 	return addAcceptJSONHeaders(req, headers)
@@ -359,7 +364,7 @@ func addHeaders(req *http.Request, headers []Header) *http.Request {
 
 func addAcceptJSONHeaders(req *http.Request, headers []Header) (*http.Request, error) {
 	// Request JSON
-	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Accept", mimeApplicationJSON)
 
 	// Apply any custom headers
 	for _, hdr := range headers {

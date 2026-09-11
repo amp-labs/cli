@@ -359,8 +359,8 @@ func formatGlobalPromptMessage(integrations []integrationRemovedObjectsInfo) str
 		for _, info := range integrations {
 			objectList := strings.Join(info.removedObjects, ", ")
 			installationWord := pluralizer.Pluralize("installation", info.installationCount, false)
-			lines.WriteString(fmt.Sprintf("   • %s: %s (%d %s)\n",
-				info.integrationName, objectList, info.installationCount, installationWord))
+			fmt.Fprintf(&lines, "   • %s: %s (%d %s)\n",
+				info.integrationName, objectList, info.installationCount, installationWord)
 		}
 
 		message += lines.String()
@@ -378,11 +378,11 @@ func formatGlobalPromptMessage(integrations []integrationRemovedObjectsInfo) str
 func formatAffectedInstallations(groups []groupInfo, totalCount int) string {
 	var result strings.Builder
 	for _, g := range groups {
-		result.WriteString(fmt.Sprintf("\n    - %s (%s)", g.name, g.ref))
+		fmt.Fprintf(&result, "\n    - %s (%s)", g.name, g.ref)
 	}
 
 	if totalCount > len(groups) {
-		result.WriteString(fmt.Sprintf("\n    - and %d more", totalCount-len(groups)))
+		fmt.Fprintf(&result, "\n    - and %d more", totalCount-len(groups))
 	}
 
 	return result.String()

@@ -140,7 +140,7 @@ func openInEditor(ctx context.Context, data []byte) ([]byte, error) {
 	// vi/notepad fallback) and runs locally as the invoking user, so there is
 	// no untrusted input and no injection surface here.
 	// nosemgrep: go.lang.security.audit.dangerous-exec-command.dangerous-exec-command
-	cmd := exec.CommandContext(ctx, editor, tmpFile.Name())
+	cmd := exec.CommandContext(ctx, editor, tmpFile.Name()) //nolint:gosec // G702: user's own $EDITOR, see above
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

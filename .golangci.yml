@@ -11,6 +11,8 @@ linters:
     # Highly annoying. We'd need to whitelist all packages we import, which is a lot of work and adds very little value.
     - depguard
     # Annoying and unhelpful. Assumes uninitialized (zero-valued) fields are always a bug, which is plain wrong.
+    - exhaustruct_v5
+    # Deprecated alias of exhaustruct_v5; keep it off too so it doesn't emit a deprecation warning.
     - exhaustruct
     # Marks [TODO, FIXME, BUG] comments as errors. We use these, so this is not helpful - unless we decide this is a good policy.
     - godox
@@ -40,6 +42,8 @@ linters:
     - nilnil
     # Deprecated alias of wsl_v5; keep it off so only wsl_v5 runs (avoids a deprecation warning).
     - wsl
+    # Deprecated alias of gomodguard_v2; keep it off so only gomodguard_v2 runs (avoids a deprecation warning).
+    - gomodguard
   settings:
     ireturn:
       allow:
