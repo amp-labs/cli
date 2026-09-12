@@ -1,14 +1,19 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/amp-labs/cli/clerk"
@@ -21,6 +26,11 @@ import (
 
 const (
 	ServerPort = 3535
+)
+
+var (
+	errInvalidLoginCallback = errors.New("invalid callback URL")
+	errMissingLoginPayload  = errors.New("callback URL is missing its login payload")
 )
 
 type handler struct{}
@@ -110,15 +120,137 @@ func processLogin(ctx context.Context, payload []byte, write bool) (string, stri
 
 const ReadHeaderTimeoutSeconds = 3
 
-// loginCmd represents the login command.
-var loginCmd = &cobra.Command{ //nolint:gochecknoglobals
-	Use:   "login",
-	Short: "Log into an Ampersand account",
-	Long:  "Log into an Ampersand account.",
-	Run: func(cmd *cobra.Command, args []string) {
-		DoLogout(false)
-		doLogin()
-	},
+func newLoginCmd(
+	logout func(bool),
+	login func(),
+	headlessLogin func(context.Context),
+) *cobra.Command {
+	var headless bool
+
+	cmd := &cobra.Command{
+		Use:   "login",
+		Short: "Log into an Ampersand account",
+		Long:  "Log into an Ampersand account.",
+		Run: func(cmd *cobra.Command, args []string) {
+			logout(false)
+
+			if headless {
+				headlessLogin(cmd.Context())
+
+				return
+			}
+
+			login()
+		},
+	}
+
+	cmd.Flags().BoolVar(&headless, "headless", false, "Log in using a browser on another machine")
+
+	return cmd
+}
+
+var loginCmd = newLoginCmd(DoLogout, doLogin, doHeadlessLogin) //nolint:gochecknoglobals
+
+func doHeadlessLogin(ctx context.Context) {
+	// Reuse the hosted page's existing callback so this flow needs no new auth endpoint.
+	logger.Infof("Open %s in a browser.", getLoginURL())
+	logger.Info("After signing in, copy the localhost URL from your browser and paste it here.")
+	fmt.Fprint(os.Stdout, "Paste callback URL: ")
+
+	callback, err := readHiddenInput(os.Stdin)
+
+	fmt.Fprintln(os.Stdout)
+
+	if err != nil {
+		logger.FatalErr("Unable to read callback URL", err)
+	}
+
+	payload, err := parseLoginCallback(string(callback))
+	if err != nil {
+		logger.FatalErr("Unable to complete login", err)
+	}
+
+	_, email, err := processLogin(ctx, payload, true)
+	if err != nil {
+		logger.FatalErr("Unable to complete login", err)
+	}
+
+	logger.Info("Successfully logged in as " + email)
+}
+
+func readHiddenInput(input *os.File) ([]byte, error) {
+	state, err := term.MakeRaw(int(input.Fd()))
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		_ = term.Restore(int(input.Fd()), state)
+	}()
+
+	return readInputLine(input)
+}
+
+func readInputLine(reader io.Reader) ([]byte, error) {
+	const deleteCharacter = '\x7f'
+
+	var result []byte
+
+	buffered := bufio.NewReader(reader)
+
+	for {
+		character, err := buffered.ReadByte()
+		if err == nil {
+			switch character {
+			case '\r', '\n':
+				return result, nil
+			case '\b', deleteCharacter:
+				if len(result) > 0 {
+					result = result[:len(result)-1]
+				}
+			default:
+				result = append(result, character)
+			}
+
+			continue
+		}
+
+		if errors.Is(err, io.EOF) && len(result) > 0 {
+			return result, nil
+		}
+
+		return result, err
+	}
+}
+
+func parseLoginCallback(callback string) ([]byte, error) {
+	parsed, err := url.Parse(strings.TrimSpace(callback))
+	if err != nil {
+		return nil, fmt.Errorf("invalid callback URL: %w", err)
+	}
+
+	if parsed.Scheme != "http" ||
+		parsed.Host != fmt.Sprintf("localhost:%d", ServerPort) ||
+		parsed.Path != "/done" || parsed.Fragment != "" {
+		return nil, errInvalidLoginCallback
+	}
+
+	encoded, found := strings.CutPrefix(parsed.RawQuery, "p=")
+	if !found || encoded == "" || strings.Contains(encoded, "&") {
+		return nil, errMissingLoginPayload
+	}
+
+	encoded, err = url.PathUnescape(encoded)
+	if err != nil {
+		return nil, fmt.Errorf("invalid callback payload: %w", err)
+	}
+
+	payload, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return nil, fmt.Errorf("invalid callback payload: %w", err)
+	}
+
+	return payload, nil
 }
 
 func doLogin() {
@@ -132,18 +264,8 @@ func doLogin() {
 		if hasBrowser {
 			openBrowser(fmt.Sprintf("http://localhost:%d", ServerPort))
 		} else {
-			link := getLoginURL()
-
-			linkMsg := fmt.Sprintf("No browser detected, please open %s in your browser to log in.", link)
-			localhostMsg := fmt.Sprintf("NOTE: the login page will redirect to http://localhost:%d/...", ServerPort)
-
-			logger.Info(linkMsg)
-			logger.Info()
-			logger.Info(localhostMsg)
-			logger.Info("If this URL isn't accessible (e.g. you're using a remote server),")
-			logger.Info("the credentials won't be saved. It's best to run this command")
-			logger.Info("on a machine with a browser, but you can also overcome this using")
-			logger.Info("SSH port forwarding or a proxy.")
+			logger.Info("No browser detected.")
+			logger.Info("Stop this command and run `amp login --headless` to sign in from another machine.")
 		}
 	}
 
