@@ -2,6 +2,7 @@ package request
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -13,6 +14,8 @@ import (
 )
 
 var ApiVersion = "v1" //nolint:gochecknoglobals
+
+var ErrNoCurrentOrganization = errors.New("current organization is missing from user info")
 
 type APIClient struct {
 	Root      string
@@ -127,6 +130,32 @@ func (c *APIClient) GetMyInfo(ctx context.Context) (map[string]any, error) {
 	}
 
 	return myInfo, nil
+}
+
+func (c *APIClient) GetCurrentOrganization(ctx context.Context) (*Organization, error) {
+	myInfoURL := c.Root + "/my-info"
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	info := struct {
+		OrgRole struct {
+			Org Organization `json:"org"`
+		} `json:"orgRole"`
+	}{}
+
+	_, err = c.Client.Get(ctx, myInfoURL, &info, auth) //nolint:bodyclose
+	if err != nil {
+		return nil, err
+	}
+
+	if info.OrgRole.Org.Id == "" {
+		return nil, ErrNoCurrentOrganization
+	}
+
+	return &info.OrgRole.Org, nil
 }
 
 func (c *APIClient) DeleteIntegration(ctx context.Context, integrationId string) error {
@@ -253,6 +282,24 @@ func (c *APIClient) ListProjects(ctx context.Context) ([]*Project, error) {
 	}
 
 	return projects, nil
+}
+
+func (c *APIClient) CreateProject(ctx context.Context, params *CreateProjectParams) (*Project, error) {
+	createURL := c.Root + "/projects"
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var project Project
+
+	_, err = c.Client.Post(ctx, createURL, params, &project, auth) //nolint:bodyclose
+	if err != nil {
+		return nil, err
+	}
+
+	return &project, nil
 }
 
 func (c *APIClient) ListDestinations(ctx context.Context) ([]*Destination, error) {
