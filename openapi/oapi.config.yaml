@@ -4,3 +4,8 @@ generate:
   models: true
 output-options:
   skip-prune: true
+compatibility:
+  # All three specs are generated into one Go package, so unprefixed enum
+  # constants (e.g. "Header", "Query") collide across specs. Always prefix
+  # enum values with their type name (e.g. ApiKeyOptsAttachmentTypeHeader).
+  always-prefix-enum-values: true

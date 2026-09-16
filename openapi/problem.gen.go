@@ -11,22 +11,22 @@ import (
 
 // Defines values for InputValidationIssueIn.
 const (
-	Body   InputValidationIssueIn = "body"
-	Header InputValidationIssueIn = "header"
-	Path   InputValidationIssueIn = "path"
-	Query  InputValidationIssueIn = "query"
+	InputValidationIssueInBody   InputValidationIssueIn = "body"
+	InputValidationIssueInHeader InputValidationIssueIn = "header"
+	InputValidationIssueInPath   InputValidationIssueIn = "path"
+	InputValidationIssueInQuery  InputValidationIssueIn = "query"
 )
 
 // Valid indicates whether the value is a known member of the InputValidationIssueIn enum.
 func (e InputValidationIssueIn) Valid() bool {
 	switch e {
-	case Body:
+	case InputValidationIssueInBody:
 		return true
-	case Header:
+	case InputValidationIssueInHeader:
 		return true
-	case Path:
+	case InputValidationIssueInPath:
 		return true
-	case Query:
+	case InputValidationIssueInQuery:
 		return true
 	default:
 		return false

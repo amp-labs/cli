@@ -56,16 +56,16 @@ func (e DeleteEventEnabled) Valid() bool {
 
 // Defines values for DeliveryMode.
 const (
-	Auto      DeliveryMode = "auto"
-	OnRequest DeliveryMode = "onRequest"
+	DeliveryModeAuto      DeliveryMode = "auto"
+	DeliveryModeOnRequest DeliveryMode = "onRequest"
 )
 
 // Valid indicates whether the value is a known member of the DeliveryMode enum.
 func (e DeliveryMode) Valid() bool {
 	switch e {
-	case Auto:
+	case DeliveryModeAuto:
 		return true
-	case OnRequest:
+	case DeliveryModeOnRequest:
 		return true
 	default:
 		return false
@@ -119,40 +119,40 @@ func (e FieldDeletedEventEnabled) Valid() bool {
 
 // Defines values for FieldMetadataValueType.
 const (
-	Boolean      FieldMetadataValueType = "boolean"
-	Date         FieldMetadataValueType = "date"
-	Datetime     FieldMetadataValueType = "datetime"
-	Float        FieldMetadataValueType = "float"
-	Int          FieldMetadataValueType = "int"
-	MultiSelect  FieldMetadataValueType = "multiSelect"
-	Other        FieldMetadataValueType = "other"
-	Reference    FieldMetadataValueType = "reference"
-	SingleSelect FieldMetadataValueType = "singleSelect"
-	String       FieldMetadataValueType = "string"
+	FieldMetadataValueTypeBoolean      FieldMetadataValueType = "boolean"
+	FieldMetadataValueTypeDate         FieldMetadataValueType = "date"
+	FieldMetadataValueTypeDatetime     FieldMetadataValueType = "datetime"
+	FieldMetadataValueTypeFloat        FieldMetadataValueType = "float"
+	FieldMetadataValueTypeInt          FieldMetadataValueType = "int"
+	FieldMetadataValueTypeMultiSelect  FieldMetadataValueType = "multiSelect"
+	FieldMetadataValueTypeOther        FieldMetadataValueType = "other"
+	FieldMetadataValueTypeReference    FieldMetadataValueType = "reference"
+	FieldMetadataValueTypeSingleSelect FieldMetadataValueType = "singleSelect"
+	FieldMetadataValueTypeString       FieldMetadataValueType = "string"
 )
 
 // Valid indicates whether the value is a known member of the FieldMetadataValueType enum.
 func (e FieldMetadataValueType) Valid() bool {
 	switch e {
-	case Boolean:
+	case FieldMetadataValueTypeBoolean:
 		return true
-	case Date:
+	case FieldMetadataValueTypeDate:
 		return true
-	case Datetime:
+	case FieldMetadataValueTypeDatetime:
 		return true
-	case Float:
+	case FieldMetadataValueTypeFloat:
 		return true
-	case Int:
+	case FieldMetadataValueTypeInt:
 		return true
-	case MultiSelect:
+	case FieldMetadataValueTypeMultiSelect:
 		return true
-	case Other:
+	case FieldMetadataValueTypeOther:
 		return true
-	case Reference:
+	case FieldMetadataValueTypeReference:
 		return true
-	case SingleSelect:
+	case FieldMetadataValueTypeSingleSelect:
 		return true
-	case String:
+	case FieldMetadataValueTypeString:
 		return true
 	default:
 		return false

@@ -5,13 +5,13 @@ package openapi
 
 // Defines values for AccessTokenOptsAttachmentType.
 const (
-	AccessTokenHeaderAttachment AccessTokenOptsAttachmentType = "accessTokenHeaderAttachment"
+	AccessTokenOptsAttachmentTypeAccessTokenHeaderAttachment AccessTokenOptsAttachmentType = "accessTokenHeaderAttachment"
 )
 
 // Valid indicates whether the value is a known member of the AccessTokenOptsAttachmentType enum.
 func (e AccessTokenOptsAttachmentType) Valid() bool {
 	switch e {
-	case AccessTokenHeaderAttachment:
+	case AccessTokenOptsAttachmentTypeAccessTokenHeaderAttachment:
 		return true
 	default:
 		return false
@@ -20,16 +20,16 @@ func (e AccessTokenOptsAttachmentType) Valid() bool {
 
 // Defines values for ApiKeyAsBasicOptsFieldUsed.
 const (
-	PasswordField ApiKeyAsBasicOptsFieldUsed = "password"
-	UsernameField ApiKeyAsBasicOptsFieldUsed = "username"
+	ApiKeyAsBasicOptsFieldUsedPasswordField ApiKeyAsBasicOptsFieldUsed = "password"
+	ApiKeyAsBasicOptsFieldUsedUsernameField ApiKeyAsBasicOptsFieldUsed = "username"
 )
 
 // Valid indicates whether the value is a known member of the ApiKeyAsBasicOptsFieldUsed enum.
 func (e ApiKeyAsBasicOptsFieldUsed) Valid() bool {
 	switch e {
-	case PasswordField:
+	case ApiKeyAsBasicOptsFieldUsedPasswordField:
 		return true
-	case UsernameField:
+	case ApiKeyAsBasicOptsFieldUsedUsernameField:
 		return true
 	default:
 		return false
@@ -38,16 +38,16 @@ func (e ApiKeyAsBasicOptsFieldUsed) Valid() bool {
 
 // Defines values for ApiKeyOptsAttachmentType.
 const (
-	Header ApiKeyOptsAttachmentType = "header"
-	Query  ApiKeyOptsAttachmentType = "query"
+	ApiKeyOptsAttachmentTypeHeader ApiKeyOptsAttachmentType = "header"
+	ApiKeyOptsAttachmentTypeQuery  ApiKeyOptsAttachmentType = "query"
 )
 
 // Valid indicates whether the value is a known member of the ApiKeyOptsAttachmentType enum.
 func (e ApiKeyOptsAttachmentType) Valid() bool {
 	switch e {
-	case Header:
+	case ApiKeyOptsAttachmentTypeHeader:
 		return true
-	case Query:
+	case ApiKeyOptsAttachmentTypeQuery:
 		return true
 	default:
 		return false
@@ -56,28 +56,28 @@ func (e ApiKeyOptsAttachmentType) Valid() bool {
 
 // Defines values for AuthType.
 const (
-	ApiKey AuthType = "apiKey"
-	Basic  AuthType = "basic"
-	Custom AuthType = "custom"
-	Jwt    AuthType = "jwt"
-	None   AuthType = "none"
-	Oauth2 AuthType = "oauth2"
+	AuthTypeApiKey AuthType = "apiKey"
+	AuthTypeBasic  AuthType = "basic"
+	AuthTypeCustom AuthType = "custom"
+	AuthTypeJwt    AuthType = "jwt"
+	AuthTypeNone   AuthType = "none"
+	AuthTypeOauth2 AuthType = "oauth2"
 )
 
 // Valid indicates whether the value is a known member of the AuthType enum.
 func (e AuthType) Valid() bool {
 	switch e {
-	case ApiKey:
+	case AuthTypeApiKey:
 		return true
-	case Basic:
+	case AuthTypeBasic:
 		return true
-	case Custom:
+	case AuthTypeCustom:
 		return true
-	case Jwt:
+	case AuthTypeJwt:
 		return true
-	case None:
+	case AuthTypeNone:
 		return true
-	case Oauth2:
+	case AuthTypeOauth2:
 		return true
 	default:
 		return false
@@ -86,19 +86,19 @@ func (e AuthType) Valid() bool {
 
 // Defines values for CustomAuthInputFieldType.
 const (
-	FieldTypePassword CustomAuthInputFieldType = "fieldTypePassword"
-	FieldTypeSelect   CustomAuthInputFieldType = "fieldTypeSelect"
-	FieldTypeText     CustomAuthInputFieldType = "fieldTypeText"
+	CustomAuthInputFieldTypeFieldTypePassword CustomAuthInputFieldType = "fieldTypePassword"
+	CustomAuthInputFieldTypeFieldTypeSelect   CustomAuthInputFieldType = "fieldTypeSelect"
+	CustomAuthInputFieldTypeFieldTypeText     CustomAuthInputFieldType = "fieldTypeText"
 )
 
 // Valid indicates whether the value is a known member of the CustomAuthInputFieldType enum.
 func (e CustomAuthInputFieldType) Valid() bool {
 	switch e {
-	case FieldTypePassword:
+	case CustomAuthInputFieldTypeFieldTypePassword:
 		return true
-	case FieldTypeSelect:
+	case CustomAuthInputFieldTypeFieldTypeSelect:
 		return true
-	case FieldTypeText:
+	case CustomAuthInputFieldTypeFieldTypeText:
 		return true
 	default:
 		return false
@@ -107,22 +107,22 @@ func (e CustomAuthInputFieldType) Valid() bool {
 
 // Defines values for Oauth2OptsGrantType.
 const (
-	AuthorizationCode     Oauth2OptsGrantType = "authorizationCode"
-	AuthorizationCodePKCE Oauth2OptsGrantType = "authorizationCodePKCE"
-	ClientCredentials     Oauth2OptsGrantType = "clientCredentials"
-	Password              Oauth2OptsGrantType = "password"
+	Oauth2OptsGrantTypeAuthorizationCode     Oauth2OptsGrantType = "authorizationCode"
+	Oauth2OptsGrantTypeAuthorizationCodePKCE Oauth2OptsGrantType = "authorizationCodePKCE"
+	Oauth2OptsGrantTypeClientCredentials     Oauth2OptsGrantType = "clientCredentials"
+	Oauth2OptsGrantTypePassword              Oauth2OptsGrantType = "password"
 )
 
 // Valid indicates whether the value is a known member of the Oauth2OptsGrantType enum.
 func (e Oauth2OptsGrantType) Valid() bool {
 	switch e {
-	case AuthorizationCode:
+	case Oauth2OptsGrantTypeAuthorizationCode:
 		return true
-	case AuthorizationCodePKCE:
+	case Oauth2OptsGrantTypeAuthorizationCodePKCE:
 		return true
-	case ClientCredentials:
+	case Oauth2OptsGrantTypeClientCredentials:
 		return true
-	case Password:
+	case Oauth2OptsGrantTypePassword:
 		return true
 	default:
 		return false
