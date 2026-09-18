@@ -33,11 +33,10 @@ var validateCmd = &cobra.Command{ //nolint:gochecknoglobals
 	Long: "Validate an amp.yaml manifest without deploying it.\n\n" +
 		"You can provide a path to the folder that contains amp.yaml or a path to the file " +
 		"itself; if omitted the current directory is used.\n\n" +
-		"When a project is configured (via --project), destinations and provider apps " +
+		"When a project is configured via the --project flag, destinations and provider apps " +
 		"referenced by the manifest are checked against your Ampersand project, and the " +
-		"command fails if those checks can't be run. Without a project only schema and " +
-		"best-practice checks run.\n\n" +
-		"Exits 0 when the manifest is clean and 1 otherwise, so it can gate CI.",
+		"command fails if those checks can't be run.\n\n" +
+		"Exits 0 when the manifest is clean and 1 otherwise, so this command can be used in CI/CD pipelines.",
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		source := "."
