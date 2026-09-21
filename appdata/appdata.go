@@ -2,7 +2,9 @@ package appdata
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 
 	"github.com/adrg/xdg"
@@ -16,35 +18,34 @@ const fileName = "Ampersand/config.json"
 // IMPORTANT: Do not modify the JSON labels in this struct without ensuring backwards
 // compatibility, since those strings are written to the user's config file on their computer.
 type Config struct {
-	Token Token `json:"token"`
-}
-
-// Token represents a JWT token.
-type Token struct {
-	Iss string `json:"iss"`
-	Sub string `json:"sub"`
-	Aud string `json:"aud"`
-	Iat int    `json:"iat"`
-	Exp int    `json:"exp"`
+	// Region is the Ampersand deployment region the CLI talks to, e.g. "us" or "eu".
+	// An empty value means no region has been selected and the default ("us") applies.
+	Region string `json:"region"`
 }
 
 // Get returns the user's existing config, or an empty config if the file doesn't exist.
 func Get() (Config, error) {
-	path, err := getExistingFilePath()
+	path, err := configFilePath()
 	if err != nil {
 		return Config{}, err
 	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return Config{}, fmt.Errorf("can't read config file: %w", err)
+		if errors.Is(err, fs.ErrNotExist) {
+			// no config file exists yet, which is not an error:
+			// the caller is returned an empty Config object, and Set() will create the file
+			return Config{}, nil
+		}
+
+		return Config{}, fmt.Errorf("can't read config file at %s: %w", path, err)
 	}
 
 	var c Config
 
 	err = json.Unmarshal(data, &c)
 	if err != nil {
-		return Config{}, fmt.Errorf("can't parse config: %w", err)
+		return Config{}, fmt.Errorf("can't parse config at %s: %w", path, err)
 	}
 
 	return c, nil
@@ -69,12 +70,9 @@ func Set(config Config) error {
 }
 
 func setEntireConfig(config Config) error {
-	path, err := getExistingFilePath()
+	path, err := configFilePath()
 	if err != nil {
-		path, err = getPathForNewFile()
-		if err != nil {
-			return fmt.Errorf("can't get path for new config file: %w", err)
-		}
+		return err
 	}
 
 	js, err := json.Marshal(config)
@@ -85,12 +83,15 @@ func setEntireConfig(config Config) error {
 	return writeFile(path, js)
 }
 
-func getPathForNewFile() (string, error) {
-	return xdg.ConfigFile(fileName)
-}
+// configFilePath returns the path of the user's config file in the XDG config home, creating
+// its parent directory if needed. This mirrors how clerk.GetJwtPath locates jwt.json.
+func configFilePath() (string, error) {
+	path, err := xdg.ConfigFile(fileName)
+	if err != nil {
+		return "", fmt.Errorf("can't determine config file path: %w", err)
+	}
 
-func getExistingFilePath() (string, error) {
-	return xdg.SearchConfigFile(fileName)
+	return path, nil
 }
 
 const perm = 0o600 // Regular file with read/write permission for owner
