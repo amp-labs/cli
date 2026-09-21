@@ -201,6 +201,34 @@ func (c *APIClient) ListConnections(ctx context.Context) ([]*Connection, error) 
 	return connections, nil
 }
 
+// providerCatalogURL returns the URL of the public provider catalog endpoint.
+// The endpoint is not project-scoped and requires no authentication.
+func providerCatalogURL() string {
+	rootURL, ok := os.LookupEnv("AMP_API_URL")
+	if !ok {
+		rootURL = vars.ApiURL
+	}
+
+	return fmt.Sprintf("%s/%s/providers", rootURL, ApiVersion)
+}
+
+// FetchProviderCatalog fetches the live ("dynamic") provider catalog from the
+// Ampersand API and unmarshals it into target. The catalog changes several times a
+// day, so callers should prefer it over any catalog compiled into a dependency. The
+// endpoint is public (no auth) and not project-scoped, so this works without a
+// configured project or an active login session. target is typically a
+// *providers.CatalogType from the connectors package.
+func FetchProviderCatalog(ctx context.Context, target any) error {
+	client := NewRequestClient()
+
+	_, err := client.Get(ctx, providerCatalogURL(), target) //nolint:bodyclose
+	if err != nil {
+		return fmt.Errorf("error fetching provider catalog: %w", err)
+	}
+
+	return nil
+}
+
 func (c *APIClient) GetCatalog(ctx context.Context) (openapi.CatalogType, error) {
 	catalogURL := c.Root + "/providers"
 
