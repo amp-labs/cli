@@ -98,6 +98,17 @@ type Project struct {
 	OrgId      string    `json:"orgId"`
 }
 
+type CreateProjectParams struct {
+	AppName string `json:"appName"`
+	Name    string `json:"name"`
+	OrgId   string `json:"orgId"`
+}
+
+type Organization struct {
+	Id    string `json:"id"`
+	Label string `json:"label"`
+}
+
 type Destination struct {
 	Id         string           `json:"id"`
 	ProjectId  string           `json:"projectId"`
