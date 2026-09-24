@@ -56,7 +56,23 @@ func InitAndBindFormatFlag(cmd *cobra.Command) error {
 }
 
 func GetOutputFormat() utils.Format {
-	switch strings.ToLower(viper.GetString("format")) {
+	return parseOutputFormat(viper.GetString("format"))
+}
+
+// GetOutputFormatForCommand reads the format flag from the command that owns it.
+// Format flags are local to each command, so this avoids another command's Viper
+// binding changing the selected output format.
+func GetOutputFormatForCommand(cmd *cobra.Command) utils.Format {
+	format, err := cmd.Flags().GetString("format")
+	if err != nil {
+		return utils.Unknown
+	}
+
+	return parseOutputFormat(format)
+}
+
+func parseOutputFormat(format string) utils.Format {
+	switch strings.ToLower(format) {
 	case "json":
 		return utils.JSON
 	case "yaml", "yml":
