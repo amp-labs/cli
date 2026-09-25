@@ -159,6 +159,21 @@ func (e FieldMetadataValueType) Valid() bool {
 	}
 }
 
+// Defines values for HydratedIntegrationObjectEnabled.
+const (
+	HydratedIntegrationObjectEnabledAlways HydratedIntegrationObjectEnabled = "always"
+)
+
+// Valid indicates whether the value is a known member of the HydratedIntegrationObjectEnabled enum.
+func (e HydratedIntegrationObjectEnabled) Valid() bool {
+	switch e {
+	case HydratedIntegrationObjectEnabledAlways:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for IntegrationObjectEnabled.
 const (
 	IntegrationObjectEnabledAlways IntegrationObjectEnabled = "always"
@@ -427,6 +442,9 @@ type HydratedIntegrationObject struct {
 	// DisplayName Example: Account
 	DisplayName string `json:"displayName"`
 
+	// Enabled If set to `always`, Ampersand reads this object for every installation even if the customer never selects it (or it isn't present) in the installation config.
+	Enabled *HydratedIntegrationObjectEnabled `json:"enabled,omitempty"`
+
 	// Error Error message if there was an issue hydrating this object.
 	Error string `json:"error,omitempty"`
 
@@ -449,6 +467,9 @@ type HydratedIntegrationObject struct {
 	// Schedule Example: */10 * * * *
 	Schedule string `json:"schedule"`
 }
+
+// HydratedIntegrationObjectEnabled If set to `always`, Ampersand reads this object for every installation even if the customer never selects it (or it isn't present) in the installation config.
+type HydratedIntegrationObjectEnabled string
 
 // HydratedIntegrationProxy defines model for HydratedIntegrationProxy.
 type HydratedIntegrationProxy struct {
