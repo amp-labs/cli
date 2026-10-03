@@ -61,7 +61,7 @@ nfpms:
     package_name: ampersand-cli
     file_name_template: "{{ .ConventionalFileName }}"
     vendor: Ampersand
-    homepage: https://www.withampersand.com/
+    homepage: https://www.ampersand.ai
     maintainer: Ampersand Team <support@withampersand.com>
     description: |-
       The CLI for Ampersand
