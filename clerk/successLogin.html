@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>login success</title>
+    <title>Login Success</title>
     <style>
         body {
             display: flex;
@@ -9,7 +9,13 @@
             height: 100vh;
             margin: 0;
             padding: 0;
-            font-family: Display, sans-serif;    
+            font-family: Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif;
+            /* Brand colors */
+            --color-brand-charcoal: #2B2B2B;
+            --color-brand-cream-100: #FDFBF9;
+            --color-brand-butter-300: #F3F89B;
+            background-color: var(--color-brand-charcoal);
+            color: var(--color-brand-cream-100);
         }
         .navbar {
             display: flex;
@@ -17,13 +23,6 @@
             align-items: center;
             padding: 1.5rem 3rem;
             height: 3rem;
-        }
-        .logo {
-            font-family: "Helvetica Neue";
-            color: #1D1D1D;
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: 0;
         }
         .content {
             display: flex;
@@ -44,7 +43,7 @@
         .line2 {
             font-size: 2rem;
             font-weight: 700;
-            color: #4F1EB8;
+            color: var(--color-brand-butter-300);
         }
         .line3 {
             font-weight: 300;
@@ -53,32 +52,28 @@
         }
         .minimal-button {
             background-color: transparent;
-            color: black;
-            border: none;
+            color: var(--color-brand-cream-100);
             padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
             font-size: 1rem;
             cursor: pointer;
             transition: all ease .3s;
-            border: 1px solid black;
+            border: 1px solid var(--color-brand-cream-100);
             text-decoration: none;
         }
         .minimal-button:hover {
-            background-color: #6F3ED8;
-            color: white;
+            background-color: var(--color-brand-butter-300);
+            border-color: var(--color-brand-butter-300);
+            color: var(--color-brand-charcoal);
         }
     </style>
 </head>
 <body>
-    <div class="navbar">
-        <span class="logo">Ampersand</span>
-    </div>
     <div class="content">
         <div class="content-center">
             <h2 class="line1">Successfully logged in as</h2>
             <p class="line2">{{email}}</p>
             <p class="line3">You can close this tab and return to the CLI.</p>
-            <a class="minimal-button" href="https://docs.withampersand.com" target="_blank">Read docs</a>
+            <a class="minimal-button" href="https://docs.ampersand.ai" target="_blank">Read docs</a>
         </div>
     </div>
 </body>
