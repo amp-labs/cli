@@ -37,7 +37,8 @@ var validateCmd = &cobra.Command{ //nolint:gochecknoglobals
 		"referenced by the manifest are checked against your Ampersand project, and the " +
 		"command fails if those checks can't be run.\n\n" +
 		"Exits 0 when the manifest is clean and 1 otherwise, so this command can be used in CI/CD pipelines.",
-	Args: cobra.MaximumNArgs(1),
+	Hidden: true,
+	Args:   cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		source := "."
 		if len(args) > 0 {
