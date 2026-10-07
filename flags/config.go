@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/amp-labs/cli/region"
 	"github.com/amp-labs/cli/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -19,6 +20,9 @@ func Init(rootCmd *cobra.Command) error {
 	rootCmd.PersistentFlags().BoolP("debug", "d", false, "Enable debug logging mode, defaults to false.")
 	rootCmd.PersistentFlags().StringP("project", "p", "", "Ampersand project name or ID")
 	rootCmd.PersistentFlags().StringP("key", "k", "", "Ampersand API key")
+	rootCmd.PersistentFlags().StringP(region.FlagName, "r", "",
+		"Ampersand region to talk to, e.g. "+strings.Join(region.Known(), " or ")+". "+
+			"If never set, defaults to "+string(region.Default)+".")
 
 	err := viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
 	if err != nil {
@@ -40,7 +44,9 @@ func Init(rootCmd *cobra.Command) error {
 		panic(err)
 	}
 
-	return nil
+	// Unlike --key, the region's environment variable (AMP_REIGON) is not bound here,
+	// as viper would then rank it above the 'amp set:region' saved/config region, when we want it ranked below
+	return viper.BindPFlag(region.FlagName, rootCmd.PersistentFlags().Lookup(region.FlagName))
 }
 
 // InitAndBindFormatFlag initializes and binds the format flag to the provided command.
@@ -91,4 +97,19 @@ func GetProjectOrFail() string {
 
 func GetAPIKey() string {
 	return viper.GetString("key")
+}
+
+// GetRegion returns the region this process talks to.
+// PersistentPreRun resolves it, calls SetRegion, and then this function returns that value.
+func GetRegion() region.Region {
+	if resolved := viper.GetString(region.FlagName); resolved != "" {
+		return region.Region(resolved)
+	}
+
+	return region.Default
+}
+
+// SetRegion records the resolved region for the rest of the process.
+func SetRegion(selected region.Region) {
+	viper.Set(region.FlagName, string(selected))
 }
