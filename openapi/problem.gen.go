@@ -98,7 +98,7 @@ type ApiProblem struct {
 
 	// SupportUrl A URL to contact for support
 	//
-	// Example: https://withampersand.com/support
+	// Example: mailto:support@withampersand.com
 	SupportUrl *string `json:"supportUrl,omitempty"`
 
 	// Time The time the problem occurred, formatted as RFC-3339
