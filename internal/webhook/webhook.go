@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -56,6 +57,10 @@ func ParseEvent(event string) (provider, eventName string) {
 
 // PrettyPrintJSON formats and prints JSON data to stdout with colors.
 func PrettyPrintJSON(data []byte) error {
+	return PrettyPrintJSONTo(os.Stdout, data)
+}
+
+func PrettyPrintJSONTo(writer io.Writer, data []byte) error {
 	var prettyJSON bytes.Buffer
 
 	err := json.Indent(&prettyJSON, data, "", "  ")
@@ -63,8 +68,8 @@ func PrettyPrintJSON(data []byte) error {
 		return err
 	}
 
-	fmt.Fprint(os.Stdout, "\n→ Received webhook event:\n"+prettyJSON.String()+"\n")
-	fmt.Fprint(os.Stdout, "------------------------------------------\n")
+	fmt.Fprint(writer, "\n→ Received webhook event:\n"+prettyJSON.String()+"\n")
+	fmt.Fprint(writer, "------------------------------------------\n")
 
 	return nil
 }
