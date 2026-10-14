@@ -183,6 +183,33 @@ func (c *APIClient) ListInstallations(ctx context.Context, integrationId string)
 	return installations, nil
 }
 
+func (c *APIClient) CreateInstallation(
+	ctx context.Context,
+	integrationId string,
+	params *CreateInstallationParams,
+) (*Installation, error) {
+	createURL := fmt.Sprintf(
+		"%s/projects/%s/integrations/%s/installations",
+		c.Root,
+		c.ProjectId,
+		integrationId,
+	)
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var installation Installation
+
+	_, err = c.Client.Post(ctx, createURL, params, &installation, auth) //nolint:bodyclose
+	if err != nil {
+		return nil, err
+	}
+
+	return &installation, nil
+}
+
 func (c *APIClient) ListConnections(ctx context.Context) ([]*Connection, error) {
 	listURL := fmt.Sprintf("%s/projects/%s/connections", c.Root, c.ProjectId)
 
