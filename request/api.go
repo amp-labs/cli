@@ -183,6 +183,31 @@ func (c *APIClient) ListInstallations(ctx context.Context, integrationId string)
 	return installations, nil
 }
 
+func (c *APIClient) ListOperations(
+	ctx context.Context, integrationId string, installationId string,
+) ([]*Operation, error) {
+	listURL := fmt.Sprintf(
+		"%s/projects/%s/integrations/%s/installations/%s/operations",
+		c.Root, c.ProjectId, integrationId, installationId,
+	)
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	response := struct {
+		Results []*Operation `json:"results"`
+	}{}
+
+	_, err = c.Client.Get(ctx, listURL, &response, auth) //nolint:bodyclose
+	if err != nil {
+		return nil, err
+	}
+
+	return response.Results, nil
+}
+
 func (c *APIClient) ListConnections(ctx context.Context) ([]*Connection, error) {
 	listURL := fmt.Sprintf("%s/projects/%s/connections", c.Root, c.ProjectId)
 

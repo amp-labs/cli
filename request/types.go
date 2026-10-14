@@ -20,6 +20,17 @@ type Installation struct {
 	HealthStatus  string      `json:"healthStatus"`
 }
 
+type Operation struct {
+	Id             string     `json:"id"`
+	InstallationId string     `json:"installationId"`
+	ActionType     string     `json:"actionType"`
+	Status         string     `json:"status"`
+	Resource       string     `json:"resource"`
+	ReadType       string     `json:"readType"`
+	CreateTime     time.Time  `json:"createTime"`
+	UpdateTime     *time.Time `json:"updateTime"`
+}
+
 type Group struct {
 	GroupRef   string    `json:"groupRef"`
 	GroupName  string    `json:"groupName"`
