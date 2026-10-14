@@ -55,6 +55,13 @@ type ProviderApp struct {
 	ProjectId    string    `json:"projectId"`
 }
 
+type CreateProviderAppParams struct {
+	Provider     string   `json:"provider"`
+	ClientId     string   `json:"clientId"`
+	ClientSecret string   `json:"clientSecret"`
+	Scopes       []string `json:"scopes,omitempty"`
+}
+
 type Config struct {
 	Id             string    `json:"id"`
 	RevisionId     string    `json:"revisionId"`
