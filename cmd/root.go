@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
 	"github.com/spf13/cobra"
@@ -21,7 +23,7 @@ var rootCmd = &cobra.Command{ //nolint:gochecknoglobals
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		return
+		os.Exit(1)
 	}
 }
 
