@@ -20,6 +20,11 @@ type Installation struct {
 	HealthStatus  string      `json:"healthStatus"`
 }
 
+type PatchInstallation struct {
+	Installation map[string]any `json:"installation"`
+	UpdateMask   []string       `json:"updateMask"`
+}
+
 type Group struct {
 	GroupRef   string    `json:"groupRef"`
 	GroupName  string    `json:"groupName"`
