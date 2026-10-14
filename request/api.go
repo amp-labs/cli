@@ -129,6 +129,27 @@ func (c *APIClient) GetMyInfo(ctx context.Context) (map[string]any, error) {
 	return myInfo, nil
 }
 
+func (c *APIClient) GenerateOAuthAuthorizationURL(
+	ctx context.Context,
+	params *OAuthAuthorizationURLParams,
+) (string, error) {
+	oauthURL := c.Root + "/oauth-connect"
+
+	auth, err := c.getAuthHeader(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	var authorizationURL string
+
+	_, err = c.Client.Post(ctx, oauthURL, params, &authorizationURL, auth) //nolint:bodyclose
+	if err != nil {
+		return "", err
+	}
+
+	return authorizationURL, nil
+}
+
 func (c *APIClient) DeleteIntegration(ctx context.Context, integrationId string) error {
 	delURL := fmt.Sprintf("%s/projects/%s/integrations/%s", c.Root, c.ProjectId, integrationId)
 
