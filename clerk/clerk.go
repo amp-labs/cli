@@ -15,7 +15,9 @@ import (
 
 	"github.com/adrg/xdg"
 	"github.com/alexkappa/mustache"
+	"github.com/amp-labs/cli/flags"
 	"github.com/amp-labs/cli/logger"
+	"github.com/amp-labs/cli/region"
 	"github.com/amp-labs/cli/utils"
 	"github.com/amp-labs/cli/vars"
 	"github.com/clerkinc/clerk-sdk-go/clerk"
@@ -91,7 +93,7 @@ func GetClerkRootURL() string {
 		return clerkRoot
 	}
 
-	return vars.ClerkRootURL
+	return flags.GetRegion().RegionalizeURL(vars.ClerkRootURL)
 }
 
 func GetSessionURL(data *LoginData) string {
@@ -102,14 +104,26 @@ func GetSessionURL(data *LoginData) string {
 	return fmt.Sprintf(ClientSessionPathDev, GetClerkRootURL(), data.Token)
 }
 
+// GetJwtFile returns the config path of the file holding the stored JWT.
+//
+// Credentials are scoped to the region and stage they were issued for.
+// The US paths are unchanged from before regions existed, to ensure backwards compatibility.
 func GetJwtFile() string {
 	stage := utils.GetStage()
+	reg := flags.GetRegion()
 
-	if stage == "prod" {
-		return "amp/jwt.json"
+	// default assumption is US region and prod stage, for backwards compatibility
+	name := "jwt"
+
+	if reg != region.Default {
+		name += "-" + string(reg)
 	}
 
-	return fmt.Sprintf("amp/jwt-%s.json", stage)
+	if stage != "prod" {
+		name += "-" + stage
+	}
+
+	return "amp/" + name + ".json"
 }
 
 // GetJwtPath returns the path to the jwt.json file where the JWT token is stored.

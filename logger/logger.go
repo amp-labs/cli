@@ -16,6 +16,16 @@ func Infof(msg string, a ...any) {
 	Info(fmt.Sprintf(msg, a...))
 }
 
+// Warn prints a warning to stderr, so that it never mixes into output a caller may be
+// piping or parsing (e.g. 'amp get:region', or a list command with --format json).
+func Warn(msg string) {
+	fmt.Fprintf(os.Stderr, "Warning: %s\n", msg)
+}
+
+func Warnf(msg string, a ...any) {
+	Warn(fmt.Sprintf(msg, a...))
+}
+
 func Debug(msg string) {
 	if flags.GetDebugMode() {
 		fmt.Fprintf(os.Stdout, "%s DEBUG: %s\n", time.Now().Format(time.RFC3339), msg)
