@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -24,21 +25,23 @@ var (
 	ErrFailedToGetTCPAddress = errors.New("failed to get TCP address")
 	forwardURL               string
 	listenAddr               string
+	showPayload              bool
 	listenCommand            = &cobra.Command{
 		Use:   "listen",
-		Short: "Listen for webhooks locally",
-		Long: `Listen for webhooks locally and forward them to your application.
-This command starts a local webhook server that receives events and forwards them to your application.
-It's designed for local development and testing.`,
-		Hidden: true,
-		RunE:   runListen,
+		Short: "Receive webhook deliveries locally",
+		Long: `Receive webhook deliveries on a local HTTP server.
+This command does not create a public route or change an Ampersand destination.
+Use amp tunnel to route a destination to this listener.`,
+		RunE: runListen,
 	}
 )
 
 func init() {
-	listenCommand.Flags().StringVar(&forwardURL, "forward-to", "http://localhost:4000/webhook",
-		"URL to forward webhooks to")
+	listenCommand.Flags().StringVar(&forwardURL, "forward-to", "", "Optional URL to forward webhooks to")
 	listenCommand.Flags().StringVar(&listenAddr, "listen", "127.0.0.1:0", "Address to listen on (default is random port)")
+	listenCommand.Flags().BoolVar(
+		&showPayload, "show-payload", false, "Print full webhook payloads, including provider field values",
+	)
 	rootCmd.AddCommand(listenCommand)
 }
 
@@ -93,7 +96,11 @@ func runListen(cmd *cobra.Command, args []string) error {
 
 	// Print the listen address
 	fmt.Fprint(os.Stdout, "🎧 Listening on "+addr.IP.String()+":"+port+"\n")
-	fmt.Fprint(os.Stdout, "ℹ️  Forwarding to: "+forwardURL+"\n")
+
+	if forwardURL != "" {
+		fmt.Fprint(os.Stdout, "ℹ️  Forwarding to: "+forwardURL+"\n")
+	}
+
 	fmt.Fprint(os.Stdout, "Press Ctrl+C to stop\n")
 
 	// Wait for interrupt signal
@@ -158,6 +165,12 @@ func clearListenerPort() {
 }
 
 func handleWebhook(writer http.ResponseWriter, req *http.Request) {
+	handleWebhookWithOptions(writer, req, os.Stdout, forwardURL, showPayload)
+}
+
+func handleWebhookWithOptions(
+	writer http.ResponseWriter, req *http.Request, logWriter io.Writer, forwardTo string, includePayload bool,
+) {
 	// Only accept POST requests
 	if req.Method != http.MethodPost {
 		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
@@ -176,15 +189,19 @@ func handleWebhook(writer http.ResponseWriter, req *http.Request) {
 
 	req.Body.Close()
 
-	// Log the webhook payload
-
-	err = webhook.PrettyPrintJSON(body)
+	err = logWebhook(logWriter, req, body, includePayload)
 	if err != nil {
-		logger.FatalErr("error pretty printing JSON", err)
+		logger.FatalErr("error logging webhook", err)
+	}
+
+	if forwardTo == "" {
+		writer.WriteHeader(http.StatusNoContent)
+
+		return
 	}
 
 	// Forward the request to the application
-	forwardReq, err := http.NewRequestWithContext(req.Context(), http.MethodPost, forwardURL, bytes.NewReader(body))
+	forwardReq, err := http.NewRequestWithContext(req.Context(), http.MethodPost, forwardTo, bytes.NewReader(body))
 	if err != nil {
 		logger.FatalErr("error creating forward request", err)
 		http.Error(writer, "Internal server error", http.StatusInternalServerError)
@@ -210,7 +227,7 @@ func handleWebhook(writer http.ResponseWriter, req *http.Request) {
 
 	resp, err := client.Do(forwardReq)
 	if err != nil {
-		logger.FatalErr("error forwarding request to "+forwardURL, err)
+		logger.FatalErr("error forwarding request to "+forwardTo, err)
 		// Still return 200 to the original sender
 		writer.WriteHeader(http.StatusOK)
 
@@ -232,4 +249,62 @@ func handleWebhook(writer http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		logger.FatalErr("error copying response", err)
 	}
+}
+
+type webhookDeliveryMetadata struct {
+	Method      string `json:"method"`
+	Path        string `json:"path"`
+	ContentType string `json:"contentType,omitempty"`
+	ByteCount   int    `json:"byteCount"`
+	Action      string `json:"action,omitempty"`
+	ItemCount   *int   `json:"itemCount,omitempty"`
+}
+
+func logWebhook(writer io.Writer, req *http.Request, body []byte, includePayload bool) error {
+	if includePayload {
+		return webhook.PrettyPrintJSONTo(writer, body)
+	}
+
+	metadata := summarizeWebhook(req, body)
+
+	return json.NewEncoder(writer).Encode(metadata)
+}
+
+func summarizeWebhook(req *http.Request, body []byte) webhookDeliveryMetadata {
+	metadata := webhookDeliveryMetadata{
+		Method:      req.Method,
+		Path:        req.URL.Path,
+		ContentType: req.Header.Get("Content-Type"),
+		ByteCount:   len(body),
+	}
+
+	var envelope struct {
+		Action     string          `json:"action"`
+		Result     json.RawMessage `json:"result"`
+		ResultInfo *struct {
+			NumRecords *int `json:"numRecords"`
+		} `json:"resultInfo"`
+	}
+
+	err := json.Unmarshal(body, &envelope)
+	if err != nil {
+		return metadata
+	}
+
+	metadata.Action = envelope.Action
+	if envelope.ResultInfo != nil && envelope.ResultInfo.NumRecords != nil {
+		metadata.ItemCount = envelope.ResultInfo.NumRecords
+
+		return metadata
+	}
+
+	var results []json.RawMessage
+
+	err = json.Unmarshal(envelope.Result, &results)
+	if err == nil {
+		count := len(results)
+		metadata.ItemCount = &count
+	}
+
+	return metadata
 }
