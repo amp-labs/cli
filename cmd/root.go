@@ -60,7 +60,7 @@ func warnIfEnvIgnored(flagValue string, selected region.Region) {
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		return
+		os.Exit(1)
 	}
 }
 
