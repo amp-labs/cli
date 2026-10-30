@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -153,5 +154,25 @@ func TestResolveTunnelTarget(t *testing.T) {
 		return "", nil
 	}); got != explicit {
 		t.Fatalf("resolveTunnelTarget(explicit) = %q", got)
+	}
+}
+
+func TestExistingTunnel(t *testing.T) {
+	t.Parallel()
+
+	tunnel, err := existingTunnel("https://abc.ngrok.app")(t.Context(), "")
+	if err != nil {
+		t.Fatalf("existingTunnel() error = %v", err)
+	}
+
+	if tunnel.publicURL != "https://abc.ngrok.app" || tunnel.done != nil || tunnel.stop != nil {
+		t.Fatalf("existingTunnel() = %#v", tunnel)
+	}
+
+	for _, invalid := range []string{"abc.ngrok.app", "ftp://abc.ngrok.app", "https://", "://bad"} {
+		_, err := existingTunnel(invalid)(t.Context(), "")
+		if !errors.Is(err, errInvalidTunnelURL) {
+			t.Errorf("existingTunnel(%q) error = %v, want %v", invalid, err, errInvalidTunnelURL)
+		}
 	}
 }

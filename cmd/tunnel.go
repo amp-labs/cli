@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -32,14 +33,18 @@ var (
 	errListenerPortMissing = errors.New("listener port is empty")
 	errTunnelURLTimeout    = errors.New("timed out waiting for the Cloudflare tunnel URL")
 	errTunnelStopped       = errors.New("cloudflared stopped before the tunnel was ready")
+	errInvalidTunnelURL    = errors.New("--url must be an absolute http or https URL")
 	cloudflareURLPattern   = regexp.MustCompile(`https://[a-z0-9-]+\.trycloudflare\.com`)
 	tunnelTarget           string
+	tunnelURL              string
 	tunnelCommand          = &cobra.Command{
 		Use:   "tunnel <destination>",
 		Short: "Start a local tunnel for a webhook destination",
-		Long:  "Start a Cloudflare tunnel, point one webhook destination to it, and restore the destination when stopped.",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runTunnelCommand,
+		Long: "Start a Cloudflare tunnel, point one webhook destination to it, " +
+			"and restore the destination when stopped.\n\n" +
+			"Use --url to point the destination to a tunnel you already run, such as ngrok, instead of starting one.",
+		Args: cobra.ExactArgs(1),
+		RunE: runTunnelCommand,
 	}
 )
 
@@ -54,6 +59,9 @@ type tunnelStarter func(context.Context, string) (*runningTunnel, error)
 func init() {
 	tunnelCommand.Flags().StringVar(&tunnelTarget, "target", "",
 		"Local URL that receives tunneled requests (default: running listener or http://127.0.0.1:4000)")
+	tunnelCommand.Flags().StringVar(&tunnelURL, "url", "",
+		"Public URL of a tunnel you already run, used instead of starting cloudflared")
+	tunnelCommand.MarkFlagsMutuallyExclusive("target", "url")
 	rootCmd.AddCommand(tunnelCommand)
 }
 
@@ -70,9 +78,26 @@ func runTunnelCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if tunnelURL != "" {
+		return runDestinationTunnel(ctx, client, destination, "", existingTunnel(tunnelURL))
+	}
+
 	return runDestinationTunnel(
 		ctx, client, destination, resolveTunnelTarget(tunnelTarget, readSavedListenerPort), startCloudflareTunnel,
 	)
+}
+
+// existingTunnel uses a tunnel the user already runs. Its done channel is nil, so only
+// Ctrl+C or SIGTERM ends the command.
+func existingTunnel(publicURL string) tunnelStarter {
+	return func(context.Context, string) (*runningTunnel, error) {
+		parsed, err := url.Parse(publicURL)
+		if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" {
+			return nil, errInvalidTunnelURL
+		}
+
+		return &runningTunnel{publicURL: publicURL}, nil
+	}
 }
 
 func resolveTunnelTarget(explicitTarget string, readPort func() (string, error)) string {
