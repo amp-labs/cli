@@ -4,3 +4,7 @@ updates:
     directory: /
     schedule:
       interval: daily
+    groups:
+      go-minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
