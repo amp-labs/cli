@@ -26,7 +26,7 @@ type browserDetector func() bool
 
 type browserOpener func(url string)
 
-func newConnectProviderCmd(
+func newConnectOAuthCmd(
 	newClient oauthClientFactory,
 	getProjectId connectProjectResolver,
 	hasBrowser browserDetector,
@@ -39,7 +39,7 @@ func newConnectProviderCmd(
 	)
 
 	cmd := &cobra.Command{
-		Use:   "connect:provider <provider>",
+		Use:   "connect:oauth <provider>",
 		Short: "Start a provider OAuth connection",
 		Long: "Generate an OAuth authorization URL. Open it in a browser when available; " +
 			"otherwise, print it.",
@@ -91,7 +91,7 @@ func newConnectProviderCmd(
 	return cmd
 }
 
-var connectProviderCmd = newConnectProviderCmd( //nolint:gochecknoglobals
+var connectOAuthCmd = newConnectOAuthCmd( //nolint:gochecknoglobals
 	func(projectId string, apiKey string) oauthClient {
 		return request.NewAPIClient(projectId, &apiKey)
 	},
@@ -101,5 +101,5 @@ var connectProviderCmd = newConnectProviderCmd( //nolint:gochecknoglobals
 )
 
 func init() {
-	rootCmd.AddCommand(connectProviderCmd)
+	rootCmd.AddCommand(connectOAuthCmd)
 }

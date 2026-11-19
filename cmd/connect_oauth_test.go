@@ -25,12 +25,12 @@ func (f *fakeOAuthClient) GenerateOAuthAuthorizationURL(
 	return testAuthorizationURL, nil
 }
 
-func TestConnectProviderCommandGeneratesAndOpensAuthorizationURL(t *testing.T) {
+func TestConnectOAuthCommandGeneratesAndOpensAuthorizationURL(t *testing.T) {
 	t.Parallel()
 
 	client := &fakeOAuthClient{}
 	openedURL := ""
-	cmd := newConnectProviderCmd(
+	cmd := newConnectOAuthCmd(
 		func(projectId string, _ string) oauthClient {
 			if projectId != testOAuthProject {
 				t.Fatalf("project ID = %q, want test-project", projectId)
@@ -70,11 +70,11 @@ func TestConnectProviderCommandGeneratesAndOpensAuthorizationURL(t *testing.T) {
 	}
 }
 
-func TestConnectProviderCommandDoesNotOpenBrowserWhenUnavailable(t *testing.T) {
+func TestConnectOAuthCommandDoesNotOpenBrowserWhenUnavailable(t *testing.T) {
 	t.Parallel()
 
 	client := &fakeOAuthClient{}
-	cmd := newConnectProviderCmd(
+	cmd := newConnectOAuthCmd(
 		func(_ string, _ string) oauthClient { return client },
 		func() string { return testOAuthProject },
 		func() bool { return false },
