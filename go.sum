@@ -9,7 +9,7 @@ github.com/amp-labs/amp-common v0.0.0-20260727154549-8d53f77eb37a h1:dRhnr8jvlA8
 github.com/amp-labs/amp-common v0.0.0-20260727154549-8d53f77eb37a/go.mod h1:MfvRXzJXpjTAKOyK12Rtc/Zl8xWJUbU80HNq41dabg4=
 github.com/amp-labs/amp-yaml-validator v0.0.0-20260727173531-db79457785f8 h1:+Noa8z9/Ixv2uZFAABoYx6/T9ChOx+03vyN3kB8V7sU=
 github.com/amp-labs/amp-yaml-validator v0.0.0-20260727173531-db79457785f8/go.mod h1:WQNzF8wM+qWV5HCZEEFuP8yKL6Y7OAXYzC4VA94cNi4=
-github.com/amp-labs/connectors v0.0.0-20260727171722-b67511e3ea1e h1:tUer9R25tQZa6Rdfd7TfXrJhCpM0OzXBYUFQe/dO2t0=
+github.com/amp-labs/connectors v0.0.0-20260727171722-b67511e3ea1e h1:Fy+p0DX1lchyJhrLSisS77BcrPWbuTpvxHLPYDjYVTo=
 github.com/amp-labs/connectors v0.0.0-20260727171722-b67511e3ea1e/go.mod h1:3aFBLrsXIAshiNgtaDuaANZ3QSyji3dmnO7PAzp9+mY=
 github.com/antchfx/xmlquery v1.5.1 h1:T9I4Ns1EXiWHy0IqKupGhnfTQtJwlGrpXtauYOoNv78=
 github.com/antchfx/xmlquery v1.5.1/go.mod h1:bVqnl7TaDXSReKINrhZz+2E/PbCu2tUahb+wZ7WZNT8=
