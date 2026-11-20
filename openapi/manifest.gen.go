@@ -603,7 +603,10 @@ type IntegrationSubscribeObject struct {
 	InheritFieldsAndMapping bool         `json:"inheritFieldsAndMapping,omitempty"`
 	ObjectName              string       `json:"objectName"`
 	OtherEvents             *OtherEvents `json:"otherEvents,omitempty"`
-	UpdateEvent             *UpdateEvent `json:"updateEvent,omitempty"`
+
+	// RequiredFields Fields this subscribe object uses when it does not inherit fields and mappings from the read object. Each entry names a provider field in `fieldName` and can rename it with `mapToName`. Cannot be set when `inheritFieldsAndMapping` is true. Required when `inheritFieldsAndMapping` is false and create or update events are enabled.
+	RequiredFields *[]IntegrationFieldExistent `json:"requiredFields,omitempty"`
+	UpdateEvent    *UpdateEvent                `json:"updateEvent,omitempty"`
 }
 
 // IntegrationWrite defines model for IntegrationWrite.
