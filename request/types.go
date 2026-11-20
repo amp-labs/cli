@@ -55,6 +55,14 @@ type ProviderApp struct {
 	ProjectId    string    `json:"projectId"`
 }
 
+type OAuthAuthorizationURLParams struct {
+	ProjectIdOrName string `json:"projectIdOrName"`
+	Provider        string `json:"provider"`
+	GroupRef        string `json:"groupRef"`
+	ConsumerRef     string `json:"consumerRef"`
+	ProviderAppId   string `json:"providerAppId,omitempty"`
+}
+
 type Config struct {
 	Id             string    `json:"id"`
 	RevisionId     string    `json:"revisionId"`
