@@ -11,6 +11,13 @@ import (
 	"github.com/adrg/xdg"
 )
 
+const (
+	malformedRegion = "eu west"
+	usAPIURL        = "https://api.withampersand.com"
+	euAPIURL        = "https://api.eu.withampersand.com"
+	euConfig        = `{"region":"eu"}`
+)
+
 func TestParse(t *testing.T) {
 	t.Parallel()
 
@@ -30,7 +37,7 @@ func TestParse(t *testing.T) {
 		{name: "digit", input: "eu2", want: Region("eu2")},
 		{name: "max length", input: strings.Repeat("a", maxLabelLen), want: Region(strings.Repeat("a", maxLabelLen))},
 		{name: "empty", input: "", wantErr: true},
-		{name: "inner space", input: "eu west", wantErr: true},
+		{name: "inner space", input: malformedRegion, wantErr: true},
 		{name: "leading hyphen", input: "-eu", wantErr: true},
 		{name: "trailing hyphen", input: "eu-", wantErr: true},
 		{name: "leading digit", input: "1eu", wantErr: true},
@@ -124,19 +131,19 @@ func TestRegionalizeURL(t *testing.T) {
 	}{
 		{
 			name:   "us",
-			rawURL: "https://api.withampersand.com",
+			rawURL: usAPIURL,
 			region: US,
-			want:   "https://api.withampersand.com",
+			want:   usAPIURL,
 		},
 		{
 			name:   "eu",
-			rawURL: "https://api.withampersand.com",
+			rawURL: usAPIURL,
 			region: EU,
-			want:   "https://api.eu.withampersand.com",
+			want:   euAPIURL,
 		},
 		{
 			name:   "unknown region",
-			rawURL: "https://api.withampersand.com",
+			rawURL: usAPIURL,
 			region: Region("ap"),
 			want:   "https://api.ap.withampersand.com",
 		},
@@ -166,9 +173,9 @@ func TestRegionalizeURL(t *testing.T) {
 		},
 		{
 			name:   "already regionalized",
-			rawURL: "https://api.eu.withampersand.com",
+			rawURL: euAPIURL,
 			region: EU,
-			want:   "https://api.eu.withampersand.com",
+			want:   euAPIURL,
 		},
 		{
 			name:   "localhost",
@@ -257,15 +264,15 @@ func TestResolve(t *testing.T) {
 		wantErr   bool
 	}{
 		{name: "default", config: "", flagValue: "", want: Default},
-		{name: "saved", config: `{"region":"eu"}`, flagValue: "", want: EU},
+		{name: "saved", config: euConfig, flagValue: "", want: EU},
 		{name: "env", config: "", env: "eu", flagValue: "", want: EU},
-		{name: "flag over saved", config: `{"region":"eu"}`, flagValue: "us", want: US},
+		{name: "flag over saved", config: euConfig, flagValue: "us", want: US},
 		{name: "flag over env", config: "", env: "eu", flagValue: "us", want: US},
-		{name: "saved over env", config: `{"region":"eu"}`, env: "ap", flagValue: "", want: EU},
+		{name: "saved over env", config: euConfig, env: "ap", flagValue: "", want: EU},
 		{name: "flag unknown", config: "", flagValue: "ap", want: Region("ap")},
-		{name: "flag malformed", config: "", flagValue: "eu west", wantErr: true},
+		{name: "flag malformed", config: "", flagValue: malformedRegion, wantErr: true},
 		{name: "saved malformed", config: `{"region":"eu west"}`, flagValue: "", wantErr: true},
-		{name: "env malformed", config: "", env: "eu west", flagValue: "", wantErr: true},
+		{name: "env malformed", config: "", env: malformedRegion, flagValue: "", wantErr: true},
 		{name: "corrupt config", config: `{"region":`, flagValue: "", wantErr: true},
 	}
 
